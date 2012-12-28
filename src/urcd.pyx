@@ -99,12 +99,17 @@ while 1:
     if not nick:
       continue
 
-    # /PRIVMSG, /NOTICE, /TOPIC
-    if re.search('^((PRIVMSG)|(NOTICE)|(TOPIC)) #?\w+ :.*$',buffer.upper()):
+    # /PRIVMSG, /NOTICE, /TOPIC, /PART
+    if re.search('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) #?\w+ :.*$',buffer.upper()):
 
       cmd = buffer.split(' ',1)[0].upper()
       dst = buffer.split(' ',2)[1]
       msg = buffer.split(':',1)[1]
+
+      if cmd == 'PART' and dst in channels:
+        os.write(1,':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
+        channels.remove(dst)
+        continue
 
       for path in os.listdir(os.getcwd()):
         try:
