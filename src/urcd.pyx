@@ -79,7 +79,7 @@ while 1:
           ':'+serv+' 003 '+nick+' :'+serv+'\n'
           ':'+serv+' 004 '+nick+' '+serv+' 0.0 + :+\n'
           ':'+serv+' 005 '+nick+' NETWORK='+serv+' :\n'
-          ':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +\n'
+          ':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n'
         )
 
         os.write(1,':'+serv+' 375 '+nick+' :- '+serv+' MOTD -\n')
@@ -150,11 +150,11 @@ while 1:
       continue
 
     # /MODE #channel arg?
-    if re.search('^MODE #\w+ ([-+a-zA-Z]+)?$',buffer.upper()):
+    if re.search('^MODE #\w+( [-+a-zA-Z]+)?$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
-      os.write(1,':'+serv+' 324 '+nick+' '+dst+' \n')
+      os.write(1,':'+serv+' 324 '+nick+' '+dst+' +nt\n')
       os.write(1,':'+serv+' 329 '+nick+' '+dst+' '+str(int(time.time()))+'\n')
 
       continue
@@ -164,7 +164,7 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
-      os.write(1,':'+serv+' 221 '+nick+' '+dst+' :\n')
+      os.write(1,':'+serv+' 221 '+dst+' :+i\n')
       continue
 
     # /MODE nick arg
@@ -172,7 +172,7 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
-      os.write(1,':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +\n')
+      os.write(1,':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n')
       continue
 
     #/INVITE
