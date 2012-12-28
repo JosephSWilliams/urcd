@@ -56,6 +56,7 @@ while 1:
     while 1:
       byte = os.read(0,1)
       if not byte or len(buffer)>1024:
+        sock_close(0,0)
         sys.exit(0)
       if byte == '\n':
         break
