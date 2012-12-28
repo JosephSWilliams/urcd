@@ -225,12 +225,15 @@ while 1:
     if not buffer:
       break
 
+    # escape evil buffer :-)
+    buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]+'\n'
+
     if re.search('^:\w+!\w+@[\w.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?\w+ :.*$',buffer.upper()):
 
       dst = buffer.split(' ',3)[2]
 
       if dst == nick or dst in channels:
-        os.write(1,buffer) # contains potential evil buffer
+        os.write(1,buffer)
       continue
 
 sock_close(0,0)
