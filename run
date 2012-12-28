@@ -1,0 +1,2 @@
+#!/bin/sh -e
+exec tcpserver `cat env/addr` `cat env/port` ./urcd

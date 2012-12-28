@@ -1,0 +1,4 @@
+#!/bin/sh
+git add git-commit .gitignore gitd Make.sh run src README
+TZ=UTC git commit --date="`date -u +'%s'`"
+test -x /usr/lib/git-core/git-update-server-info && /usr/lib/git-core/git-update-server-info

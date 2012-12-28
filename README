@@ -1,0 +1,27 @@
+urcd:
+  af_unix relay chat daemon
+
+depends:
+  ucspi-tcp, python(>=2.6), daemontools,
+  sh, gcc
+
+recommends:
+  cython(>=0.16)
+
+install:
+  # python2.6
+  ./Make.sh
+
+  # python2.7
+  sed 's/\.6/.7/g' Make.sh | sh
+
+  $editor env/addr
+  $editor env/port
+  $editor env/serv
+  $editor env/motd
+
+  mkdir -p socket/
+
+  ln -s `pwd`/urcd /service/urcd
+  sleep 4
+  svstat /service/urcd
