@@ -124,6 +124,17 @@ while 1:
 
       continue
 
+    # /PART
+    if re.search('^PART #\w+$',buffer.upper()):
+
+      dst = buffer.split(' ')[1]
+
+      if dst in channels:
+        os.write(1,':'+nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
+        channels.remove(dst)
+
+      continue
+
     # /PING
     if re.search('^PING :?[\w.]+$',buffer.upper()):
 
@@ -150,7 +161,7 @@ while 1:
       )
       continue
 
-    # /MODE #channel arg?
+    # /MODE #channel [<arg>,...]
     if re.search('^MODE #\w+( [-+a-zA-Z]+)?$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
@@ -168,12 +179,22 @@ while 1:
       os.write(1,':'+serv+' 221 '+dst+' :+i\n')
       continue
 
-    # /MODE nick arg
+    # /MODE nick <arg>
     if re.search('^MODE \w+ [-+][a-zA-Z]$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
       os.write(1,':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n')
+      continue
+
+    # /AWAY
+    if re.search('^AWAY ?$',buffer.upper()):
+      os.write(1,':'+serv+' 305 '+nick+' :WB, :-)\n')
+      continue
+
+    # /AWAY <msg>
+    if re.search('^AWAY .+$',buffer.upper()):
+      os.write(1,':'+serv+' 306 '+nick+' :HB, :-)\n')
       continue
 
     #/INVITE
@@ -209,7 +230,7 @@ while 1:
       dst = buffer.split(' ',3)[2]
 
       if dst == nick or dst in channels:
-        os.write(1,buffer)
+        os.write(1,buffer) # contains potential evil buffer
       continue
 
 sock_close(0,0)
