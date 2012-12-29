@@ -237,6 +237,7 @@ while 1:
 
     # escape evil buffer :-)
     buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]+'\n'
+    buffer = buffer.replace("\\'","'")
 
     if re.search('^:\w+!\w+@[\w.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?\w+ :.*$',buffer.upper()):
 
