@@ -82,8 +82,8 @@ while 1:
         )
 
         os.write(1,':'+serv+' 375 '+nick+' :- '+serv+' MOTD -\n')
-        for line in motd:
-          os.write(1,':'+serv+' 372 '+nick+' :- '+line+'\n')
+        for msg in motd:
+          os.write(1,':'+serv+' 372 '+nick+' :- '+msg+'\n')
         os.write(1,':'+serv+' 376 '+nick+' :EOF MOTD\n')
 
         del motd
@@ -135,7 +135,7 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
-      os.write(1,':'+serv+' 324 '+nick+' '+dst+' +nt\n')
+      os.write(1,':'+serv+' 324 '+nick+' '+dst+' +n\n')
       os.write(1,':'+serv+' 329 '+nick+' '+dst+' '+str(int(time.time()))+'\n')
 
       continue
@@ -225,6 +225,7 @@ while 1:
 
     else:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
+      buffer = buffer.replace("\\'","'")
       os.write(1,'ERROR :UNKNOWN COMMAND:'+buffer+'\n')
       continue
 
