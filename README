@@ -26,7 +26,7 @@ install:
   ln -s `pwd`/urcd /service/urcd
 
   mkdir -p /service/urcd/socket/
-  echo -n '/service/urcd/socket/ > env/path
+  echo -n '/service/urcd/socket/' > env/path
 
   sleep 4
   svstat /service/urcd
