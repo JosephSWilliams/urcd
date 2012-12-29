@@ -41,13 +41,13 @@ server_POLLIN=select.poll()
 server_POLLIN.register(3,3)
 
 def client_poll():
-  return len( client_POLLIN.poll(
-    256 *len( server_POLLIN.poll(256))
+  return len( client_POLLIN.poll(256-
+    (256*len( server_POLLIN.poll(0)))
   ))
 
 def server_poll():
-  return len( server_POLLIN.poll(
-    256 *len( client_POLLIN.poll(256))
+  return len( server_POLLIN.poll(256-
+    (256*len( client_POLLIN.poll(0)))
   ))
 
 while 1:
