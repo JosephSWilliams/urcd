@@ -23,7 +23,7 @@ install:
   $editor env/serv
   $editor env/motd
 
-  ln -s `pwd`/urcd /service/urcd
+  ln -s `pwd` /service/urcd
 
   mkdir -p /service/urcd/socket/
   echo -n '/service/urcd/socket/' > env/path
