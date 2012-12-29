@@ -122,40 +122,12 @@ while 1:
 
       continue
 
-    # /PART
-    if re.search('^PART [#\w,]+$',buffer.upper()):
-
-      dst = buffer.split(' ')[1]
-
-      for dst in dst.split(','):
-        if dst in channels:
-          os.write(1,':'+nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
-          channels.remove(dst)
-      continue
-
     # /PING
     if re.search('^PING :?[\w.]+$',buffer.upper()):
 
       dst = buffer.split(' ',1)[1]
 
       os.write(1,'PONG '+dst+'\n')
-      continue
-
-    # /JOIN
-    if re.search('^JOIN [#\w,]+$',buffer.upper()):
-
-      dst = buffer.split(' ',1)[1].lower()
-
-      for dst in dst.split(','):
-        if dst in channels:
-          continue
-        channels.append(dst)
-        os.write(1,
-          ':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
-          ':'+serv+' 332 '+nick+' '+dst+' :\n'
-          ':'+serv+' 333 '+nick+' '+dst+' '+nick+' '+str(int(time.time()))+'\n'
-          ':'+serv+' 353 '+nick+' = '+dst+' :'+nick+'\n'
-        )
       continue
 
     # /MODE #channel [<arg>,...]
@@ -195,6 +167,12 @@ while 1:
       os.write(1,':'+serv+' 306 '+nick+' :HB, :-)\n')
       continue
 
+    # /WHO
+    if re.search('^WHO .+',buffer.upper()):
+      cmd = buffer.split(' ')[1]
+      os.write(1,':'+serv+' 315 '+nick+' '+cmd+' :EOF WHO\n')
+      continue
+
     # /INVITE
     if re.search('^INVITE \w+ #\w+$',buffer.upper()):
 
@@ -211,10 +189,31 @@ while 1:
           pass
       continue
 
-    # /WHO
-    if re.search('^WHO .+',buffer.upper()):
-      cmd = buffer.split(' ')[1]
-      os.write(1,':'+serv+' 315 '+nick+' '+cmd+' :EOF WHO\n')
+    # /JOIN
+    if re.search('^JOIN [#\w,]+$',buffer.upper()):
+
+      dst = buffer.split(' ',1)[1].lower()
+
+      for dst in dst.split(','):
+        if dst in channels:
+          continue
+        channels.append(dst)
+        os.write(1,
+          ':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
+          ':'+serv+' 366 '+nick+' '+dst+' :EOF NAMES\n'
+          ':'+serv+' 353 '+nick+' = '+dst+' :'+nick+'\n'
+        )
+      continue
+
+    # /PART
+    if re.search('^PART [#\w,]+$',buffer.upper()):
+
+      dst = buffer.split(' ')[1]
+
+      for dst in dst.split(','):
+        if dst in channels:
+          os.write(1,':'+nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
+          channels.remove(dst)
       continue
 
     if re.search('^QUIT ',buffer.upper()):
