@@ -200,8 +200,8 @@ while 1:
         channels.append(dst)
         os.write(1,
           ':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
-          ':'+serv+' 366 '+nick+' '+dst+' :EOF NAMES\n'
           ':'+serv+' 353 '+nick+' = '+dst+' :'+nick+'\n'
+          ':'+serv+' 366 '+nick+' '+dst+' :EOF NAMES\n'
         )
       continue
 
