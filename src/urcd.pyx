@@ -32,6 +32,7 @@ os.chroot(os.getcwd())
 sock=socket.socket(1,2)
 sock_close(0,0)
 sock.bind(str(os.getpid()))
+sock.setblocking(0)
 
 client_POLLIN=select.poll()
 client_POLLIN.register(0,3)
@@ -55,7 +56,7 @@ while 1:
     buffer = str()
     while 1:
       byte = os.read(0,1)
-      if not byte or len(buffer)>1024:
+      if not byte or len(buffer)>(1024-16):
         sock_close(0,0)
         sys.exit(0)
       if byte == '\n':
