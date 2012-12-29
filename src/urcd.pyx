@@ -213,6 +213,12 @@ while 1:
           pass
       continue
 
+    #/WHO
+    if re.search('^WHO .+',buffer.upper()):
+      cmd = buffer.split(' ')[1]
+      os.write(1,':'+serv+' 315 '+nick+' '+cmd+' :EOF WHO\n')
+      continue
+
     if re.search('^QUIT ',buffer.upper()):
       break
 
