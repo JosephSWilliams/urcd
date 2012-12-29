@@ -1,0 +1,23 @@
+#!/bin/sh
+[ -z $2 ] && \
+  echo $0' <addr> <port> </path/to/socket/>' 1>&2 && \
+  exit 64
+
+mkdir -p /services/urcd-tcpsend-"$1:$2" || exit 1
+
+printf '#!/bin/sh -e\n' > \
+  /services/urcd-tcpsend-"$1:$2"/run || exit 1
+
+printf "exec tcpclient $1 $2 ./urcsend $3\n" >> \
+  /services/urcd-tcpsend-"$1:$2"/run || exit 1
+
+chmod +x /services/urcd-tcpsend-"$1:$2"/run || exit 1
+
+test -L /services/urcd-tcpsend-"$1:$2"/urcsend || \
+  ln -s `pwd`/urcsend /services/urcd-tcpsend-"$1:$2"/urcsend || \
+  exit 1
+
+test -L /service/urcd-tcpsend-"$1:$2" || \
+  ln -s /services/urcd-tcpsend-"$1:$2" \
+    /service/urcd-tcpsend-"$1:$2" || \
+    exit 1

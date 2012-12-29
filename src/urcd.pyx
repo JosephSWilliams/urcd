@@ -56,7 +56,7 @@ while 1:
     buffer = str()
     while 1:
       byte = os.read(0,1)
-      if not byte or len(buffer)>(1024-64):
+      if not byte or len(buffer)>1024:
         sock_close(0,0)
         sys.exit(0)
       if byte == '\n':
@@ -67,12 +67,6 @@ while 1:
     # workarounds for shoddy clients
     buffer = re.sub(' $','',buffer) # chatzilla sucks
     buffer = re.sub('^((NICK)|(nick)) :',buffer.split(':',1)[0],buffer) # mIRC sucks
-
-    if not buffer:
-      continue
-
-    if re.search('^USER .*$',buffer.upper()):
-      continue
 
     # /NICK
     if re.search('^NICK \w+$',buffer.upper()):
@@ -202,7 +196,7 @@ while 1:
       os.write(1,':'+serv+' 306 '+nick+' :HB, :-)\n')
       continue
 
-    #/INVITE
+    # /INVITE
     if re.search('^INVITE \w+ #\w+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
@@ -218,7 +212,7 @@ while 1:
           pass
       continue
 
-    #/WHO
+    # /WHO
     if re.search('^WHO .+',buffer.upper()):
       cmd = buffer.split(' ')[1]
       os.write(1,':'+serv+' 315 '+nick+' '+cmd+' :EOF WHO\n')
@@ -226,6 +220,10 @@ while 1:
 
     if re.search('^QUIT ',buffer.upper()):
       break
+
+    # /USER
+    if re.search('^USER .*$',buffer.upper()):
+      continue
 
     else:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
@@ -243,11 +241,7 @@ while 1:
 
     if re.search('^:\w+!\w+@[\w.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?\w+ :.*$',buffer.upper()):
 
-      src = buffer.split(' ',1)[0][1:]
-      if src == nick+'!'+user+'@'+serv:
-        continue
-
-      dst = buffer.split(' ',3)[2]
+      dst = buffer.split(' ',3)[2].lower()
 
       if dst == nick or dst in channels:
         os.write(1,buffer)
