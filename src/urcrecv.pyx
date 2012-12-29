@@ -16,11 +16,9 @@ while 1:
     byte = os.read(0,1)
     if not byte or len(buffer)>1024:
       sys.exit(0)
+    buffer+=byte
     if byte == '\n':
-      buffer+=byte
       break
-    if byte != '\r':
-      buffer+=byte
 
   for path in os.listdir(os.getcwd()):
     try:
