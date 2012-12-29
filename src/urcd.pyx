@@ -65,7 +65,7 @@ while 1:
 
     # workarounds for shoddy clients
     buffer = re.sub(' $','',buffer) # chatzilla sucks
-    buffer = re.sub('^((NICK)|(nick)) :',buffer.split(':',1)[0],buffer) # mIRC sucks
+    buffer = re.sub('^((NICK)|(nick)) :','NICK ',buffer) # mIRC sucks
 
     # /NICK
     if re.search('^NICK \w+$',buffer.upper()):
@@ -226,6 +226,7 @@ while 1:
     else:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
       buffer = buffer.replace("\\'","'")
+      buffer = buffer.replace('\\\\','\\')
       os.write(1,'ERROR :UNKNOWN COMMAND:'+buffer+'\n')
       continue
 
@@ -238,6 +239,7 @@ while 1:
     # escape evil buffer :-)
     buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]+'\n'
     buffer = buffer.replace("\\'","'")
+    buffer = buffer.replace('\\\\','\\')
 
     if re.search('^:\w+!\w+@[\w.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?\w+ :.*$',buffer.upper()):
 
