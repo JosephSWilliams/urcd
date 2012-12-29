@@ -26,7 +26,7 @@ signal.signal(1 ,sock_close)
 signal.signal(2 ,sock_close)
 signal.signal(15,sock_close)
 
-os.chdir('socket/')
+os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
 
 sock=socket.socket(1,2)
@@ -57,8 +57,7 @@ while 1:
     while 1:
       byte = os.read(0,1)
       if not byte or len(buffer)>1024:
-        sock_close(0,0)
-        sys.exit(0)
+        sock_close(15,0)
       if byte == '\n':
         break
       if byte != '\r':
