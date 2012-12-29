@@ -56,7 +56,7 @@ while 1:
     buffer = str()
     while 1:
       byte = os.read(0,1)
-      if not byte or len(buffer)>(1024-16):
+      if not byte or len(buffer)>(1024-64):
         sock_close(0,0)
         sys.exit(0)
       if byte == '\n':
@@ -66,6 +66,7 @@ while 1:
 
     # workarounds for shoddy clients
     buffer = re.sub(' $','',buffer) # chatzilla sucks
+    buffer = re.sub('^((NICK)|(nick)) :',buffer.split(':',1)[0],buffer) # mIRC sucks
 
     if not buffer:
       continue
@@ -241,6 +242,10 @@ while 1:
     buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]+'\n'
 
     if re.search('^:\w+!\w+@[\w.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?\w+ :.*$',buffer.upper()):
+
+      src = buffer.split(' ',1)[0][1:]
+      if src == nick+'!'+user+'@'+serv:
+        continue
 
       dst = buffer.split(' ',3)[2]
 
