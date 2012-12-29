@@ -223,7 +223,7 @@ while 1:
       break
 
     else:
-      os.write(1,'ERROR :UNKNOWN COMMAND: '+buffer.split(' ')[0]+'\n')
+      os.write(1,'ERROR :UNKNOWN COMMAND: '+buffer+'\n')
 
   while server_poll():
 
