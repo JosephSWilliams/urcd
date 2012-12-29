@@ -183,7 +183,8 @@ while 1:
       continue
 
     # /MODE nick <arg>
-    if re.search('^MODE \w+ [-+][a-zA-Z]$',buffer.upper()):
+    # chatzilla sucks again (:?)
+    if re.search('^MODE \w+ :?[-+][a-zA-Z]$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
