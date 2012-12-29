@@ -125,14 +125,14 @@ while 1:
       continue
 
     # /PART
-    if re.search('^PART #\w+$',buffer.upper()):
+    if re.search('^PART [#\w,]+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
-      if dst in channels:
-        os.write(1,':'+nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
-        channels.remove(dst)
-
+      for dst in dst.split(','):
+        if dst in channels:
+          os.write(1,':'+nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
+          channels.remove(dst)
       continue
 
     # /PING
@@ -144,21 +144,20 @@ while 1:
       continue
 
     # /JOIN
-    if re.search('^JOIN #\w+$',buffer.upper()):
+    if re.search('^JOIN [#\w,]+$',buffer.upper()):
 
       dst = buffer.split(' ',1)[1].lower()
 
-      if dst in channels:
-        continue
-
-      channels.append(dst)
-
-      os.write(1,
-        ':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
-        ':'+serv+' 332 '+nick+' '+dst+' :\n'
-        ':'+serv+' 333 '+nick+' '+dst+' '+nick+' '+str(int(time.time()))+'\n'
-        ':'+serv+' 353 '+nick+' = '+dst+' :'+nick+'\n'
-      )
+      for dst in dst.split(','):
+        if dst in channels:
+          continue
+        channels.append(dst)
+        os.write(1,
+          ':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
+          ':'+serv+' 332 '+nick+' '+dst+' :\n'
+          ':'+serv+' 333 '+nick+' '+dst+' '+nick+' '+str(int(time.time()))+'\n'
+          ':'+serv+' 353 '+nick+' = '+dst+' :'+nick+'\n'
+        )
       continue
 
     # /MODE #channel [<arg>,...]
