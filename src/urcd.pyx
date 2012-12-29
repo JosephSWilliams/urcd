@@ -64,6 +64,9 @@ while 1:
       if byte != '\r':
         buffer+=byte
 
+    # workarounds for shoddy clients
+    buffer = re.sub(' $','',buffer) # chatzilla sucks
+
     if not buffer:
       continue
 
