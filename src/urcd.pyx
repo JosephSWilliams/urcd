@@ -223,7 +223,9 @@ while 1:
       break
 
     else:
-      os.write(1,'ERROR :UNKNOWN COMMAND: '+buffer+'\n')
+      buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
+      os.write(1,'ERROR :UNKNOWN COMMAND:'+buffer+'\n')
+      continue
 
   while server_poll():
 
