@@ -1,15 +1,13 @@
 urcd:
-  af_unix relay chat daemons
+  af_unix relay chat daemon and
+  af_unix relay chat daemon accessories...
 
 depends:
   ucspi-tcp, python(>=2.6), daemontools,
-  sh
+  nacl, sh
 
 recommends:
   cython(>=0.16), gcc
-
-todo:
-  curvecp
 
 install:
   # python2.6
@@ -32,7 +30,19 @@ install:
   svstat /service/urcd
 
 server2server:
-  ./bin/add-tcprecv irc.daemon.ano 1234 /service/urcd/socket/
+  ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
 
   # your peers can link their server using:
-  ./bin/add-tcpsend irc.daemon.ano 1234 /service/urcd/socket/
+  ./bin/add-tcpsend your.urcd.ano 1234 /service/urcd/socket/
+
+  # you will need to link to your peer's server:
+  ./bin/add-tcpsend peer.urcd.ano 4321 /service/urcd/socket/
+
+curvecp server2server:
+  ./bin/add-curvecprecv your.urcd.ano 1234 /service/urcd/socket/
+
+  # your peers can link their server using:
+  ./bin/add-curvecpsend your.urcd.ano 1234 /service/urcd/socket/ your.urcd.ano $your_pubkey
+
+  # you will need to link to your peer's server:
+  ./bin/add-curvecpsend peer.urcd.ano 4321 /service/urcd/socket/ peer.urcd.ano $peer_pubkey

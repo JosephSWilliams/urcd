@@ -4,6 +4,8 @@ import signal
 import sys
 import os
 
+fd = int(os.getenv('CURVECPCLIENT',7))
+
 def sock_close(sn,sf):
   try:
     os.remove(str(os.getpid()))
@@ -30,9 +32,7 @@ while 1:
     continue
 
   try:
-    if not os.write(7,buffer):
-      break
+    if not os.write(fd,buffer):
+      sock_close(15,0)
   except:
-    break
-
-sock_close(0,0)
+    sock_close(15,0)

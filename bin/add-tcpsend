@@ -1,5 +1,5 @@
 #!/bin/sh
-[ -z $2 ] && \
+[ -z $3 ] && \
   echo $0' <addr> <port> </path/to/socket/>' 1>&2 && \
   exit 64
 

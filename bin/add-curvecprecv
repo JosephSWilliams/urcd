@@ -1,0 +1,31 @@
+#!/bin/sh
+[ -z $3 ] && \
+  echo $0' <addr> <port> </path/to/socket/>' 1>&2 && \
+  exit 64
+
+mkdir -p /services/urcd-curvecprecv-"$1:$2" || exit 1
+
+test -L /services/urcd-curvecprecv-"$1:$2"/serv || \
+  ln -s `pwd`/env/serv /services/urcd-curvecprecv-"$1:$2"/serv || \
+  exit 1
+
+curvecpmakekey /services/urcd-curvecprecv-"$1:$2"/curvecp || exit 1
+
+printf \
+"#!/bin/sh -e
+exec curvecpserver \`cat serv\` curvecp $1 $2 01110101011100100110001101100100 curvecpmessage ./urcrecv $3\n" > \
+/services/urcd-curvecprecv-"$1:$2"/run || exit
+
+chmod +x /services/urcd-curvecprecv-"$1:$2"/run || exit 1
+
+test -L /services/urcd-curvecprecv-"$1:$2"/urcrecv || \
+  ln -s `pwd`/urcrecv /services/urcd-curvecprecv-"$1:$2"/urcrecv || \
+  exit 1
+
+test -L /service/urcd-curvecprecv-"$1:$2" || \
+  ln -s /services/urcd-curvecprecv-"$1:$2" \
+    /service/urcd-curvecprecv-"$1:$2" || \
+    exit 1
+
+printf \
+"PUBKEY: `curvecpprintkey /services/urcd-curvecprecv-"$1:$2"/curvecp`\n"
