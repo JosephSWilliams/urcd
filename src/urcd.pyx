@@ -259,7 +259,7 @@ while 1:
 
       dst = buffer.split(' ',3)[2].lower()
 
-      if dst == nick or dst in channels:
+      if dst == nick.lower() or dst in channels:
         os.write(wr,buffer)
       continue
 
