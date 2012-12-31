@@ -7,7 +7,7 @@ depends:
   nacl, sh
 
 recommends:
-  cython(>=0.16), gcc
+  python-dev(>=2.6), cython(>=0.16), gcc
 
 install:
   # python2.6
@@ -28,6 +28,21 @@ install:
 
   sleep 4
   svstat /service/urcd
+
+interface:
+  place an executable program in the cwd
+  of urcd named 'stdin'. the program reads
+  stdin from the irc client. anything your
+  program writes to stdout will be written
+  to urcd
+
+  place an executable program in the cwd
+  of urcd named 'stdout'. the program reads 
+  stdin from urcd. anything your program 
+  writes to stdout will be written to the
+  irc client
+
+  happy hacking :-)
 
 server2server:
   ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
