@@ -53,6 +53,9 @@ server2server:
   # you will need to link to your peer's server:
   ./bin/add-tcpsend peer.urcd.ano 4321 /service/urcd/socket/
 
+  # transit nodes may use ./add-tcplisten and clients can
+  # stream with ./add-tcpconnect
+
 curvecp server2server:
   ./bin/add-curvecprecv your.urcd.ano 1234 /service/urcd/socket/
 
@@ -61,3 +64,6 @@ curvecp server2server:
 
   # you will need to link to your peer's server:
   ./bin/add-curvecpsend peer.urcd.ano 4321 /service/urcd/socket/ peer.urcd.ano $peer_pubkey
+
+  # transit nodes may use ./add-curvecplisten and clients can
+  # stream with ./add-curvecpconnect

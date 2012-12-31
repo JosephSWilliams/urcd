@@ -4,6 +4,7 @@ build
 urcd
 urcrecv
 urcsend
+urcstream
 socket
 supervise
 stdin

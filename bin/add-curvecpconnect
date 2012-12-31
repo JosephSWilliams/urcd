@@ -1,0 +1,27 @@
+#!/bin/sh
+[ -z $5 ] && \
+  echo $0' <addr> <port> </path/to/socket/> <serv> <pubkey>' 1>&2 && \
+  exit 64
+
+mkdir -p /services/urcd-curvecpconnect-"$1:$2" || exit 1
+
+printf $4 > /services/urcd-curvecpconnect-"$1:$2"/serv || exit 1
+
+printf $5 > /services/urcd-curvecpconnect-"$1:$2"/pubkey || exit 1
+
+printf \
+"#!/bin/sh -e
+export CURVECPCLIENT=1
+exec curvecpclient \`cat serv\` \`cat pubkey\` $1 $2 01110101011100100110001101100100 curvecpmessage ./urcstream $3\n" > \
+/services/urcd-curvecpconnect-"$1:$2"/run || exit
+
+chmod +x /services/urcd-curvecpconnect-"$1:$2"/run || exit 1
+
+test -L /services/urcd-curvecpconnect-"$1:$2"/urcstream || \
+  ln -s `pwd`/urcstream /services/urcd-curvecpconnect-"$1:$2"/urcstream || \
+  exit 1
+
+test -L /service/urcd-curvecpconnect-"$1:$2" || \
+  ln -s /services/urcd-curvecpconnect-"$1:$2" \
+    /service/urcd-curvecpconnect-"$1:$2" || \
+    exit 1
