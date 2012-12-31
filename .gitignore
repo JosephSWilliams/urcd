@@ -6,3 +6,5 @@ urcrecv
 urcsend
 socket
 supervise
+stdin
+stdout
