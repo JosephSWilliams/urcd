@@ -5,7 +5,7 @@ import signal
 import sys
 import os
 
-user = os.getpid()
+user = str(os.getpid())
 
 wr = 1
 if int(os.getenv('TCPCLIENT',0)):
