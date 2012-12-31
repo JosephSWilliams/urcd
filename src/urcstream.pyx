@@ -5,6 +5,8 @@ import signal
 import sys
 import os
 
+user = os.getpid()
+
 wr = 1
 if int(os.getenv('TCPCLIENT',0)):
   wr += 6
@@ -59,7 +61,8 @@ while 1:
         break
     for path in os.listdir(os.getcwd()):
       try:
-        sock.sendto(buffer,path)
+        if path != user:
+          sock.sendto(buffer,path)
       except:
         pass
 
