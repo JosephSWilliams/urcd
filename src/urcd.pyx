@@ -27,20 +27,21 @@ signal.signal(1 ,sock_close)
 signal.signal(2 ,sock_close)
 signal.signal(15,sock_close)
 
-rd = sys.stdin.fileno()
-if os.access('stdin',os.X_OK):
+rd = 0
+if os.access('stdin',1):
   p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
   rd = p.stdout.fileno()
   del p
 
-wr = sys.stdout.fileno()
-if os.access('stdout',os.X_OK):
+wr = 1
+if os.access('stdout',1):
   p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE)
   wr = p.stdin.fileno()
   del p
 
 os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
+root = os.getcwd()
 
 sock=socket.socket(1,2)
 sock_close(0,0)
@@ -124,7 +125,7 @@ while 1:
         channels.remove(dst)
         continue
 
-      for path in os.listdir(os.getcwd()):
+      for path in os.listdir(root):
         try:
           if path != user:
             sock.sendto(':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',path)
@@ -195,7 +196,7 @@ while 1:
 
       os.write(wr,':'+serv+' 341 '+nick+' '+dst+' '+msg+'\n')
 
-      for path in os.listdir(os.getcwd()):
+      for path in os.listdir(root):
         try:
           if path != user:
             sock.sendto(':'+nick+'!'+user+'@'+serv+' INVITE '+dst+' :'+msg+'\n',path)

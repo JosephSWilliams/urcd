@@ -5,6 +5,7 @@ import os
 
 os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
+root = os.getcwd()
 
 sock=socket.socket(1,2)
 sock.setblocking(0)
@@ -20,7 +21,7 @@ while 1:
     if byte == '\n':
       break
 
-  for path in os.listdir(os.getcwd()):
+  for path in os.listdir(root):
     try:
       sock.sendto(buffer,path)
     except:

@@ -26,6 +26,7 @@ signal.signal(15,sock_close)
 
 os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
+root = os.getcwd()
 
 sock=socket.socket(1,2)
 sock_close(0,0)
@@ -59,7 +60,7 @@ while 1:
       buffer+=byte
       if byte == '\n':
         break
-    for path in os.listdir(os.getcwd()):
+    for path in os.listdir(root):
       try:
         if path != user:
           sock.sendto(buffer,path)
