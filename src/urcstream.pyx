@@ -67,7 +67,7 @@ while 1:
         pass
 
   while server_poll():
-    buffer, path = sock.recvfrom(1024)
+    buffer = os.read(sd,1024)
     try:
       if not os.write(wr,buffer):
         sock_close(15,0)
