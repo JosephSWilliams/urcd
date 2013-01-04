@@ -206,7 +206,7 @@ while 1:
       continue
 
     # /JOIN
-    if re.search('^JOIN #['+RE+',]+$',buffer.upper()):
+    if re.search('^JOIN [#'+RE+',]+$',buffer.upper()):
 
       dst = buffer.split(' ',1)[1].lower()
 
