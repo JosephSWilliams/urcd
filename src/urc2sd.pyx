@@ -10,7 +10,7 @@ import re
 import os
 
 user = str(os.getpid())
-RE   = 'a-zA-Z0-9^()-_{}[]|'
+RE   = 'a-zA-Z0-9^(\)-_{\}[\]|'
 nick = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],64)
@@ -36,16 +36,16 @@ signal.signal(2 ,sock_close)
 signal.signal(15,sock_close)
 
 rd = 0
-if os.access('stdin',1):
-  p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
-  rd = p.stdout.fileno()
-  del p
+#if os.access('stdin',1):
+#  p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
+#  rd = p.stdout.fileno()
+#  del p
 
 wr = 1
-if os.access('stdout',1):
-  p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE)
-  wr = p.stdin.fileno()
-  del p
+#if os.access('stdout',1):
+#  p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE)
+#  wr = p.stdin.fileno()
+#  del p
 
 os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
@@ -119,7 +119,7 @@ while 1:
       continue
 
     # :nick!user@serv JOIN :#channel
-    if re.search('^:'+re.escape(nick)+'!.+ JOIN :',buffer.upper()):
+    if re.search('^:'+re.escape(nick)+'!.+ JOIN :#['+RE+']+$',buffer.upper()):
       dst = buffer.split(':')[2].lower()
       if not dst in channels:
         channels.append(dst)

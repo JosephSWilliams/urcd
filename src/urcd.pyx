@@ -11,7 +11,7 @@ import os
 
 nick      = str()
 user      = str(os.getpid())
-RE        = 'a-zA-Z0-9^()-_{}[]|'
+RE        = 'a-zA-Z0-9^(\)-_{\}[\]|'
 serv      = open('env/serv','rb').read().split('\n')[0]
 motd      = open('env/motd','rb').read().split('\n')
 channels  = collections.deque([],64)
