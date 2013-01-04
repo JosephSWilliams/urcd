@@ -36,16 +36,16 @@ signal.signal(2 ,sock_close)
 signal.signal(15,sock_close)
 
 rd = 0
-#if os.access('stdin',1):
-#  p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
-#  rd = p.stdout.fileno()
-#  del p
+if os.access('stdin',1):
+  p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
+  rd = p.stdout.fileno()
+  del p
 
 wr = 1
-#if os.access('stdout',1):
-#  p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE)
-#  wr = p.stdin.fileno()
-#  del p
+if os.access('stdout',1):
+  p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE)
+  wr = p.stdin.fileno()
+  del p
 
 os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
@@ -140,6 +140,14 @@ while 1:
       dst = buffer.split(' ')[2].lower()
       os.write(wr,'JOIN '+dst+'\n')
       channels.remove(dst)
+      continue
+
+    # :nick!user@serv INVITE nick :#channel
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ INVITE '+re.escape(nick)+' :#['+RE+']+$',buffer.upper()):
+      dst = buffer.split(':',2)[2]
+      if not dst in channels:
+        os.write(wr,'JOIN '+dst+'\n')
+        channels.append(dst)
       continue
 
     EOF() if EOF else EOF
