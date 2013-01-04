@@ -12,9 +12,14 @@ if [ -x $CYTHON ];then
     fi
 fi
 
+gcc src/ucspi-client2server.c -o ucspi-client2server || exit 1
+
 if [ -z $HEADERS ]; then
   cp src/urcd.pyx urcd || exit 1
   chmod +x urcd        || exit 1
+
+  cp src/urc2sd.pyx urc2sd || exit 1
+  chmod +x urc2sd          || exit 1
 
   cp src/urcrecv.pyx urcrecv || exit 1
   chmod +x urcrecv           || exit 1
@@ -35,6 +40,10 @@ mkdir -p build || exit 1
 cython --embed src/urcd.pyx -o build/urcd.c         || exit 1
 gcc -O2 -c build/urcd.c -I $HEADERS -o build/urcd.o || exit 1
 gcc -O1 -o urcd build/urcd.o -l python2.6           || exit 1
+
+cython --embed src/urc2sd.pyx -o build/urc2sd.c         || exit 1
+gcc -O2 -c build/urc2sd.c -I $HEADERS -o build/urc2sd.o || exit 1
+gcc -O1 -o urc2sd build/urc2sd.o -l python2.6           || exit 1
 
 cython --embed src/urcrecv.pyx -o build/urcrecv.c         || exit 1
 gcc -O2 -c build/urcrecv.c -I $HEADERS -o build/urcrecv.o || exit 1

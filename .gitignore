@@ -2,6 +2,7 @@ env
 conf
 build
 urcd
+urc2sd
 urcrecv
 urcsend
 urcstream
@@ -9,3 +10,7 @@ socket
 supervise
 stdin
 stdout
+channels
+auto_cmd
+nick
+ucspi-client2server

@@ -1,0 +1,2 @@
+#!/bin/sh -e
+exec tcpclient `cat addr` `cat port` ./ucspi-client2server ./urc2sd `cat path`

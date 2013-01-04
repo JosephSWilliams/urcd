@@ -4,10 +4,10 @@ urcd:
 
 depends:
   ucspi-tcp, python(>=2.6), daemontools,
-  nacl, sh
+  nacl, sh, gcc
 
 recommends:
-  python-dev(>=2.6), cython(>=0.16), gcc
+  python-dev(>=2.6), cython(>=0.16)
 
 install:
   # python2.6
@@ -67,3 +67,16 @@ curvecp server2server:
 
   # transit nodes may use ./add-curvecplisten and clients can
   # stream with ./add-curvecpconnect
+
+urc2sd:
+  mkdir -p /services/urc2sd
+  ln -s `pwd`/urc2sd /services/urc2sd/urc2sd
+  ln -s `pwd`/ucspi-client2server /services/urc2sd/ucspi-client2server
+  ln -s `pwd`/run.urc2sd /services/urc2sd/run
+  printf $addr > /services/urc2sd/$addr
+  printf $port > /services/urc2sd/$port
+  printf '/path/to/socket/' > /services/urc2sd/path
+  printf 'urcd' > /services/urc2sd/nick
+  printf '#channel' > /services/urc2sd/channels
+  touch /services/urc2sd/auto_cmd
+  ln -s /services/urc2sd /service/urc2sd

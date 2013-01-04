@@ -1,4 +1,4 @@
 #!/bin/sh
-git add git-commit .gitignore gitd Make.sh bin run src README
+git add git-commit .gitignore gitd Make.sh bin run run.urc2sd src README
 TZ=UTC git commit --date="`date -u +'%s'`"
 test -x /usr/lib/git-core/git-update-server-info && /usr/lib/git-core/git-update-server-info
