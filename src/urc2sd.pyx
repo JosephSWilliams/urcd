@@ -159,7 +159,7 @@ while 1:
       src = buffer[1:].split('!',1)[0] + '> '
       cmd = buffer.split(' ',3)[1].upper()
       dst = buffer.split(' ',3)[2].lower()
-      msg = buffer.split(':')[2]
+      msg = buffer.split(':',2)[2]
 
       if dst in channels:
         os.write(wr,cmd+' '+dst+' :'+src+msg+'\n')
