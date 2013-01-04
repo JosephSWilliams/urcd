@@ -7,7 +7,7 @@ depends:
   nacl, sh, gcc
 
 recommends:
-  python-dev(>=2.6), cython(>=0.16)
+  python-dev(>=2.6), cython(>=0.17.3)
 
 install:
   # python2.6
@@ -42,7 +42,9 @@ interface:
   writes to stdout will be written to the
   irc client
 
-  happy hacking :-)
+  for urc2sd simply reverse this process. ie,
+  stdin will be stdout, and vice versa. happy
+  hacking :-)
 
 server2server:
   ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
