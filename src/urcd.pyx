@@ -11,6 +11,7 @@ import os
 
 nick      = str()
 user      = str(os.getpid())
+RE        = 'a-zA-Z0-9^()-_{}[]|'
 serv      = open('env/serv','rb').read().split('\n')[0]
 motd      = open('env/motd','rb').read().split('\n')
 channels  = collections.deque([],64)
@@ -83,7 +84,7 @@ while 1:
     buffer = re.sub('^((NICK)|(nick)) :','NICK ',buffer) # mIRC sucks
 
     # /NICK
-    if re.search('^NICK \w+$',buffer.upper()):
+    if re.search('^NICK ['+RE+']+$',buffer.upper()):
 
       if not nick:
         nick = buffer.split(' ')[1]
@@ -114,7 +115,7 @@ while 1:
       continue
 
     # /PRIVMSG, /NOTICE, /TOPIC, /PART
-    if re.search('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) #?\w+ :.*$',buffer.upper()):
+    if re.search('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) #?['+RE+']+ :.*$',buffer.upper()):
 
       cmd = buffer.split(' ',1)[0].upper()
       dst = buffer.split(' ',2)[1]
@@ -138,7 +139,7 @@ while 1:
       continue
 
     # /PING
-    if re.search('^PING :?[\w.]+$',buffer.upper()):
+    if re.search('^PING :?.+$',buffer.upper()):
 
       dst = buffer.split(' ',1)[1]
 
@@ -146,7 +147,7 @@ while 1:
       continue
 
     # /MODE #channel [<arg>,...]
-    if re.search('^MODE #\w+( [-+a-zA-Z]+)?$',buffer.upper()):
+    if re.search('^MODE #['+RE+']+( [-+a-zA-Z]+)?$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
@@ -156,7 +157,7 @@ while 1:
       continue
 
     # /MODE nick
-    if re.search('^MODE \w+$',buffer.upper()):
+    if re.search('^MODE ['+RE+']+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
@@ -165,7 +166,7 @@ while 1:
 
     # /MODE nick <arg>
     # chatzilla sucks again (:?)
-    if re.search('^MODE \w+ :?[-+][a-zA-Z]$',buffer.upper()):
+    if re.search('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
@@ -189,7 +190,7 @@ while 1:
       continue
 
     # /INVITE
-    if re.search('^INVITE \w+ #\w+$',buffer.upper()):
+    if re.search('^INVITE ['+RE+']+ #['+RE+']+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
       msg = buffer.split(' ')[2]
@@ -205,7 +206,7 @@ while 1:
       continue
 
     # /JOIN
-    if re.search('^JOIN [#\w,]+$',buffer.upper()):
+    if re.search('^JOIN #['+RE+',]+$',buffer.upper()):
 
       dst = buffer.split(' ',1)[1].lower()
 
@@ -221,7 +222,7 @@ while 1:
       continue
 
     # /PART
-    if re.search('^PART [#\w,]+$',buffer.upper()):
+    if re.search('^PART #['+RE+',]+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
@@ -256,7 +257,7 @@ while 1:
     buffer = buffer.replace("\\'","'")
     buffer = buffer.replace('\\\\','\\')
 
-    if re.search('^:\w+!\w+@[\w.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?\w+ :.*$',buffer.upper()):
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?['+RE+']+ :.*$',buffer.upper()):
 
       dst = buffer.split(' ',3)[2].lower()
 

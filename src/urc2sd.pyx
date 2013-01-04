@@ -10,6 +10,7 @@ import re
 import os
 
 user = str(os.getpid())
+RE   = 'a-zA-Z0-9^()-_{}[]|'
 nick = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],64)
@@ -102,7 +103,7 @@ while 1:
       if byte != '\r':
         buffer+=byte
 
-    if re.search('^:\w+!\w+@[\w.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #\w+ :.*$',buffer.upper()):
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
       for path in os.listdir(root):
         try:
           if path != user:
@@ -112,7 +113,7 @@ while 1:
       continue
 
     # PING
-    if re.search('^PING :?[\w.]+$',buffer.upper()):
+    if re.search('^PING :?.+$',buffer.upper()):
       dst = buffer.split(' ',1)[1]
       os.write(wr,'PONG '+dst+'\n')
       continue
@@ -154,7 +155,7 @@ while 1:
     buffer = buffer.replace("\\'","'")
     buffer = buffer.replace('\\\\','\\')
 
-    if re.search('^:\w+!\w+@[\w.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #\w+ :.*$',buffer.upper()):
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
 
       src = buffer[1:].split('!',1)[0] + '> '
       cmd = buffer.split(' ',3)[1].upper()
