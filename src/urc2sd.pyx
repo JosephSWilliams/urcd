@@ -77,12 +77,12 @@ def EOF():
   global EOF
 
   for cmd in auto_cmd:
-    os.write(wr,cmd+'\n')
     time.sleep(1)
+    os.write(wr,cmd+'\n')
 
   for dst in channels:
-    os.write(wr,'JOIN '+dst+'\n')
     time.sleep(1)
+    os.write(wr,'JOIN '+dst+'\n')
 
   del EOF
   EOF = 0
@@ -147,7 +147,6 @@ while 1:
       dst = buffer.split(':',2)[2]
       if not dst in channels:
         os.write(wr,'JOIN '+dst+'\n')
-        channels.append(dst)
       continue
 
     EOF() if EOF else EOF
