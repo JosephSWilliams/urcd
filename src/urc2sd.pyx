@@ -167,13 +167,16 @@ while 1:
 
     if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
 
-      src = buffer[1:].split('!',1)[0] + '> '
-      cmd = buffer.split(' ',3)[1].upper()
       dst = buffer.split(' ',3)[2].lower()
-      msg = buffer.split(':',2)[2]
 
       if dst in channels:
-        os.write(wr,cmd+' '+dst+' :'+src+msg+'\n')
-      continue
+
+        src    = buffer[1:].split('!',1)[0] + '> '
+        cmd    = buffer.split(' ',3)[1].upper()
+        msg    = buffer.split(':',2)[2]
+        buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
+
+        if len(buffer)<=1024:
+          os.write(wr,buffer)
 
 sock_close(0,0)
