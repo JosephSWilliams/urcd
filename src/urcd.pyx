@@ -2,6 +2,7 @@
 import unicodedata
 import collections
 import subprocess
+import codecs
 import select
 import socket
 import signal
@@ -253,7 +254,7 @@ while 1:
     if not buffer:
       break
 
-    buffer = unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')).encode('ascii','ignore')
+    buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
     buffer = re.sub('[\x02\x0f]','',buffer)
     buffer = re.sub('\x01(ACTION )?','*',buffer) # contains potential irssi bias
     buffer = re.sub('\x03[0-9][0-9]?(,[0-9][0-9]?)?','',buffer)
