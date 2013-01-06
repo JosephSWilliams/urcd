@@ -10,6 +10,8 @@ recommends:
   python-dev(>=2.6), cython(>=0.17.3)
 
 install:
+  useradd urcd
+
   # python2.6
   ./Make.sh
 
@@ -24,6 +26,7 @@ install:
   ln -s `pwd` /service/urcd
 
   mkdir -p /service/urcd/socket/
+  chown urcd /service/urcd/socket/
   echo -n '/service/urcd/socket/' > env/path
 
   sleep 4

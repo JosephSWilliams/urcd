@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 import socket
+import pwd
 import sys
 import os
 
+uid = pwd.getpwnam('urcd')[2]
 os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
+os.setuid(uid)
 root = os.getcwd()
+del uid
 
 sock=socket.socket(1,2)
 sock.setblocking(0)

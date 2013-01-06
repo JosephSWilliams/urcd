@@ -2,6 +2,7 @@
 import socket
 import select
 import signal
+import pwd
 import sys
 import os
 
@@ -24,9 +25,12 @@ signal.signal(1 ,sock_close)
 signal.signal(2 ,sock_close)
 signal.signal(15,sock_close)
 
+uid = pwd.getpwnam('urcd')[2]
 os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
+os.setuid(uid)
 root = os.getcwd()
+del uid
 
 sock=socket.socket(1,2)
 sock_close(0,0)
