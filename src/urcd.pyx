@@ -233,6 +233,7 @@ while 1:
           channels.remove(dst)
       continue
 
+    # /QUIT
     if re.search('^QUIT ',buffer.upper()):
       break
 
@@ -245,7 +246,6 @@ while 1:
       buffer = buffer.replace("\\'","'")
       buffer = buffer.replace('\\\\','\\')
       os.write(wr,'ERROR :UNKNOWN COMMAND:'+buffer+'\n')
-      continue
 
   while server_poll():
 
