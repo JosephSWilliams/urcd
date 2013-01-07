@@ -136,7 +136,7 @@ while 1:
       nick = buffer.split(' ')[2]
       continue
 
-    if re.search('^:.+ 433 .+ '+re.escape(nick).upper(),buffer):
+    if re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
       nick+='_'
       os.write(wr,'NICK '+nick+'\n')
       continue
