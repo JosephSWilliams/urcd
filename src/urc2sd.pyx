@@ -125,18 +125,18 @@ while 1:
       continue
 
     # :nick!user@serv JOIN :#channel
-    if re.search('^:'+re.escape(nick)+'!.+ JOIN :#['+RE+']+$',buffer.upper()):
+    if re.search('^:'+re.escape(nick).upper()+'!.+ JOIN :#['+RE+']+$',buffer.upper()):
       dst = buffer.split(':')[2].lower()
       if not dst in channels:
         channels.append(dst)
       continue
 
     # :nick!* NICK nick_
-    if re.search('^:'+re.escape(nick)+'!.+ NICK ',buffer.upper()):
+    if re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
       nick = buffer.split(' ')[2]
       continue
 
-    if re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
+    if re.search('^:.+ 433 .+ '+re.escape(nick).upper(),buffer):
       nick+='_'
       os.write(wr,'NICK '+nick+'\n')
       continue
@@ -149,8 +149,8 @@ while 1:
       continue
 
     # :nick!user@serv INVITE nick :#channel
-    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ INVITE '+re.escape(nick)+' :#['+RE+']+$',buffer.upper()):
-      dst = buffer.split(':',2)[2]
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
+      dst = buffer.split(':',2)[2].lower()
       if not dst in channels:
         os.write(wr,'JOIN '+dst+'\n')
       continue
