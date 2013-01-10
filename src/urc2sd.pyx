@@ -83,11 +83,11 @@ def EOF():
   global EOF
 
   for cmd in auto_cmd:
-    time.sleep(1)
+    time.sleep(len(auto_cmd))
     os.write(wr,cmd+'\n')
 
   for dst in channels:
-    time.sleep(1)
+    time.sleep(len(channels))
     os.write(wr,'JOIN '+dst+'\n')
 
   del EOF
