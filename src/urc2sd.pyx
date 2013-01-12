@@ -13,7 +13,7 @@ import re
 import os
 
 user = str(os.getpid())
-RE   = 'a-zA-Z0-9^(\)-_{\}[\]|'
+RE   = 'a-zA-Z0-9^(\)\-_{\}[\]|'
 nick = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],64)
@@ -102,7 +102,7 @@ while 1:
     buffer = str()
     while 1:
       byte = os.read(rd,1)
-      if not byte or len(buffer)>1024:
+      if not byte or len(buffer)>=1024:
         sock_close(15,0)
       if byte == '\n':
         break
