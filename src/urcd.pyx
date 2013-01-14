@@ -12,12 +12,17 @@ import sys
 import re
 import os
 
+NICKLEN    = 32
+TOPICLEN   = 512
+CHANLIMIT  = 64
+CHANNELLEN = 64
+
 nick           = str()
 user           = str(os.getpid())
 RE             = 'a-zA-Z0-9^(\)\-_{\}[\]|'
 serv           = open('env/serv','rb').read().split('\n')[0]
 motd           = open('env/motd','rb').read().split('\n')
-channels       = collections.deque([],64)
+channels       = collections.deque([],CHANLIMIT)
 channel_struct = dict()
 
 def sock_close(sn,sf):
@@ -95,13 +100,18 @@ while 1:
 
       if not nick:
         nick = buffer.split(' ')[1]
+
+        if len(nick)>NICKLEN:
+          os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+          continue
+
         os.write(wr,
           ':'+serv+' 001 '+nick+' :'+serv+'\n'
           ':'+serv+' 002 '+nick+' :'+nick+'!'+user+'@'+serv+'\n'
           ':'+serv+' 003 '+nick+' :'+serv+'\n'
           ':'+serv+' 004 '+nick+' '+serv+' 0.0 + :+\n'
-          ':'+serv+' 005 '+nick+' NETWORK='+serv+' :\n'
-          ':'+serv+' 254 '+nick+' 64 :CHANNEL(S)\n'
+          ':'+serv+' 005 '+nick+' NETWORK='+serv+' CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+':\n'
+          ':'+serv+' 254 '+nick+' '+str(CHANLIMIT)+' :CHANNEL(S)\n'
           ':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n'
         )
 
@@ -114,21 +124,24 @@ while 1:
 
         continue
 
-      os.write(wr,':'+nick+'!'+user+'@'+serv+' NICK ')
-
-      for dst in channel_struct.keys():
-        if dst in channels:
-          if nick in channel_struct[dst]['names']:
-            channel_struct[dst]['names'].remove(nick)
-
+      src  = nick
       nick = buffer.split(' ')[1]
 
+      if len(nick)>NICKLEN:
+        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+        continue
+
+      os.write(wr,':'+src+'!'+user+'@'+serv+' NICK '+nick+'\n')
+
       for dst in channel_struct.keys():
         if dst in channels:
-          if nick in channel_struct[dst]['names']:
-            channel_struct[dst]['names'].append(nick)
+          if src in channel_struct[dst]['names']:
+            channel_struct[dst]['names'].remove(src)
 
-      os.write(wr,nick+'\n')
+      for dst in channel_struct.keys():
+        if dst in channels:
+          channel_struct[dst]['names'].append(nick)
+
       continue
 
     if not nick:
@@ -141,6 +154,28 @@ while 1:
       dst = buffer.split(' ',2)[1]
       msg = buffer.split(':',1)[1]
 
+      if dst[0] == '#' and len(dst)>CHANNELLEN:
+        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+        continue
+
+      elif len(dst)>NICKLEN:
+        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+        continue
+
+      if cmd == 'TOPIC':
+
+        if len(msg)>TOPICLEN:
+          os.write(wr,'ERROR : EMSGSIZE:TOPICLEN='+str(TOPICLEN)+'\n')
+          continue
+
+        os.write(wr,':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
+
+        if dst[0] == '#' and not dst in channel_struct.keys():
+          channel_struct[dst] = dict(
+            topic             = msg,
+            names             = collections.deque([],CHANLIMIT),
+          )
+
       if cmd == 'PART' and dst in channels:
         os.write(wr,':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
         channels.remove(dst)
@@ -152,15 +187,6 @@ while 1:
             sock.sendto(':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',path)
         except:
           pass
-
-      if cmd == 'TOPIC':
-        os.write(wr,':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
-
-        if not dst in channel_struct.keys():
-          channel_struct[dst] = dict(
-            topic             = msg,
-            names             = collections.deque([],64),
-          )
 
       continue
 
@@ -177,6 +203,10 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
+      if len(dst)>CHANNELLEN:
+        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+        continue
+
       os.write(wr,':'+serv+' 324 '+nick+' '+dst+' +n\n')
       os.write(wr,':'+serv+' 329 '+nick+' '+dst+' '+str(int(time.time()))+'\n')
 
@@ -187,6 +217,10 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
+      if len(dst)>NICKLEN:
+        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+        continue
+
       os.write(wr,':'+serv+' 221 '+dst+' :+i\n')
       continue
 
@@ -195,6 +229,10 @@ while 1:
     if re.search('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
+
+      if len(dst)>NICKLEN:
+        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+        continue
 
       os.write(wr,':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n')
       continue
@@ -212,6 +250,11 @@ while 1:
     # /WHO
     if re.search('^WHO .+',buffer.upper()):
       cmd = buffer.split(' ')[1]
+
+      if len(cmd)>NICKLEN:
+        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+        continue
+
       os.write(wr,':'+serv+' 315 '+nick+' '+cmd+' :EOF WHO\n')
       continue
 
@@ -220,6 +263,14 @@ while 1:
 
       dst = buffer.split(' ')[1]
       msg = buffer.split(' ')[2]
+
+      if len(dst)>NICKLEN:
+        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+        continue
+
+      elif len(msg)>CHANNELLEN:
+        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+        continue
 
       os.write(wr,':'+serv+' 341 '+nick+' '+dst+' '+msg+'\n')
 
@@ -236,6 +287,10 @@ while 1:
 
       dst = buffer.split(' ',1)[1].lower()
 
+      if len(dst)>CHANNELLEN:
+        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+        continue
+
       for dst in dst.split(','):
 
         if dst in channels:
@@ -246,27 +301,36 @@ while 1:
         if not dst in channel_struct.keys():
           channel_struct[dst] = dict(
             topic             = None,
-            names             = collections.deque([],64),
+            names             = collections.deque([],CHANLIMIT),
           )
 
         if nick in channel_struct[dst]['names']:
           channel_struct[dst]['names'].remove(nick)
 
         if channel_struct[dst]['topic']:
-          os.write(wr,':'+serv+' 322 '+nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
+          buffer = ':'+serv+' 322 '+nick+' '+dst+' :' + channel_struct[dst]['topic'] + '\n'
 
-        os.write(wr,
-          ':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
-          ':'+serv+' 353 '+nick+' = '+dst+' :'+nick+' '
-        )
+          if len(buffer)<=1024:
+            os.write(wr,buffer)
+
+        os.write(wr,':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n')
+
+        buffer = ':'+serv+' 353 '+nick+' = '+dst+' :'+nick+' '
 
         for src in channel_struct[dst]['names']:
-          os.write(wr,src+' ')
-        os.write(wr,'\n')
+          buffer += src+' '
+
+        buffer += '\n'
+
+        if len(buffer)<=1024:
+          os.write(wr,buffer)
+
+        else:
+          os.write(wr,':'+serv+' 353 '+nick+' = '+dst+' :'+nick+'\n')
 
         os.write(wr,':'+serv+' 366 '+nick+' '+dst+' :EOF NAMES\n')
 
-        if len(channel_struct[dst]['names'])==64:
+        if len(channel_struct[dst]['names'])==CHANLIMIT:
           os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
 
         channel_struct[dst]['names'].append(nick)
@@ -277,6 +341,10 @@ while 1:
     if re.search('^PART #['+RE+',]+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
+
+      if len(dst)>CHANNELLEN:
+        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+        continue
 
       for dst in dst.split(','):
         if dst in channels:
@@ -335,24 +403,37 @@ while 1:
 
     if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?['+RE+']+ :.*$',buffer.upper()):
 
-      cmd = buffer.split(' ',3)[1].upper()
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
+
+      if len(src)>NICKLEN:
+        continue
+
+      cmd = buffer.split(' ',3)[1].upper()
       dst = buffer.split(' ',3)[2].lower()
 
       if dst[0] == '#':
 
+        if len(dst)>CHANNELLEN:
+          continue
+
         if not dst in channel_struct.keys():
 
-          if len(channel_struct.keys())>=64 and not channel_struct.keys()[0] in channels:
+          if len(channel_struct.keys())>=CHANLIMIT and not channel_struct.keys()[0] in channels:
             del channel_struct[channel_struct.keys()[0]]
 
           channel_struct[dst] = dict(
             topic             = None,
-            names             = collections.deque([],64),
+            names             = collections.deque([],CHANLIMIT),
           )
 
         if cmd == 'TOPIC':
-          channel_struct[dst]['topic'] = buffer.split(':',2)[2]
+
+          msg = buffer.split(':',2)[2]
+
+          if len(msg)>TOPICLEN:
+            continue
+
+          channel_struct[dst]['topic'] = msg
 
         if src != nick and not src in channel_struct[dst]['names']:
 
@@ -360,10 +441,13 @@ while 1:
 
             os.write(wr,buffer.split(' ',1)[0]+' JOIN :'+dst+'\n')
 
-            if len(channel_struct[dst]['names'])==64:
+            if len(channel_struct[dst]['names'])==CHANLIMIT:
               os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
 
           channel_struct[dst]['names'].append(src)
+
+      elif len(dst)>NICKLEN:
+        continue
 
       if (dst == nick.lower() or dst in channels) and len(buffer)<=1024:
         os.write(wr,buffer)
