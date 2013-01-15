@@ -1,20 +1,19 @@
 #!/bin/sh
 
 unset HEADERS
-CYTHON=`which cython 2>&1 >/dev/null`
-if [ -x $CYTHON ];then
-    if [ -e '/usr/include/python2.6/Python.h'       ] &&
-       [ -e '/usr/include/python2.6/structmember.h' ] ;then
-        HEADERS='/usr/include/python2.6/'
-  elif [ -e '/usr/local/include/python2.6/Python.h'       ] &&
-       [ -e '/usr/local/include/python2.6/structmember.h' ] ;then
-        HEADERS='/usr/local/include/python2.6/'
-    fi
+
+if   [ -e '/usr/include/python2.6/Python.h'       ] &&
+     [ -e '/usr/include/python2.6/structmember.h' ] ;then
+       HEADERS='/usr/include/python2.6'
+
+elif [ -e '/usr/local/include/python2.6/Python.h'       ] &&
+     [ -e '/usr/local/include/python2.6/structmember.h' ] ;then
+       HEADERS='/usr/local/include/python2.6'
 fi
 
 gcc src/ucspi-client2server.c -o ucspi-client2server || exit 1
 
-if [ -z $HEADERS ]; then
+if ! $(which cython 2>&1 >/dev/null); then
   cp src/urcd.pyx urcd || exit 1
   chmod +x urcd        || exit 1
 
