@@ -4,10 +4,11 @@ urcd:
 
 depends:
   ucspi-tcp, python(>=2.6), daemontools,
-  nacl, sh, gcc
+  sh, gcc
 
 recommends:
-  python-dev(>=2.6), cython(>=0.17.3)
+  python-dev(>=2.6), cython(>=0.17.3),
+  nacl(curvecp support)
 
 install:
   useradd urcd

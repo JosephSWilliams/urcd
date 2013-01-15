@@ -137,10 +137,7 @@ while 1:
         if dst in channels:
           if src in channel_struct[dst]['names']:
             channel_struct[dst]['names'].remove(src)
-
-      for dst in channel_struct.keys():
-        if dst in channels:
-          channel_struct[dst]['names'].append(nick)
+            channel_struct[dst]['names'].append(nick)
 
       continue
 
@@ -170,15 +167,21 @@ while 1:
 
         os.write(wr,':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
-        if dst[0] == '#' and not dst in channel_struct.keys():
-          channel_struct[dst] = dict(
-            topic             = msg,
-            names             = collections.deque([],CHANLIMIT),
-          )
+        if dst[0] == '#':
+
+          if not dst in channel_struct.keys():
+            channel_struct[dst] = dict(
+              topic             = msg,
+              names             = collections.deque([],CHANLIMIT),
+            )
+
+          else:
+            channel_struct[dst]['topic'] = msg
 
       if cmd == 'PART' and dst in channels:
         os.write(wr,':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
         channels.remove(dst)
+        channel_struct[dst]['names'].remove(nick)
         continue
 
       for path in os.listdir(root):
@@ -285,6 +288,10 @@ while 1:
     # /JOIN
     if re.search('^JOIN [#'+RE+',]+$',buffer.upper()):
 
+      if len(channels)>CHANLIMIT:
+        os.write(wr,'ERROR : EMSGSIZE:CHANLIMIT='+str(CHANLIMIT)+'\n')
+        continue
+
       dst = buffer.split(' ',1)[1].lower()
 
       if len(dst)>CHANNELLEN:
@@ -341,10 +348,6 @@ while 1:
     if re.search('^PART #['+RE+',]+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
-
-      if len(dst)>CHANNELLEN:
-        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
-        continue
 
       for dst in dst.split(','):
         if dst in channels:
@@ -418,8 +421,15 @@ while 1:
 
         if not dst in channel_struct.keys():
 
-          if len(channel_struct.keys())>=CHANLIMIT and not channel_struct.keys()[0] in channels:
-            del channel_struct[channel_struct.keys()[0]]
+          if len(channel_struct.keys())>=CHANLIMIT:
+
+            for dst in channel_struct.keys():
+
+              if not dst in channels:
+                del channel_struct[dst]
+                break
+
+            dst = buffer.split(' ',3)[2].lower()
 
           channel_struct[dst] = dict(
             topic             = None,
