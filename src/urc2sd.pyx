@@ -109,7 +109,36 @@ while 1:
       if byte != '\r':
         buffer+=byte
 
+    # PRIVMSG, NOTICE, TOPIC
     if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
+      for path in os.listdir(root):
+        try:
+          if path != user:
+            sock.sendto(buffer+'\n',path)
+        except:
+          pass
+      continue
+
+    # PART
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ PART #['+RE+']+( :)?',buffer.upper()):
+
+      if len(buffer.split(' :'))<2:
+        buffer += ' :'
+
+      for path in os.listdir(root):
+        try:
+          if path != user:
+            sock.sendto(buffer+'\n',path)
+        except:
+          pass
+      continue
+
+    # QUIT
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ QUIT( :)?',buffer.upper()):
+
+      if len(buffer.split(' :'))<2:
+        buffer += ' :'
+
       for path in os.listdir(root):
         try:
           if path != user:
@@ -125,7 +154,15 @@ while 1:
       continue
 
     # :nick!user@serv JOIN :#channel
-    if re.search('^:'+re.escape(nick).upper()+'!.+ JOIN :#['+RE+']+$',buffer.upper()):
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
+
+      for path in os.listdir(root):
+        try:
+          if path != user:
+            sock.sendto(buffer+'\n',path)
+        except:
+          pass
+
       dst = buffer.split(':')[2].lower()
       if not dst in channels:
         channels.append(dst)
@@ -142,10 +179,23 @@ while 1:
       continue
 
     # :oper!user@serv KICK #channel nick :msg
-    if re.search('^:.+ KICK ',buffer.upper()) and buffer.split(' ')[3] == nick:
-      dst = buffer.split(' ')[2].lower()
-      os.write(wr,'JOIN '+dst+'\n')
-      channels.remove(dst)
+    if re.search('^:.+ KICK #['+RE+']+ ['+RE+']+',buffer.upper()):
+
+      if len(buffer.split(' :'))<2:
+        buffer += ' :'
+
+      for path in os.listdir(root):
+        try:
+          if path != user:
+            sock.sendto(buffer+'\n',path)
+        except:
+          pass
+
+      if buffer.split(' ')[3].lower() == nick.lower():
+        dst = buffer.split(' ')[2].lower()
+        os.write(wr,'JOIN '+dst+'\n')
+        channels.remove(dst)
+
       continue
 
     # :nick!user@serv INVITE nick :#channel

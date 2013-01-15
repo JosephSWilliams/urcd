@@ -315,7 +315,7 @@ while 1:
           channel_struct[dst]['names'].remove(nick)
 
         if channel_struct[dst]['topic']:
-          buffer = ':'+serv+' 322 '+nick+' '+dst+' :' + channel_struct[dst]['topic'] + '\n'
+          buffer = ':'+serv+' 322 '+nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n'
 
           if len(buffer)<=1024:
             os.write(wr,buffer)
@@ -362,6 +362,10 @@ while 1:
       os.write(wr,':'+serv+' 321 '+nick+' channel :users name\n')
 
       for dst in channel_struct.keys():
+
+        if not len(channel_struct[dst]['names']):
+          continue
+
         buffer = ':'+serv+' 322 '+nick+' '+dst+' '+str(len(channel_struct[dst]['names']))+' :[+n] '
 
         if channel_struct[dst]['topic']:
@@ -400,11 +404,12 @@ while 1:
     buffer = re.sub('[\x02\x0f]','',buffer)
     buffer = re.sub('\x01(ACTION )?','*',buffer) # contains potential irssi bias
     buffer = re.sub('\x03[0-9][0-9]?(,[0-9][0-9]?)?','',buffer)
-    buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4] + '\n'
+    buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]+'\n'
     buffer = buffer.replace("\\'","'")
     buffer = buffer.replace('\\\\','\\')
 
-    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)) #?['+RE+']+ :.*$',buffer.upper()):
+    # PRIVMSG, NOTICE, TOPIC, INVITE, PART
+    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) #?['+RE+']+ :.*$',buffer.upper()):
 
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
 
@@ -445,7 +450,18 @@ while 1:
 
           channel_struct[dst]['topic'] = msg
 
-        if src != nick and not src in channel_struct[dst]['names']:
+        if cmd == 'PART':
+
+          if src != nick.lower() and src in channel_struct[dst]['names']:
+
+            channel_struct[dst]['names'].remove(src)
+
+            if dst in channels and len(buffer)<=1024:
+              os.write(wr,buffer)
+
+          continue
+
+        if src != nick.lower() and not src in channel_struct[dst]['names']:
 
           if dst in channels:
 
@@ -461,5 +477,107 @@ while 1:
 
       if (dst == nick.lower() or dst in channels) and len(buffer)<=1024:
         os.write(wr,buffer)
+
+    # JOIN
+    elif re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
+
+      src = buffer.split(':',2)[1].split('!',1)[0].lower()
+
+      if len(src)>NICKLEN:
+        continue
+
+      dst = buffer.split(':')[2].split('\n',1)[0].lower()
+
+      if len(dst)>CHANNELLEN:
+        continue
+
+      if not dst in channel_struct.keys():
+
+        if len(channel_struct.keys())>=CHANLIMIT:
+
+          for dst in channel_struct.keys():
+
+            if not dst in channels:
+              del channel_struct[dst]
+              break
+
+          dst = buffer.split(':')[2].split('\n',1)[0].lower()
+
+        channel_struct[dst] = dict(
+          topic             = None,
+          names             = collections.deque([],CHANLIMIT),
+        )
+
+      if src != nick.lower() and not src in channel_struct[dst]['names']:
+
+        if dst in channels:
+
+          os.write(wr,buffer)
+
+          if len(channel_struct[dst]['names'])==CHANLIMIT:
+            os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
+
+        channel_struct[dst]['names'].append(src)
+
+    # QUIT
+    elif re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ QUIT :.*$',buffer.upper()):
+
+      src = buffer.split(':',2)[1].split('!',1)[0].lower()
+
+      if src == nick.lower():
+        continue
+
+      if len(src)>NICKLEN:
+        continue
+
+      for dst in channel_struct.keys():
+
+        if src in channel_struct[dst]['names']:
+          channel_struct[dst]['names'].remove(src)
+
+      if len(buffer)<=1024:
+        os.write(wr,buffer)
+
+    # KICK
+    elif re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',buffer.upper()):
+
+      src = buffer.split(' ',4)[3].lower()
+
+      if len(src)>NICKLEN:
+        continue
+
+      dst = buffer.split(' ',3)[2].lower()
+
+      if len(dst)>CHANNELLEN:
+        continue
+
+      if not dst in channel_struct.keys():
+
+        if len(channel_struct.keys())>=CHANLIMIT:
+
+          for dst in channel_struct.keys():
+
+            if not dst in channels:
+              del channel_struct[dst]
+              break
+
+          dst = buffer.split(' ',3)[2].lower()
+
+        channel_struct[dst] = dict(
+          topic             = None,
+          names             = collections.deque([],CHANLIMIT),
+        )
+
+      if src != nick.lower():
+
+        for dst in channel_struct.keys():
+
+          if src in channel_struct[dst]['names']:
+            channel_struct[dst]['names'].remove(src)
+
+        dst = buffer.split(' ',3)[2].lower()
+
+        if dst in channels and len(buffer)<=1024:
+          os.write(wr,buffer)
 
 sock_close(0,0)
