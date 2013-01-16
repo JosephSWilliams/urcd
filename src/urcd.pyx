@@ -384,8 +384,8 @@ while 1:
       break
 
     # /USER
-    #if re.search('^USER .*$',buffer.upper()):
-    #  continue
+    if re.search('^USER .*$',buffer.upper()):
+      continue
 
     else:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
