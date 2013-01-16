@@ -135,9 +135,8 @@ while 1:
 
       for dst in channel_struct.keys():
         if dst in channels:
-          if src in channel_struct[dst]['names']:
-            channel_struct[dst]['names'].remove(src)
-            channel_struct[dst]['names'].append(nick)
+          channel_struct[dst]['names'].remove(src)
+          channel_struct[dst]['names'].append(nick)
 
       continue
 
@@ -385,8 +384,8 @@ while 1:
       break
 
     # /USER
-    if re.search('^USER .*$',buffer.upper()):
-      continue
+    #if re.search('^USER .*$',buffer.upper()):
+    #  continue
 
     else:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
@@ -530,13 +529,16 @@ while 1:
       if len(src)>NICKLEN:
         continue
 
+      cmd = '\x01'
+
       for dst in channel_struct.keys():
 
         if src in channel_struct[dst]['names']:
           channel_struct[dst]['names'].remove(src)
 
-      if len(buffer)<=1024:
-        os.write(wr,buffer)
+          if cmd == '\x01' and dst in channels and len(buffer)<=1024:
+            os.write(wr,buffer)
+            cmd = '\x00'
 
     # KICK
     elif re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',buffer.upper()):
