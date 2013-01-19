@@ -287,17 +287,17 @@ while 1:
     # /JOIN
     if re.search('^JOIN [#'+RE+',]+$',buffer.upper()):
 
-      if len(channels)>CHANLIMIT:
-        os.write(wr,'ERROR : EMSGSIZE:CHANLIMIT='+str(CHANLIMIT)+'\n')
-        continue
-
       dst = buffer.split(' ',1)[1].lower()
 
-      if len(dst)>CHANNELLEN:
-        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
-        continue
-
       for dst in dst.split(','):
+
+        if len(channels)>CHANLIMIT:
+          os.write(wr,'ERROR : EMSGSIZE:CHANLIMIT='+str(CHANLIMIT)+'\n')
+          continue
+
+        if len(dst)>CHANNELLEN:
+          os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+          continue
 
         if dst in channels:
           continue
