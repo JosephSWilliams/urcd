@@ -1,0 +1,29 @@
+#!/bin/sh
+[ -z $3 ] && \
+  echo $0' <addr> <port> </path/to/socket/>' 1>&2 && \
+  exit 64
+
+mkdir -p /services/urcd-torconnect-"$1:$2" || exit 1
+
+test -L /services/urcd-torconnect-"$1:$2"/ucspi-socks4aclient || \
+  ln -s `pwd`/ucspi-socks4aclient /services/urcd-torconnect-"$1:$2"/ucspi-socks4aclient || exit 1
+
+printf '#!/bin/sh -e\n' > \
+  /services/urcd-torconnect-"$1:$2"/run || exit 1
+
+printf 'export TCPCLIENT=1\n' >> \
+  /services/urcd-torconnect-"$1:$2"/run || exit 1
+
+printf "exec tcpclient 127.0.0.1 9050 ./ucspi-socks4aclient $1 $2 ./urcstream $3\n" >> \
+  /services/urcd-torconnect-"$1:$2"/run || exit 1
+
+chmod +x /services/urcd-torconnect-"$1:$2"/run || exit 1
+
+test -L /services/urcd-torconnect-"$1:$2"/urcstream || \
+  ln -s `pwd`/urcstream /services/urcd-torconnect-"$1:$2"/urcstream || \
+  exit 1
+
+test -L /service/urcd-torconnect-"$1:$2" || \
+  ln -s /services/urcd-torconnect-"$1:$2" \
+    /service/urcd-torconnect-"$1:$2" || \
+    exit 1

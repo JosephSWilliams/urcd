@@ -62,7 +62,19 @@ server2server:
   # transit nodes may use ./add-tcplisten and clients can
   # stream with ./add-tcpconnect
 
-curvecp server2server:
+server2server (tor):
+  ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
+
+  # your peers can link their server using:
+  ./bin/add-torsend your.urcd.ano 1234 /service/urcd/socket/
+
+  # you will need to link to your peer's server:
+  ./bin/add-torsend peer.urcd.ano 4321 /service/urcd/socket/
+
+  # transit nodes may use ./add-tcplisten and clients can
+  # stream with ./add-torconnect
+
+server2server (curvecp):
   ./bin/add-curvecprecv your.urcd.ano 1234 /service/urcd/socket/
 
   # your peers can link their server using:

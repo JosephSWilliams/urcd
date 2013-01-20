@@ -13,6 +13,8 @@ fi
 
 gcc src/ucspi-client2server.c -o ucspi-client2server || exit 1
 
+gcc src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
+
 if ! $(which cython 2>&1 >/dev/null); then
   cp src/urcd.pyx urcd || exit 1
   chmod +x urcd        || exit 1
