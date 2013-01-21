@@ -106,9 +106,9 @@ while 1:
           continue
 
         os.write(wr,
-          ':'+serv+' NOTICE * :IGNORING HOSTNAME\n'
-          ':'+serv+' NOTICE * :IGNORING HOST RESOLUTION\n'
-          ':'+serv+' NOTICE * :\x02'+serv+'\x02\n'
+          ':'+serv+' NOTICE AUTH :*** IGNORING HOSTNAME\n'
+          ':'+serv+' NOTICE AUTH :*** SKIPPING HOST RESOLUTION\n'
+          ':'+serv+' NOTICE AUTH :WELCOME TO \x02'+serv+'\x02\n'
           ':'+serv+' 001 '+nick+' :'+serv+'\n'
           ':'+serv+' 002 '+nick+' :'+nick+'!'+user+'@'+serv+'\n'
           ':'+serv+' 003 '+nick+' :'+serv+'\n'
