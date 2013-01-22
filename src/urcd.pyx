@@ -411,7 +411,7 @@ while 1:
     buffer = buffer.replace('\\\\','\\')
 
     # PRIVMSG, NOTICE, TOPIC, INVITE, PART
-    if re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) #?['+RE+']+ :.*$',buffer.upper()):
+    if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) #?['+RE+']+ :.*$',buffer.upper()):
 
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
 
@@ -481,7 +481,7 @@ while 1:
         os.write(wr,buffer)
 
     # JOIN
-    elif re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
+    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
 
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
 
@@ -522,7 +522,7 @@ while 1:
         channel_struct[dst]['names'].append(src)
 
     # QUIT
-    elif re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ QUIT :.*$',buffer.upper()):
+    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ QUIT :.*$',buffer.upper()):
 
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
 
@@ -544,7 +544,7 @@ while 1:
             cmd = '\x00'
 
     # KICK
-    elif re.search('^:['+RE+']+!['+RE+']+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',buffer.upper()):
+    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',buffer.upper()):
 
       src = buffer.split(' ',4)[3].lower()
 
