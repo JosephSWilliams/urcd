@@ -111,6 +111,12 @@ while 1:
 
     # PRIVMSG, NOTICE, TOPIC
     if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
+
+      src = buffer[1:].split('!',1)[0]
+
+      if src == nick:
+        continue
+
       for path in os.listdir(root):
         try:
           if path != user:
@@ -227,8 +233,8 @@ while 1:
 
       if dst in channels:
 
-        src    = buffer[1:].split('!',1)[0] + '> '
         cmd    = buffer.split(' ',3)[1].upper()
+        src    = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
         msg    = buffer.split(':',2)[2]
         buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
 

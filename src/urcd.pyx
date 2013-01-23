@@ -318,7 +318,7 @@ while 1:
           channel_struct[dst]['names'].remove(nick)
 
         if channel_struct[dst]['topic']:
-          os.write(wr,':'+serv+' 322 '+nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
+          os.write(wr,':'+serv+' 332 '+nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
 
         os.write(wr,':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n')
 
