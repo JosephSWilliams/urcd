@@ -429,7 +429,7 @@ while 1:
 
         if cmd == 'TOPIC':
 
-          msg = buffer.split(':',2)[2]
+          msg = buffer.split(':',2)[2].split('\n',1)[0]
 
           if len(msg)>TOPICLEN:
             continue
