@@ -153,9 +153,10 @@ while 1:
       dst = buffer.split(' ',2)[1]
       msg = buffer.split(':',1)[1]
 
-      if dst[0] == '#' and len(dst)>CHANNELLEN:
-        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
-        continue
+      if dst[0] == '#':
+        if len(dst)>CHANNELLEN:
+          os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+          continue
 
       elif len(dst)>NICKLEN:
         os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
@@ -317,25 +318,14 @@ while 1:
           channel_struct[dst]['names'].remove(nick)
 
         if channel_struct[dst]['topic']:
-          buffer = ':'+serv+' 322 '+nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n'
-
-          if len(buffer)<=1024:
-            os.write(wr,buffer)
+          os.write(wr,':'+serv+' 322 '+nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
 
         os.write(wr,':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n')
 
-        buffer = ':'+serv+' 353 '+nick+' = '+dst+' :'+nick+' '
-
+        os.write(wr,':'+serv+' 353 '+nick+' = '+dst+' :'+nick+' ')
         for src in channel_struct[dst]['names']:
-          buffer += src+' '
-
-        buffer += '\n'
-
-        if len(buffer)<=1024:
-          os.write(wr,buffer)
-
-        else:
-          os.write(wr,':'+serv+' 353 '+nick+' = '+dst+' :'+nick+'\n')
+          os.write(wr,src+' ')
+        os.write(wr,'\n')
 
         os.write(wr,':'+serv+' 366 '+nick+' '+dst+' :EOF NAMES\n')
 
@@ -365,18 +355,12 @@ while 1:
 
       for dst in channel_struct.keys():
 
-        if not len(channel_struct[dst]['names']):
-          continue
+        if len(channel_struct[dst]['names']):
 
-        buffer = ':'+serv+' 322 '+nick+' '+dst+' '+str(len(channel_struct[dst]['names']))+' :[+n] '
-
-        if channel_struct[dst]['topic']:
-          buffer += channel_struct[dst]['topic']
-
-        buffer += '\n'
-
-        if len(buffer)<=1024:
-          os.write(wr,buffer)
+          os.write(wr,':'+serv+' 322 '+nick+' '+dst+' '+str(len(channel_struct[dst]['names']))+' :[+n] ')
+          if channel_struct[dst]['topic']:
+            os.write(wr,channel_struct[dst]['topic'])
+          os.write(wr,'\n')
 
       os.write(wr,':'+serv+' 323 '+nick+' :EOF LIST\n')
 
@@ -474,7 +458,7 @@ while 1:
 
           channel_struct[dst]['names'].append(src)
 
-      elif len(dst)>NICKLEN:
+      elif cmd == 'PART':
         continue
 
       if (dst == nick.lower() or dst in channels) and len(buffer)<=1024:
