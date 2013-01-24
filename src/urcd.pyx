@@ -106,9 +106,6 @@ while 1:
           continue
 
         os.write(wr,
-          ':'+serv+' NOTICE AUTH :*** NOT LOOKING UP HOSTNAME...\n'
-          ':'+serv+' NOTICE AUTH :*** SKIPPING HOST RESOLUTION\n'
-          ':'+serv+' NOTICE AUTH :\x02'+serv+'\x02\n'
           ':'+serv+' 001 '+nick+' :'+serv+'\n'
           ':'+serv+' 002 '+nick+' :'+nick+'!'+user+'@'+serv+'\n'
           ':'+serv+' 003 '+nick+' :'+serv+'\n'
@@ -378,7 +375,7 @@ while 1:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
       buffer = buffer.replace("\\'","'")
       buffer = buffer.replace('\\\\','\\')
-      os.write(wr,'ERROR :UNKNOWN COMMAND:'+buffer+'\n')
+      os.write(wr,':'+serv+' NOTICE '+nick+' :ERROR :'+buffer+'\n')
 
   while server_poll():
 
