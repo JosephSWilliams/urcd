@@ -99,7 +99,7 @@ while 1:
     if re.search('^NICK ['+RE+']+$',buffer.upper()):
 
       if not nick:
-        nick = buffer.split(' ')[1]
+        nick = buffer.split(' ')[1].lower()
 
         if len(nick)>NICKLEN:
           os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
@@ -125,7 +125,7 @@ while 1:
         continue
 
       src  = nick
-      nick = buffer.split(' ')[1]
+      nick = buffer.split(' ')[1].lower()
 
       if len(nick)>NICKLEN:
         os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
@@ -136,7 +136,8 @@ while 1:
       for dst in channel_struct.keys():
         if dst in channels:
           channel_struct[dst]['names'].remove(src)
-          channel_struct[dst]['names'].append(nick)
+          if not nick in channel_struct[dst]['names']:
+            channel_struct[dst]['names'].append(nick)
 
       continue
 
@@ -434,7 +435,11 @@ while 1:
             os.write(wr,buffer.split(' ',1)[0]+' JOIN :'+dst+'\n')
 
             if len(channel_struct[dst]['names'])==CHANLIMIT:
-              os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
+
+              if nick.lower() != channel_struct[dst]['names'][0].lower():
+                os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
+              else:
+                channel_struct[dst]['names'].append(nick)
 
           channel_struct[dst]['names'].append(src)
 
@@ -481,7 +486,11 @@ while 1:
           os.write(wr,buffer)
 
           if len(channel_struct[dst]['names'])==CHANLIMIT:
-            os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
+
+            if nick.lower() != channel_struct[dst]['names'][0].lower():
+              os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
+            else:
+              channel_struct[dst]['names'].append(nick)
 
         channel_struct[dst]['names'].append(src)
 
