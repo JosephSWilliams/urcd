@@ -251,14 +251,14 @@ while 1:
       continue
 
     # /WHO
-    if re.search('^WHO .+',buffer.upper()):
-      cmd = buffer.split(' ')[1]
+    if re.search('WHO .+',buffer.upper()):
 
-      if len(cmd)>NICKLEN:
-        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
-        continue
+      dst = buffer.split(' ',2)[1].lower()
 
-      os.write(wr,':'+serv+' 315 '+nick+' '+cmd+' :EOF WHO\n')
+      if dst in channel_struct.keys():
+        for src in channel_struct[dst]['names']:
+          os.write(wr,':'+serv+' 352 '+nick+' '+dst+' '+src+' '+serv+' '+src+' '+src+' H :0 '+src+'\n')
+      os.write(wr,':'+serv+' 315 '+nick+' '+dst+' :EOF WHO\n')
       continue
 
     # /INVITE
@@ -360,7 +360,6 @@ while 1:
           os.write(wr,'\n')
 
       os.write(wr,':'+serv+' 323 '+nick+' :EOF LIST\n')
-
       continue
 
     # /QUIT
@@ -375,7 +374,7 @@ while 1:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
       buffer = buffer.replace("\\'","'")
       buffer = buffer.replace('\\\\','\\')
-      os.write(wr,':'+serv+' NOTICE '+nick+' :ERROR :'+buffer+'\n')
+      os.write(wr,':'+serv+' NOTICE '+nick+' :ERROR: '+buffer+'\n')
 
   while server_poll():
 
