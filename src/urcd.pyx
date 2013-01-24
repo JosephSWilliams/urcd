@@ -206,10 +206,6 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
-      if len(dst)>CHANNELLEN:
-        os.write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
-        continue
-
       os.write(wr,':'+serv+' 324 '+nick+' '+dst+' +n\n')
       os.write(wr,':'+serv+' 329 '+nick+' '+dst+' '+str(int(time.time()))+'\n')
 
@@ -220,10 +216,6 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
-      if len(dst)>NICKLEN:
-        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
-        continue
-
       os.write(wr,':'+serv+' 221 '+dst+' :+i\n')
       continue
 
@@ -232,10 +224,6 @@ while 1:
     if re.search('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
-
-      if len(dst)>NICKLEN:
-        os.write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
-        continue
 
       os.write(wr,':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n')
       continue
@@ -435,12 +423,8 @@ while 1:
         if cmd == 'PART':
 
           if src != nick.lower() and src in channel_struct[dst]['names']:
-
             channel_struct[dst]['names'].remove(src)
-
-            if dst in channels and len(buffer)<=1024:
-              os.write(wr,buffer)
-
+            os.write(wr,buffer)
           continue
 
         if src != nick.lower() and not src in channel_struct[dst]['names']:
