@@ -102,7 +102,7 @@ while 1:
     buffer = str()
     while 1:
       byte = os.read(rd,1)
-      if not byte or len(buffer)>=1024:
+      if not byte or len(buffer)>=768:
         sock_close(15,0)
       if byte == '\n':
         break
@@ -238,7 +238,6 @@ while 1:
         msg    = buffer.split(':',2)[2]
         buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
 
-        if len(buffer)<=1024:
-          os.write(wr,buffer)
+        os.write(wr,buffer)
 
 sock_close(0,0)

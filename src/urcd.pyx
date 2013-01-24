@@ -84,7 +84,7 @@ while 1:
     buffer = str()
     while 1:
       byte = os.read(rd,1)
-      if not byte or len(buffer)>=1024:
+      if not byte or len(buffer)>=768:
         sock_close(15,0)
       if byte == '\n':
         break
@@ -441,7 +441,7 @@ while 1:
       elif cmd == 'PART':
         continue
 
-      if (dst == nick.lower() or dst in channels) and len(buffer)<=1024:
+      if dst == nick.lower() or dst in channels:
         os.write(wr,buffer)
 
     # JOIN
@@ -503,7 +503,7 @@ while 1:
         if src in channel_struct[dst]['names']:
           channel_struct[dst]['names'].remove(src)
 
-          if cmd == '\x01' and dst in channels and len(buffer)<=1024:
+          if cmd == '\x01' and dst in channels:
             os.write(wr,buffer)
             cmd = '\x00'
 
@@ -546,7 +546,7 @@ while 1:
 
         dst = buffer.split(' ',3)[2].lower()
 
-        if dst in channels and len(buffer)<=1024:
+        if dst in channels:
           os.write(wr,buffer)
 
 sock_close(0,0)
