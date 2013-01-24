@@ -423,12 +423,12 @@ while 1:
 
         if cmd == 'PART':
 
-          if src != nick.lower() and src in channel_struct[dst]['names']:
+          if src != nick and src in channel_struct[dst]['names']:
             channel_struct[dst]['names'].remove(src)
             os.write(wr,buffer)
           continue
 
-        if src != nick.lower() and not src in channel_struct[dst]['names']:
+        if src != nick and not src in channel_struct[dst]['names']:
 
           if dst in channels:
 
@@ -436,7 +436,7 @@ while 1:
 
             if len(channel_struct[dst]['names'])==CHANLIMIT:
 
-              if nick.lower() != channel_struct[dst]['names'][0].lower():
+              if nick != channel_struct[dst]['names'][0]:
                 os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
               else:
                 channel_struct[dst]['names'].append(nick)
@@ -446,7 +446,7 @@ while 1:
       elif cmd == 'PART':
         continue
 
-      if dst == nick.lower() or dst in channels:
+      if dst == nick or dst in channels:
         os.write(wr,buffer)
 
     # JOIN
@@ -479,7 +479,7 @@ while 1:
           names             = collections.deque([],CHANLIMIT),
         )
 
-      if src != nick.lower() and not src in channel_struct[dst]['names']:
+      if src != nick and not src in channel_struct[dst]['names']:
 
         if dst in channels:
 
@@ -487,7 +487,7 @@ while 1:
 
           if len(channel_struct[dst]['names'])==CHANLIMIT:
 
-            if nick.lower() != channel_struct[dst]['names'][0].lower():
+            if nick != channel_struct[dst]['names'][0]:
               os.write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
             else:
               channel_struct[dst]['names'].append(nick)
@@ -499,7 +499,7 @@ while 1:
 
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
 
-      if src == nick.lower():
+      if src == nick:
         continue
 
       if len(src)>NICKLEN:
@@ -546,7 +546,7 @@ while 1:
           names             = collections.deque([],CHANLIMIT),
         )
 
-      if src != nick.lower():
+      if src != nick:
 
         for dst in channel_struct.keys():
 
