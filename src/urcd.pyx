@@ -197,9 +197,10 @@ while 1:
     # /PING
     if re.search('^PING :?.+$',buffer.upper()):
 
-      dst = buffer.split(' ',1)[1]
+      dst = re.split(' :?',buffer)[1]
 
-      os.write(wr,'PONG '+dst+'\n')
+      os.write(wr,':'+serv+' PONG '+serv+' :'+dst+'\n')
+      #os.write(wr,'PONG '+dst+'\n') xchat sucks (mac)
       continue
 
     # /MODE #channel [<arg>,...]
