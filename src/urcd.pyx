@@ -149,7 +149,7 @@ while 1:
 
       cmd = buffer.split(' ',1)[0].upper()
       dst = buffer.split(' ',2)[1]
-      msg = buffer.split(':',1)[1]
+      msg = re.split(' :?',buffer,2)[2] # onsams sucks
 
       if dst[0] == '#':
         if len(dst)>CHANNELLEN:
@@ -276,9 +276,9 @@ while 1:
       continue
 
     # /JOIN
-    if re.search('^JOIN [#'+RE+',]+$',buffer.upper()):
+    if re.search('^JOIN :?[#'+RE+',]+$',buffer.upper()):
 
-      dst = buffer.split(' ',1)[1].lower()
+      dst = re.split(' +:?',buffer,2)[1].lower() # onsams sucks
 
       for dst in dst.split(','):
 
@@ -326,7 +326,7 @@ while 1:
     # /PART
     if re.search('^PART #['+RE+',]+$',buffer.upper()):
 
-      dst = buffer.split(' ')[1]
+      dst = buffer.split(' ')[1].lower()
 
       for dst in dst.split(','):
         if dst in channels:
