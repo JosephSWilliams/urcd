@@ -79,22 +79,28 @@ def server_poll():
     (256*len( client_POLLIN.poll(0)))
   ))
 
+def try_write(fd,buffer):
+  try:
+    os.write(fd,buffer)
+  except:
+    sock_close(15,0)
+
 def EOF():
   global EOF
 
   for cmd in auto_cmd:
     time.sleep(len(auto_cmd))
-    os.write(wr,cmd+'\n')
+    try_write(wr,cmd+'\n')
 
   for dst in channels:
     time.sleep(len(channels))
-    os.write(wr,'JOIN '+dst+'\n')
+    try_write(wr,'JOIN '+dst+'\n')
 
   del EOF
   EOF = 0
 
-os.write(wr,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n')
-os.write(wr,'NICK '+nick+'\n')
+try_write(wr,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n')
+try_write(wr,'NICK '+nick+'\n')
 
 while 1:
   if client_poll():
@@ -156,7 +162,7 @@ while 1:
     # PING
     if re.search('^PING :?.+$',buffer.upper()):
       dst = buffer.split(' ',1)[1]
-      os.write(wr,'PONG '+dst+'\n')
+      try_write(wr,'PONG '+dst+'\n')
       continue
 
     # :nick!user@serv JOIN :#channel
@@ -181,7 +187,7 @@ while 1:
 
     if re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
       nick+='_'
-      os.write(wr,'NICK '+nick+'\n')
+      try_write(wr,'NICK '+nick+'\n')
       continue
 
     # :oper!user@serv KICK #channel nick :msg
@@ -199,7 +205,7 @@ while 1:
 
       if buffer.split(' ')[3].lower() == nick.lower():
         dst = buffer.split(' ')[2].lower()
-        os.write(wr,'JOIN '+dst+'\n')
+        try_write(wr,'JOIN '+dst+'\n')
         channels.remove(dst)
 
       continue
@@ -208,7 +214,7 @@ while 1:
     if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
       dst = buffer.split(':',2)[2].lower()
       if not dst in channels:
-        os.write(wr,'JOIN '+dst+'\n')
+        try_write(wr,'JOIN '+dst+'\n')
       continue
 
     EOF() if EOF else EOF
@@ -238,6 +244,6 @@ while 1:
         msg    = buffer.split(':',2)[2]
         buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
 
-        os.write(wr,buffer)
+        try_write(wr,buffer)
 
 sock_close(0,0)
