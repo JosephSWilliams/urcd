@@ -218,7 +218,7 @@ while 1:
     buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
     buffer = re.sub('[\x02\x0f]','',buffer)
     buffer = re.sub('\x01(ACTION )?','*',buffer) # contains potential irssi bias
-    buffer = re.sub('\x03[0-9][0-9]?(,[0-9][0-9]?)?','',buffer)
+    buffer = re.sub('\x03[0-9]?[0-9]?((?<=[0-9]),[0-9]?[0-9]?)?','',buffer)
     buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]
     buffer = buffer.replace("\\'","'")
     buffer = buffer.replace('\\\\','\\')
