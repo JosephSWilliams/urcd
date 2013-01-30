@@ -246,7 +246,7 @@ while 1:
       continue
 
     # /WHO
-    if re.search('WHO .+',buffer.upper()):
+    if re.search('^WHO .+',buffer.upper()):
 
       dst = buffer.split(' ',2)[1].lower()
 
