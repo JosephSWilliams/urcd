@@ -129,10 +129,9 @@ while 1:
             sock.sendto(buffer+'\n',path)
         except:
           pass
-      continue
 
     # PART
-    if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ PART #['+RE+']+( :)?',buffer.upper()):
+    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ PART #['+RE+']+( :)?',buffer.upper()):
 
       if len(buffer.split(' :'))<2:
         buffer += ' :'
@@ -143,10 +142,9 @@ while 1:
             sock.sendto(buffer+'\n',path)
         except:
           pass
-      continue
 
     # QUIT
-    if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ QUIT( :)?',buffer.upper()):
+    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ QUIT( :)?',buffer.upper()):
 
       if len(buffer.split(' :'))<2:
         buffer += ' :'
@@ -157,16 +155,14 @@ while 1:
             sock.sendto(buffer+'\n',path)
         except:
           pass
-      continue
 
     # PING
-    if re.search('^PING :?.+$',buffer.upper()):
+    elif re.search('^PING :?.+$',buffer.upper()):
       dst = buffer.split(' ',1)[1]
       try_write(wr,'PONG '+dst+'\n')
-      continue
 
     # :nick!user@serv JOIN :#channel
-    if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
+    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
 
       for path in os.listdir(root):
         try:
@@ -178,20 +174,17 @@ while 1:
       dst = buffer.split(':')[2].lower()
       if not dst in channels:
         channels.append(dst)
-      continue
 
     # :nick!* NICK nick_
-    if re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
+    elif re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
       nick = buffer.split(' ')[2]
-      continue
 
-    if re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
+    elif re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
       nick+='_'
       try_write(wr,'NICK '+nick+'\n')
-      continue
 
     # :oper!user@serv KICK #channel nick :msg
-    if re.search('^:.+ KICK #['+RE+']+ ['+RE+']+',buffer.upper()):
+    elif re.search('^:.+ KICK #['+RE+']+ ['+RE+']+',buffer.upper()):
 
       if len(buffer.split(' :'))<2:
         buffer += ' :'
@@ -208,14 +201,11 @@ while 1:
         try_write(wr,'JOIN '+dst+'\n')
         channels.remove(dst)
 
-      continue
-
     # :nick!user@serv INVITE nick :#channel
-    if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
+    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
       dst = buffer.split(':',2)[2].lower()
       if not dst in channels:
         try_write(wr,'JOIN '+dst+'\n')
-      continue
 
     EOF() if EOF else EOF
 
@@ -245,5 +235,3 @@ while 1:
         buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
 
         try_write(wr,buffer)
-
-sock_close(0,0)
