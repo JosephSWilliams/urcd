@@ -8,7 +8,7 @@ depends:
 
 recommends:
   python-dev(>=2.6), cython(>=0.17.3),
-  nacl(curvecp support)
+  nacl(curvecp support), nacltaia-otr
 
 install:
   useradd urcd
@@ -49,6 +49,19 @@ interface:
   for urc2sd simply reverse this process. ie,
   stdin will be stdout, and vice versa. happy
   hacking :-)
+
+no censorship:
+  urc network is a censorship resistant network.
+  i recommend nacltaia-otr, or if you prefer other
+  OTR softwares, to ignore spam or trolls.
+
+  irssi ("ban/except"):
+    /ignore *!*@* ALL
+    /ignore -except friend!*@* ALL
+
+  xchat ("ban/except"):
+    /ignore *!*@* ALL
+    /ignore friend!*@* ALL UNIGNORE
 
 server2server:
   ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
