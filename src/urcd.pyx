@@ -192,7 +192,7 @@ while 1:
       for path in os.listdir(root):
         try:
           if path != user:
-            sock.sendto(':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',path)
+            sock.sendto(':'+nick+'!'+nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',path)
         except:
           pass
 
@@ -263,7 +263,7 @@ while 1:
       for path in os.listdir(root):
         try:
           if path != user:
-            sock.sendto(':'+nick+'!'+user+'@'+serv+' INVITE '+dst+' :'+msg+'\n',path)
+            sock.sendto(':'+nick+'!'+nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n',path)
         except:
           pass
 
