@@ -145,13 +145,11 @@ while 1:
           if not nick in channel_struct[dst]['names']:
             channel_struct[dst]['names'].append(nick)
 
-      continue
-
-    if not nick:
-      continue
+    elif not nick:
+      pass
 
     # /PRIVMSG, /NOTICE, /TOPIC, /PART
-    if re.search('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) #?['+RE+']+ :.*$',buffer.upper()):
+    elif re.search('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) #?['+RE+']+ :.*$',buffer.upper()):
 
       cmd = buffer.split(' ',1)[0].upper()
       dst = buffer.split(' ',2)[1]
@@ -198,55 +196,46 @@ while 1:
         except:
           pass
 
-      continue
-
     # /PING
-    if re.search('^PING :?.+$',buffer.upper()):
+    elif re.search('^PING :?.+$',buffer.upper()):
 
       dst = re.split(' +:?',buffer)[1]
 
       try_write(wr,':'+serv+' PONG '+serv+' :'+dst+'\n') #try_write(wr,'PONG '+dst+'\n') xchat sucks (mac)
-      continue
 
     # /MODE #channel [<arg>,...]
-    if re.search('^MODE #['+RE+']+( [-+a-zA-Z]+)?$',buffer.upper()):
+    elif re.search('^MODE #['+RE+']+( [-+a-zA-Z]+)?$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
       try_write(wr,':'+serv+' 324 '+nick+' '+dst+' +n\n')
       try_write(wr,':'+serv+' 329 '+nick+' '+dst+' '+str(int(time.time()))+'\n')
 
-      continue
-
     # /MODE nick
-    if re.search('^MODE ['+RE+']+$',buffer.upper()):
+    elif re.search('^MODE ['+RE+']+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
       try_write(wr,':'+serv+' 221 '+dst+' :+i\n')
-      continue
 
     # /MODE nick <arg>
     # chatzilla sucks again (:?)
-    if re.search('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',buffer.upper()):
+    elif re.search('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
 
       try_write(wr,':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n')
-      continue
 
     # /AWAY
-    if re.search('^AWAY ?$',buffer.upper()):
+    elif re.search('^AWAY ?$',buffer.upper()):
       try_write(wr,':'+serv+' 305 '+nick+' :WB, :-)\n')
-      continue
 
     # /AWAY <msg>
-    if re.search('^AWAY .+$',buffer.upper()):
+    elif re.search('^AWAY .+$',buffer.upper()):
       try_write(wr,':'+serv+' 306 '+nick+' :HB, :-)\n')
-      continue
 
     # /WHO
-    if re.search('^WHO .+',buffer.upper()):
+    elif re.search('^WHO .+',buffer.upper()):
 
       dst = buffer.split(' ',2)[1].lower()
 
@@ -254,10 +243,9 @@ while 1:
         for src in channel_struct[dst]['names']:
           try_write(wr,':'+serv+' 352 '+nick+' '+dst+' '+src+' '+serv+' '+src+' '+src+' H :0 '+src+'\n')
       try_write(wr,':'+serv+' 315 '+nick+' '+dst+' :EOF WHO\n')
-      continue
 
     # /INVITE
-    if re.search('^INVITE ['+RE+']+ #['+RE+']+$',buffer.upper()):
+    elif re.search('^INVITE ['+RE+']+ #['+RE+']+$',buffer.upper()):
 
       dst = buffer.split(' ')[1]
       msg = buffer.split(' ')[2]
@@ -278,10 +266,9 @@ while 1:
             sock.sendto(':'+nick+'!'+user+'@'+serv+' INVITE '+dst+' :'+msg+'\n',path)
         except:
           pass
-      continue
 
     # /JOIN
-    if re.search('^JOIN :?[#'+RE+',]+$',buffer.upper()):
+    elif re.search('^JOIN :?[#'+RE+',]+$',buffer.upper()):
 
       dst = re.split(' +:?',buffer,2)[1].lower() # onsams sucks
 
@@ -326,10 +313,8 @@ while 1:
 
         channel_struct[dst]['names'].append(nick)
 
-      continue
-
     # /PART
-    if re.search('^PART #['+RE+',]+$',buffer.upper()):
+    elif re.search('^PART #['+RE+',]+$',buffer.upper()):
 
       dst = buffer.split(' ')[1].lower()
 
@@ -338,10 +323,9 @@ while 1:
           try_write(wr,':'+nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
           channels.remove(dst)
           channel_struct[dst]['names'].remove(nick)
-      continue
 
     # /LIST
-    if re.search('^LIST',buffer.upper()):
+    elif re.search('^LIST',buffer.upper()):
 
       try_write(wr,':'+serv+' 321 '+nick+' channel :users name\n')
 
@@ -355,15 +339,14 @@ while 1:
           try_write(wr,'\n')
 
       try_write(wr,':'+serv+' 323 '+nick+' :EOF LIST\n')
-      continue
 
     # /QUIT
-    if re.search('^QUIT ',buffer.upper()):
-      break
+    elif re.search('^QUIT ',buffer.upper()):
+      sock_close(15,0)
 
     # /USER
-    if re.search('^USER .*$',buffer.upper()):
-      continue
+    elif re.search('^USER .*$',buffer.upper()):
+      pass
 
     else:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
@@ -563,5 +546,3 @@ while 1:
 
         if dst in channels:
           try_write(wr,buffer)
-
-sock_close(0,0)
