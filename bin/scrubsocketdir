@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ -z "$1" ] || ! [ -e "$1" ]; then
+  echo $0': </path/to/socket/>'
+  exit 64
+fi
+for i in `ls "$1"`; do
+  [ -e "/proc/$i/" ] || setuidgid urcd rm "$1/$i"
+done
