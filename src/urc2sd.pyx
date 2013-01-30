@@ -116,7 +116,7 @@ while 1:
         buffer+=byte
 
     # PRIVMSG, NOTICE, TOPIC
-    if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
+    if re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
 
       src = buffer[1:].split('!',1)[0]
 
@@ -131,7 +131,7 @@ while 1:
           pass
 
     # PART
-    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ PART #['+RE+']+( :)?',buffer.upper()):
+    elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ PART #['+RE+']+( :)?',buffer.upper()):
 
       if len(buffer.split(' :'))<2:
         buffer += ' :'
@@ -144,7 +144,7 @@ while 1:
           pass
 
     # QUIT
-    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ QUIT( :)?',buffer.upper()):
+    elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT( :)?',buffer.upper()):
 
       if len(buffer.split(' :'))<2:
         buffer += ' :'
@@ -162,7 +162,7 @@ while 1:
       try_write(wr,'PONG '+dst+'\n')
 
     # :nick!user@serv JOIN :#channel
-    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
+    elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
 
       for path in os.listdir(root):
         try:
@@ -202,7 +202,7 @@ while 1:
         channels.remove(dst)
 
     # :nick!user@serv INVITE nick :#channel
-    elif re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
+    elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
       dst = buffer.split(':',2)[2].lower()
       if not dst in channels:
         try_write(wr,'JOIN '+dst+'\n')
@@ -223,7 +223,7 @@ while 1:
     buffer = buffer.replace("\\'","'")
     buffer = buffer.replace('\\\\','\\')
 
-    if re.search('^:['+RE+']+!['+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
+    if re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
 
       dst = buffer.split(' ',3)[2].lower()
 
