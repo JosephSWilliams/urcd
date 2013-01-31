@@ -33,6 +33,23 @@ install:
   sleep 4
   svstat /service/urcd
 
+adding curvecp:
+
+  mkdir -p /services/urcd-curvecp
+
+  ln -s `pwd`/env /services/urcd-curvecp/env
+  ln -s `pwd`/urcd /services/urcd-curvecp/urcd
+  ln -s `pwd`/run.urcd-curvecp /services/urcd-curvecp/run
+
+  curvecpmakekey /services/urcd-curvecp/curvecp
+
+  ln -s /services/urcd-curvecp /service/urcd-curvecp
+
+  sleep 4
+  svstat /service/urcd-curvecp
+
+  echo "PUBKEY: `curvecpprintkey /services/urcd-curvecp/curvecp`"
+
 interface:
   place an executable program in the cwd
   of urcd named 'stdin'. the program reads

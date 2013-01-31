@@ -1,0 +1,2 @@
+#!/bin/sh -e
+exec curvecpserver `cat env/serv` curvecp `cat env/addr` `cat env/port` 01110101011100100110001101100100 curvecpmessage ./urcd `cat env/path`
