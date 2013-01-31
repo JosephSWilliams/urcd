@@ -54,7 +54,7 @@ adding curvecp:
 
     tcpserver 127.0.0.1 6667 ./ucspi-server2client \
       curvecpclient irc.d3v11.ano `curvecpprintkey /services/urcd-curvecp/curvecp` \
-      `cat env/addr` `cat env/port` 01110101011100100110001101100100 curvecpmessage ./ucspi-stream
+      `cat env/addr` `cat env/port` 01110101011100100110001101100100 curvecpmessage ./ucspi-stream &
 
     irssi -c 127.0.0.1
 
