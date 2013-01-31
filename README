@@ -50,6 +50,14 @@ adding curvecp:
 
   echo "PUBKEY: `curvecpprintkey /services/urcd-curvecp/curvecp`"
 
+  curvecp + irc client (test):
+
+    tcpserver 127.0.0.1 6667 ./ucspi-server2client \
+      curvecpclient irc.d3v11.ano `curvecpprintkey /services/urcd-curvecp/curvecp` \
+      `cat env/addr` `cat env/port` 01110101011100100110001101100100 curvecpmessage ./ucspi-stream
+
+    irssi -c 127.0.0.1
+
 interface:
   place an executable program in the cwd
   of urcd named 'stdin'. the program reads

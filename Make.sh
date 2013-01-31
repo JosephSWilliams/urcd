@@ -11,6 +11,8 @@ elif [ -e '/usr/local/include/python2.6/Python.h'       ] &&
        HEADERS='/usr/local/include/python2.6'
 fi
 
+gcc src/ucspi-stream.c -o ucspi-stream || exit 1
+
 gcc src/ucspi-client2server.c -o ucspi-client2server || exit 1
 
 gcc src/ucspi-server2client.c -o ucspi-server2client || exit 1
