@@ -31,7 +31,7 @@ int client_eagain = 0;
 int server_eagain = 0;
 
 while (ttl<256){
-  if (poll(&fds[0],1,128-(poll(&fds[1],1,0)*128))>0){
+  if ((server_eagain)||(poll(&fds[0],1,128-(poll(&fds[1],1,0)*128))>0)){
     if (poll(&fds[3],1,ttl)>0){
       if (server_eagain<1024){
         in = read(0,&server_buffer[server_eagain],1024-server_eagain);
@@ -46,7 +46,7 @@ while (ttl<256){
       if (ttl>0) --ttl;
     else ++ttl;}}
 
-  if (poll(&fds[1],1,128-(poll(&fds[0],1,0)*128))>0){
+  if ((client_eagain)||(poll(&fds[1],1,128-(poll(&fds[0],1,0)*128))>0)){
     if (poll(&fds[2],1,ttl)>0){
       if (client_eagain<1024){
         in = read(6,&client_buffer[client_eagain],1024-client_eagain);
