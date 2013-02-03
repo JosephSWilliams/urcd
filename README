@@ -43,6 +43,10 @@ adding curvecp:
 
   curvecpmakekey /services/urcd-curvecp/curvecp
 
+  find /services/urcd-curvecp/curvecp -type d -exec chmod 700 {} \;
+  find /services/urcd-curvecp/curvecp -type f -exec chmod 600 {} \;
+  chown urcd /services/urcd-curvecp/curvecp -R
+
   ln -s /services/urcd-curvecp /service/urcd-curvecp
 
   sleep 4

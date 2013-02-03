@@ -11,6 +11,10 @@ test -L /services/urcd-curvecprecv-"$1:$2"/serv || \
 
 curvecpmakekey /services/urcd-curvecprecv-"$1:$2"/curvecp || exit 1
 
+find /services/urcd-curvecprecv-"$1:$2"/curvecp -type d -exec chmod 700 {} \;
+find /services/urcd-curvecprecv-"$1:$2"/curvecp -type f -exec chmod 600 {} \;
+chown urcd /services/urcd-curvecprecv-"$1:$2"/curvecp -R
+
 printf \
 "#!/bin/sh -e
 exec curvecpserver \`cat serv\` curvecp $1 $2 01110101011100100110001101100100 curvecpmessage ./urcrecv $3\n" > \
