@@ -12,6 +12,7 @@ import sys
 import re
 import os
 
+LIMIT      = 1
 NICKLEN    = 32
 TOPICLEN   = 512
 CHANLIMIT  = 64
@@ -68,8 +69,16 @@ client_POLLIN.register(rd,3)
 server_POLLIN=select.poll()
 server_POLLIN.register(sd,3)
 
+now = time.time()
+def limit():
+  if ((time.time() - now) > LIMIT):
+    global now
+    now = time.time()
+    return 0
+  return 1
+
 def client_poll():
-  return len( client_POLLIN.poll(256-
+  return 0 if limit() else len( client_POLLIN.poll(256-
     (256*len( server_POLLIN.poll(0)))
   ))
 

@@ -12,9 +12,10 @@ import sys
 import re
 import os
 
-user = str(os.getpid())
-RE   = 'a-zA-Z0-9^(\)\-_{\}[\]|'
-nick = open('nick','rb').read().split('\n')[0]
+LIMIT = 1
+user  = str(os.getpid())
+RE    = 'a-zA-Z0-9^(\)\-_{\}[\]|'
+nick  = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],64)
 for dst in open('channels','rb').read().split('\n'):
@@ -69,13 +70,21 @@ client_POLLIN.register(rd,3)
 server_POLLIN=select.poll()
 server_POLLIN.register(sd,3)
 
+now = time.time()
+def limit():
+  if ((time.time() - now) > LIMIT):
+    global now
+    now = time.time()
+    return 0
+  return 1
+
 def client_poll():
-  return len( client_POLLIN.poll(256-
+  return 0 if limit() else len( client_POLLIN.poll(256-
     (256*len( server_POLLIN.poll(0)))
   ))
 
 def server_poll():
-  return len( server_POLLIN.poll(256-
+  return 0 if limit() else len( server_POLLIN.poll(256-
     (256*len( client_POLLIN.poll(0)))
   ))
 

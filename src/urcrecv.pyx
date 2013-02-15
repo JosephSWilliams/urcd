@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 import socket
+import time
 import pwd
 import sys
 import os
+
+LIMIT = 1
 
 uid = pwd.getpwnam('urcd')[2]
 os.chdir(sys.argv[1])
@@ -24,6 +27,8 @@ while 1:
     buffer+=byte
     if byte == '\n':
       break
+
+  time.sleep(LIMIT)
 
   for path in os.listdir(root):
     try:

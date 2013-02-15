@@ -2,11 +2,13 @@
 import socket
 import select
 import signal
+import time
 import pwd
 import sys
 import os
 
-user = str(os.getpid())
+user  = str(os.getpid())
+LIMIT = 1
 
 wr = 1
 if int(os.getenv('TCPCLIENT',0)):
@@ -44,8 +46,16 @@ client_POLLIN.register(rd,3)
 server_POLLIN=select.poll()
 server_POLLIN.register(sd,3)
 
+now = time.time()
+def limit():
+  if ((time.time() - now) > LIMIT):
+    global now
+    now = time.time()
+    return 0
+  return 1
+
 def client_poll():
-  return len( client_POLLIN.poll(256-
+  return 0 if limit() else len( client_POLLIN.poll(256-
     (256*len( server_POLLIN.poll(0)))
   ))
 
