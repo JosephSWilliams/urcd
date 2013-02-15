@@ -5,7 +5,7 @@ import pwd
 import sys
 import os
 
-LIMIT = 1
+LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 
 uid = pwd.getpwnam('urcd')[2]
 os.chdir(sys.argv[1])

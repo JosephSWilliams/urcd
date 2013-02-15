@@ -12,7 +12,7 @@ import sys
 import re
 import os
 
-LIMIT = 1
+LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 user  = str(os.getpid())
 RE    = 'a-zA-Z0-9^(\)\-_{\}[\]|'
 nick  = open('nick','rb').read().split('\n')[0]

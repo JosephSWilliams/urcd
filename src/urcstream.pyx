@@ -8,7 +8,7 @@ import sys
 import os
 
 user  = str(os.getpid())
-LIMIT = 1
+LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 
 wr = 1
 if int(os.getenv('TCPCLIENT',0)):

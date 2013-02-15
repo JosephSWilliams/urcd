@@ -12,11 +12,11 @@ import sys
 import re
 import os
 
-LIMIT      = 1
-NICKLEN    = 32
-TOPICLEN   = 512
-CHANLIMIT  = 64
-CHANNELLEN = 64
+LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
+NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
+TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
+CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
+CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 
 nick           = str()
 user           = str(os.getpid())
