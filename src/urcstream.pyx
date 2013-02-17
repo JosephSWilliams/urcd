@@ -67,14 +67,17 @@ def server_poll():
 
 while 1:
   if client_poll():
+
     buffer = str()
+
     while 1:
       byte = os.read(rd,1)
-      if not byte or len(buffer)>1024:
-        sock_close(15,0)
-      buffer+=byte
-      if byte == '\n':
+      if not byte: sock_close(15,0)
+      elif byte == '\n':
+        buffer+=byte
         break
+      elif len(buffer)<1024: buffer+=byte
+
     for path in os.listdir(root):
       try:
         if path != user:
@@ -84,6 +87,7 @@ while 1:
 
   while server_poll():
     buffer = os.read(sd,1024)
+    if buffer[len(buffer)-1:] != '\n': continue
     try:
       if not os.write(wr,buffer):
         sock_close(15,0)

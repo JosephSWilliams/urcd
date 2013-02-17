@@ -21,13 +21,14 @@ sock.setblocking(0)
 while 1:
 
   buffer = str()
+
   while 1:
     byte = os.read(0,1)
-    if not byte or len(buffer)>1024:
-      sys.exit(0)
-    buffer+=byte
-    if byte == '\n':
+    if not byte: sys.exit(0)
+    elif byte == '\n':
+      buffer+=byte
       break
+    elif len(buffer)<1024: buffer+=byte
 
   time.sleep(LIMIT)
 

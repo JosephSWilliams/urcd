@@ -34,8 +34,7 @@ sock.bind(str(os.getpid()))
 while 1:
 
   buffer, path = sock.recvfrom(1024)
-  if not path:
-    continue
+  if not path or buffer[len(buffer)-1:] != '\n': continue
 
   try:
     if not os.write(fd,buffer):
