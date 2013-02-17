@@ -7,12 +7,13 @@ import os
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 
-uid = pwd.getpwnam('urcd')[2]
+uid, gid = pwd.getpwnam('urcd')[2:4]
 os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
+os.setgid(gid)
 os.setuid(uid)
 root = os.getcwd()
-del uid
+del uid, gid
 
 sock=socket.socket(1,2)
 sock.setblocking(0)
