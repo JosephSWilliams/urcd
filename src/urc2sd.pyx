@@ -86,7 +86,7 @@ def client_poll():
 
 def server_poll():
   return len( server_POLLIN.poll(256-
-    (256*client_poll())
+    (256*len( client_POLLIN.poll(0)))
   ))
 
 def try_write(fd,buffer):
@@ -219,7 +219,7 @@ while 1:
 
     EOF() if EOF else EOF
 
-  while server_poll():
+  while (server_poll() and limit()):
 
     buffer = os.read(sd,1024)
     if not buffer:
