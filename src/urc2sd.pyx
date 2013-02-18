@@ -85,8 +85,8 @@ def client_poll():
   ))
 
 def server_poll():
-  return 0 if limit() else len( server_POLLIN.poll(256-
-    (256*len( client_POLLIN.poll(0)))
+  return len( server_POLLIN.poll(256-
+    (256*client_poll())
   ))
 
 def try_write(fd,buffer):
