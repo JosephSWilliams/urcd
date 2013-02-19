@@ -80,7 +80,7 @@ def limit():
   return 1
 
 def client_poll():
-  return 0 if limit() else len( client_POLLIN.poll(256-
+  return len( client_POLLIN.poll(256-
     (256*len( server_POLLIN.poll(0)))
   ))
 
@@ -113,7 +113,7 @@ try_write(wr,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n')
 try_write(wr,'NICK '+nick+'\n')
 
 while 1:
-  if client_poll():
+  if (client_poll() and limit()):
 
     buffer = str()
     while 1:
