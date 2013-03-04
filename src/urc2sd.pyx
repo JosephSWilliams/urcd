@@ -80,13 +80,13 @@ def limit():
   return 1
 
 def client_poll():
-  return 0 if limit() else len( client_POLLIN.poll(256-
+  return len( client_POLLIN.poll(256-
     (256*len( server_POLLIN.poll(0)))
   ))
 
 def server_poll():
   return len( server_POLLIN.poll(256-
-    (256*client_poll())
+    (256*len( client_POLLIN.poll(0)))
   ))
 
 def try_write(fd,buffer):
@@ -113,7 +113,7 @@ try_write(wr,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n')
 try_write(wr,'NICK '+nick+'\n')
 
 while 1:
-  if client_poll():
+  if (client_poll() and limit()):
 
     buffer = str()
     while 1:
@@ -219,7 +219,7 @@ while 1:
 
     EOF() if EOF else EOF
 
-  while server_poll():
+  while (server_poll() and limit()):
 
     buffer = os.read(sd,1024)
     if not buffer:
