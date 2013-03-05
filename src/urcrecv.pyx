@@ -25,7 +25,7 @@ while 1:
   # line protocols suck
   nl = 0
   buffer = str()
-  for byte in afternl+os.read(rd,1024-len(afternl)):
+  for byte in afternl+os.read(0,1024-len(afternl)):
     if not nl:
       buffer += byte
       if byte == '\n': nl = 1
