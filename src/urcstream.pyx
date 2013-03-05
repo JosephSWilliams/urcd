@@ -68,7 +68,7 @@ def server_poll():
 nl, buffer, afternl = int(), str(), str()
 
 while 1:
-  if (client_poll() and limit()):
+  if ((afternl or client_poll()) and limit()):
 
     # line protocols suck
     nl = 0
