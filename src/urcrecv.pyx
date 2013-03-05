@@ -30,7 +30,7 @@ while 1:
       buffer += byte
       if byte == '\n': nl = 1
     else: afternl += byte
-  if not nl: sock_close(15,0)
+  if not nl: sys.exit(0)
 
   time.sleep(LIMIT)
 
