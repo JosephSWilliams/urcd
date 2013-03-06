@@ -116,11 +116,11 @@ main(int argc, char **argv)
 
       while ((path = readdir(root)))
       {
+        if (path->d_name[0] == '.') continue;
         if (strlen(path->d_name) >= UNIX_PATH_MAX) continue;
         if ((strlen(path->d_name) == strlen(user)) && (!memcmp(path->d_name,user,strlen(user)))) continue;
         memset(paths.sun_path,0,sizeof(paths.sun_path));
         memmove(&paths.sun_path,path->d_name,strlen(path->d_name));
-        if (paths.sun_path[0] == '.') continue;
         sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
       }
 
