@@ -122,7 +122,7 @@ main(int argc, char **argv)
         memset(paths.sun_path,0,sizeof(paths.sun_path));
         memmove(&paths.sun_path,path->d_name,strlen(path->d_name));
         sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
-      }
+      } closedir(root);
 
     }
 
