@@ -100,7 +100,7 @@ main(int argc, char **argv)
 
     gettimeofday(&now,utc);
     if (now.tv_sec - old > LIMIT) old = now.tv_sec;
-    else sleep(LIMIT);
+    else if (!fds[1].revents) sleep(LIMIT);
 
     if (fds[0].revents)
     {
@@ -136,4 +136,3 @@ main(int argc, char **argv)
 
   }
 }
-
