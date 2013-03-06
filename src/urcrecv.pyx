@@ -24,7 +24,7 @@ while 1:
 
   # line protocols suck
   if '\n' in afternl:
-    buffer = afternl.split('\n',1) + '\n'
+    buffer = afternl.split('\n',1)[0] + '\n'
     afternl = afternl[len(buffer):]
   else:
     nl = 0
