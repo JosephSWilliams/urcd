@@ -2,7 +2,6 @@
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -49,13 +48,14 @@ main(int argc, char **argv)
   char user[UNIX_PATH_MAX] = {0};
   if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
 
-  int n, LIMIT;
+  int n;
+  float LIMIT;
   n = open("env/LIMIT",0);
   if (n>0)
   {
-    if (read(n,buffer,1024)) LIMIT = atoi(buffer);
-    else LIMIT = 1;
-  } else LIMIT = 1;
+    if (read(n,buffer,1024)) LIMIT = atof(buffer);
+    else LIMIT = 1.0;
+  } else LIMIT = 1.0;
   close(n);
 
   struct sockaddr_un sock;
@@ -71,11 +71,11 @@ main(int argc, char **argv)
   if (socket(AF_UNIX,SOCK_DGRAM,0)!=3) exit(2);
   n = 1;
   if (setsockopt(3,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
-  n = strlen(user);
-  if (n>=UNIX_PATH_MAX) exit(4);
-  memmove(&sock.sun_path,user,n+1);
+  int userlen = strlen(user);
+  if (userlen > UNIX_PATH_MAX) exit(4);
+  memmove(&sock.sun_path,user,userlen+1);
   unlink(sock.sun_path);
-  if (bind(3,(struct sockaddr *)&sock,sizeof(sock.sun_family)+n)<0) exit(5);
+  if (bind(3,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(5);
   if (fcntl(3,F_SETFL,O_NONBLOCK)<0) sock_close(6);
 
   struct pollfd fds[2];
@@ -83,36 +83,26 @@ main(int argc, char **argv)
   fds[1].fd = 3; fds[1].events = POLLIN;
 
   DIR *root;
+  int pathlen;
   struct dirent *path;
   struct sockaddr_un paths;
   paths.sun_family = AF_UNIX;
-
-  int pathlen;
-  int userlen = strlen(user);
-
-  int old;
-  struct timeval now;
-  struct timezone *utc = (struct timezone *)0;
-  gettimeofday(&now,utc);
-  old = now.tv_sec;
 
   while (1)
   {
 
     poll(fds,2,-1);
 
-    gettimeofday(&now,utc);
-    if (now.tv_sec - old > LIMIT) old = now.tv_sec;
-    else if (!fds[1].revents) sleep(LIMIT);
-
     if (fds[0].revents)
     {
+
+      usleep((int)(LIMIT*1000000));
 
       for (n=0;n<1024;++n)
       {
         if (read(rd,buffer+n,1)<1) sock_close(7);
         if (buffer[n] == '\n') break;
-      } if (buffer[n] != '\n') continue;
+      } if (buffer[n] != '\n') goto urcwrite;
 
       root = opendir("/");
       if (!root) sock_close(8);
@@ -121,7 +111,7 @@ main(int argc, char **argv)
       {
         if (path->d_name[0] == '.') continue;
         pathlen = strlen(path->d_name);
-        if (pathlen >= UNIX_PATH_MAX) continue;
+        if (pathlen > UNIX_PATH_MAX) continue;
         if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
         memset(paths.sun_path,0,sizeof(paths.sun_path));
         memmove(&paths.sun_path,path->d_name,pathlen);
@@ -130,7 +120,7 @@ main(int argc, char **argv)
 
     }
 
-    if (fds[1].revents)
+    urcwrite: while (poll(fds+1,1,0))
     {
       n = read(3,buffer,1024);
       if (n<1) sock_close(9);
