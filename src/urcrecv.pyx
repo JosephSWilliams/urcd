@@ -23,14 +23,20 @@ nl, buffer, afternl = int(), str(), str()
 while 1:
 
   # line protocols suck
-  nl = 0
-  buffer = str()
-  for byte in afternl+os.read(0,1024-len(afternl)):
-    if not nl:
-      buffer += byte
-      if byte == '\n': nl = 1
-    else: afternl += byte
-  if not nl: sys.exit(0)
+  if '\n' in afternl:
+    buffer = afternl.split('\n',1) + '\n'
+    afternl = afternl[len(buffer):]
+  else:
+    nl = 0
+    buffer = str()
+    for byte in afternl+os.read(0,1024-len(afternl)):
+      if not nl:
+        buffer += byte
+        if byte == '\n':
+          afternl = afternl[len(buffer):]
+          nl = 1
+      else: afternl += byte
+    if not nl: sys.exit(0)
 
   time.sleep(LIMIT)
 
