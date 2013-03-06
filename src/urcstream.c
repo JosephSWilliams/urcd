@@ -40,7 +40,6 @@ main(int argc, char **argv)
   rd = wr - 1;
 
   char buffer[1024] = {0};
-
   char user[UNIX_PATH_MAX] = {0};
   if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
 
@@ -49,7 +48,7 @@ main(int argc, char **argv)
   n = open("env/LIMIT",0);
   if (n>0)
   {
-    if (read(n,buffer,1024)) LIMIT = atof(buffer);
+    if (read(n,buffer,1024)>0) LIMIT = atof(buffer);
     else LIMIT = 1.0;
   } else LIMIT = 1.0;
   close(n);
