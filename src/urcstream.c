@@ -87,6 +87,9 @@ main(int argc, char **argv)
   struct sockaddr_un paths;
   paths.sun_family = AF_UNIX;
 
+  int pathlen;
+  int userlen = strlen(user);
+
   int old;
   struct timeval now;
   struct timezone *utc = (struct timezone *)0;
@@ -117,10 +120,11 @@ main(int argc, char **argv)
       while ((path = readdir(root)))
       {
         if (path->d_name[0] == '.') continue;
-        if (strlen(path->d_name) >= UNIX_PATH_MAX) continue;
-        if ((strlen(path->d_name) == strlen(user)) && (!memcmp(path->d_name,user,strlen(user)))) continue;
+        pathlen = strlen(path->d_name);
+        if (pathlen >= UNIX_PATH_MAX) continue;
+        if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
         memset(paths.sun_path,0,sizeof(paths.sun_path));
-        memmove(&paths.sun_path,path->d_name,strlen(path->d_name));
+        memmove(&paths.sun_path,path->d_name,pathlen);
         sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
       } closedir(root);
 
