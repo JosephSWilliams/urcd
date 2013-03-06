@@ -56,7 +56,7 @@ def limit():
   return 1
 
 def client_poll():
-  return len( client_POLLIN.poll(256-
+  return 0 if limit() else len( client_POLLIN.poll(256-
     (256*len( server_POLLIN.poll(0)))
   ))
 
@@ -65,22 +65,18 @@ def server_poll():
     (256*len( client_POLLIN.poll(0)))
   ))
 
-nl, buffer, afternl = int(), str(), str()
-
 while 1:
-  if ((afternl or client_poll()) and limit()):
+  if (client_poll() and limit()):
 
-    # line protocols suck
-    nl = 0
     buffer = str()
-    for byte in afternl+os.read(rd,1024-len(afternl)):
-      if not nl:
-        buffer += byte
-        if byte == '\n':
-          afternl = afternl[len(buffer):]
-          nl = 1
-      else: afternl += byte
-    if not nl: sock_close(15,0)
+
+    while 1:
+      byte = os.read(rd,1)
+      if not byte: sock_close(15,0)
+      elif byte == '\n':
+        buffer+=byte
+        break
+      elif len(buffer)<1024: buffer+=byte
 
     for path in os.listdir(root):
       try:

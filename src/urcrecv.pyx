@@ -18,25 +18,17 @@ del uid, gid
 sock=socket.socket(1,2)
 sock.setblocking(0)
 
-nl, buffer, afternl = int(), str(), str()
-
 while 1:
 
-  # line protocols suck
-  if '\n' in afternl:
-    buffer = afternl.split('\n',1)[0] + '\n'
-    afternl = afternl[len(buffer):]
-  else:
-    nl = 0
-    buffer = str()
-    for byte in afternl+os.read(0,1024-len(afternl)):
-      if not nl:
-        buffer += byte
-        if byte == '\n':
-          afternl = afternl[len(buffer):]
-          nl = 1
-      else: afternl += byte
-    if not nl: sys.exit(0)
+  buffer = str()
+
+  while 1:
+    byte = os.read(0,1)
+    if not byte: sys.exit(0)
+    elif byte == '\n':
+      buffer+=byte
+      break
+    elif len(buffer)<1024: buffer+=byte
 
   time.sleep(LIMIT)
 
