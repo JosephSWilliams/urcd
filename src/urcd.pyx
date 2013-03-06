@@ -19,6 +19,7 @@ CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exi
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 
 nick           = str()
+Nick           = str()
 user           = str(os.getpid())
 RE             = 'a-zA-Z0-9^(\)\-_{\}[\]|'
 serv           = open('env/serv','rb').read().split('\n')[0]
@@ -115,39 +116,41 @@ while 1:
     if re.search('^NICK ['+RE+']+$',buffer.upper()):
 
       if not nick:
-        nick = buffer.split(' ')[1].lower()
+        Nick = buffer.split(' ')[1]
+        nick = Nick.lower()
 
         if len(nick)>NICKLEN:
           try_write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
           continue
 
         try_write(wr,
-          ':'+serv+' 001 '+nick+' :'+serv+'\n'
-          ':'+serv+' 002 '+nick+' :'+nick+'!'+user+'@'+serv+'\n'
-          ':'+serv+' 003 '+nick+' :'+serv+'\n'
-          ':'+serv+' 004 '+nick+' '+serv+' 0.0 + :+\n'
-          ':'+serv+' 005 '+nick+' NETWORK='+serv+' CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+':\n'
-          ':'+serv+' 254 '+nick+' '+str(CHANLIMIT)+' :CHANNEL(S)\n'
-          ':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n'
+          ':'+serv+' 001 '+Nick+' :'+serv+'\n'
+          ':'+serv+' 002 '+Nick+' :'+Nick+'!'+user+'@'+serv+'\n'
+          ':'+serv+' 003 '+Nick+' :'+serv+'\n'
+          ':'+serv+' 004 '+Nick+' '+serv+' 0.0 + :+\n'
+          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+':\n'
+          ':'+serv+' 254 '+Nick+' '+str(CHANLIMIT)+' :CHANNEL(S)\n'
+          ':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n'
         )
 
-        try_write(wr,':'+serv+' 375 '+nick+' :- '+serv+' MOTD -\n')
+        try_write(wr,':'+serv+' 375 '+Nick+' :- '+serv+' MOTD -\n')
         for msg in motd:
-          try_write(wr,':'+serv+' 372 '+nick+' :- '+msg+'\n')
-        try_write(wr,':'+serv+' 376 '+nick+' :EOF MOTD\n')
+          try_write(wr,':'+serv+' 372 '+Nick+' :- '+msg+'\n')
+        try_write(wr,':'+serv+' 376 '+Nick+' :EOF MOTD\n')
 
         del motd
 
         continue
 
       src  = nick
-      nick = buffer.split(' ')[1].lower()
+      Nick = buffer.split(' ')[1]
+      nick = Nick.lower()
 
       if len(nick)>NICKLEN:
         try_write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
         continue
 
-      try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+nick+'\n')
+      try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+Nick+'\n')
 
       for dst in channel_struct.keys():
         if dst in channels:
@@ -180,7 +183,7 @@ while 1:
           try_write(wr,'ERROR : EMSGSIZE:TOPICLEN='+str(TOPICLEN)+'\n')
           continue
 
-        try_write(wr,':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
+        try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
         if dst[0] == '#':
 
@@ -194,7 +197,7 @@ while 1:
             channel_struct[dst]['topic'] = msg
 
       if cmd == 'PART' and dst in channels:
-        try_write(wr,':'+nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
+        try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
         channels.remove(dst)
         channel_struct[dst]['names'].remove(nick)
         continue
@@ -202,7 +205,7 @@ while 1:
       for path in os.listdir(root):
         try:
           if path != user:
-            sock.sendto(':'+nick+'!'+nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',path)
+            sock.sendto(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',path)
         except:
           pass
 
@@ -218,8 +221,8 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
-      try_write(wr,':'+serv+' 324 '+nick+' '+dst+' +n\n')
-      try_write(wr,':'+serv+' 329 '+nick+' '+dst+' '+str(int(time.time()))+'\n')
+      try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
+      try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(time.time()))+'\n')
 
     # /MODE nick
     elif re.search('^MODE ['+RE+']+$',buffer.upper()):
@@ -234,15 +237,15 @@ while 1:
 
       dst = buffer.split(' ')[1]
 
-      try_write(wr,':'+nick+'!'+user+'@'+serv+' MODE '+nick+' +i\n')
+      try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n')
 
     # /AWAY
     elif re.search('^AWAY ?$',buffer.upper()):
-      try_write(wr,':'+serv+' 305 '+nick+' :WB, :-)\n')
+      try_write(wr,':'+serv+' 305 '+Nick+' :WB, :-)\n')
 
     # /AWAY <msg>
     elif re.search('^AWAY .+$',buffer.upper()):
-      try_write(wr,':'+serv+' 306 '+nick+' :HB, :-)\n')
+      try_write(wr,':'+serv+' 306 '+Nick+' :HB, :-)\n')
 
     # /WHO
     elif re.search('^WHO .+',buffer.upper()):
@@ -251,8 +254,8 @@ while 1:
 
       if dst in channel_struct.keys():
         for src in channel_struct[dst]['names']:
-          try_write(wr,':'+serv+' 352 '+nick+' '+dst+' '+src+' '+serv+' '+src+' '+src+' H :0 '+src+'\n')
-      try_write(wr,':'+serv+' 315 '+nick+' '+dst+' :EOF WHO\n')
+          try_write(wr,':'+serv+' 352 '+Nick+' '+dst+' '+src+' '+serv+' '+src+' '+src+' H :0 '+src+'\n')
+      try_write(wr,':'+serv+' 315 '+Nick+' '+dst+' :EOF WHO\n')
 
     # /INVITE
     elif re.search('^INVITE ['+RE+']+ #['+RE+']+$',buffer.upper()):
@@ -268,12 +271,12 @@ while 1:
         try_write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
         continue
 
-      try_write(wr,':'+serv+' 341 '+nick+' '+dst+' '+msg+'\n')
+      try_write(wr,':'+serv+' 341 '+Nick+' '+dst+' '+msg+'\n')
 
       for path in os.listdir(root):
         try:
           if path != user:
-            sock.sendto(':'+nick+'!'+nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n',path)
+            sock.sendto(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n',path)
         except:
           pass
 
@@ -307,16 +310,16 @@ while 1:
           channel_struct[dst]['names'].remove(nick)
 
         if channel_struct[dst]['topic']:
-          try_write(wr,':'+serv+' 332 '+nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
+          try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
 
-        try_write(wr,':'+nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n')
+        try_write(wr,':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n')
 
-        try_write(wr,':'+serv+' 353 '+nick+' = '+dst+' :'+nick+' ')
+        try_write(wr,':'+serv+' 353 '+Nick+' = '+dst+' :'+Nick+' ')
         for src in channel_struct[dst]['names']:
           try_write(wr,src+' ')
         try_write(wr,'\n')
 
-        try_write(wr,':'+serv+' 366 '+nick+' '+dst+' :EOF NAMES\n')
+        try_write(wr,':'+serv+' 366 '+Nick+' '+dst+' :EOF NAMES\n')
 
         if len(channel_struct[dst]['names'])==CHANLIMIT:
           try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
@@ -330,25 +333,25 @@ while 1:
 
       for dst in dst.split(','):
         if dst in channels:
-          try_write(wr,':'+nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
+          try_write(wr,':'+Nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
           channels.remove(dst)
           channel_struct[dst]['names'].remove(nick)
 
     # /LIST
     elif re.search('^LIST',buffer.upper()):
 
-      try_write(wr,':'+serv+' 321 '+nick+' channel :users name\n')
+      try_write(wr,':'+serv+' 321 '+Nick+' channel :users name\n')
 
       for dst in channel_struct.keys():
 
         if len(channel_struct[dst]['names']):
 
-          try_write(wr,':'+serv+' 322 '+nick+' '+dst+' '+str(len(channel_struct[dst]['names']))+' :[+n] ')
+          try_write(wr,':'+serv+' 322 '+Nick+' '+dst+' '+str(len(channel_struct[dst]['names']))+' :[+n] ')
           if channel_struct[dst]['topic']:
             try_write(wr,channel_struct[dst]['topic'])
           try_write(wr,'\n')
 
-      try_write(wr,':'+serv+' 323 '+nick+' :EOF LIST\n')
+      try_write(wr,':'+serv+' 323 '+Nick+' :EOF LIST\n')
 
     # /QUIT
     elif re.search('^QUIT ',buffer.upper()):
@@ -362,7 +365,7 @@ while 1:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
       buffer = buffer.replace("\\'","'")
       buffer = buffer.replace('\\\\','\\')
-      try_write(wr,':'+serv+' NOTICE '+nick+' :ERROR: '+buffer+'\n')
+      try_write(wr,':'+serv+' NOTICE '+Nick+' :ERROR: '+buffer+'\n')
 
   while server_poll():
 
