@@ -76,7 +76,9 @@ while 1:
     for byte in afternl+os.read(rd,1024-len(afternl)):
       if not nl:
         buffer += byte
-        if byte == '\n': nl = 1
+        if byte == '\n':
+          afternl = afternl[len(buffer):]
+          nl = 1
       else: afternl += byte
     if not nl: sock_close(15,0)
 
