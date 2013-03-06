@@ -131,7 +131,7 @@ main(int argc, char **argv)
       n = read(3,buffer,1024);
       if (n<1) sock_close(9);
       if (buffer[n-1] != '\n') continue;
-      if (n) if (write(wr,buffer,n)<0) sock_close(10);
+      if (write(wr,buffer,n)<0) sock_close(10);
     }
 
   }
