@@ -34,8 +34,8 @@ if ! $(which cython 2>&1 >/dev/null); then
   cp src/urcsend.pyx urcsend || exit 1
   chmod +x urcsend           || exit 1
 
-  cp src/urcstream.pyx urcstream || exit 1
-  chmod +x urcstream             || exit 1
+  #cp src/urcstream.pyx urcstream || exit 1
+  #chmod +x urcstream             || exit 1
 
   exit 0
 fi
