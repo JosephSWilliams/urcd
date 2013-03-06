@@ -35,10 +35,6 @@ main(int argc, char **argv)
     exit(64);
   }
 
-  if (chdir(argv[1])) exit(64);
-  struct passwd *urcd = getpwnam("urcd");
-  if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
-
   int rd, wr = 1;
   if (getenv("TCPCLIENT")) wr += 6;
   rd = wr - 1;
@@ -57,6 +53,10 @@ main(int argc, char **argv)
     else LIMIT = 1.0;
   } else LIMIT = 1.0;
   close(n);
+
+  if (chdir(argv[1])) exit(64);
+  struct passwd *urcd = getpwnam("urcd");
+  if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
   struct sockaddr_un sock;
   memset(&sock,0,sizeof(sock));
