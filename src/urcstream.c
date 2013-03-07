@@ -17,13 +17,12 @@
 
 int itoa(char *s, int n, int slen)
 {
-  int fd[2];
+  int fd[2], ret = 0;
   if (pipe(fd)<0) return -1;
-  dprintf(fd[1],"%d",n);
-  read(fd[0],s,slen);
+  if ((dprintf(fd[1],"%d",n)<0) || (read(fd[0],s,slen)<0)) --ret;
   close(fd[0]);
   close(fd[1]);
-  return 0;
+  return ret;
 }
 
 main(int argc, char **argv)
