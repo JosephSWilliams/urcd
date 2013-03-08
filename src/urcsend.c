@@ -41,16 +41,6 @@ main(int argc, char **argv)
   char user[UNIX_PATH_MAX] = {0};
   if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
 
-  int n;
-  float LIMIT;
-  n = open("env/LIMIT",0);
-  if (n>0)
-  {
-    if (read(n,buffer,1024)>0) LIMIT = atof(buffer);
-    else LIMIT = 1.0;
-  } else LIMIT = 1.0;
-  close(n);
-
   if (chdir(argv[1])) exit(64);
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
@@ -66,7 +56,7 @@ main(int argc, char **argv)
   } signal(SIGINT,sock_close); signal(SIGHUP,sock_close); signal(SIGTERM,sock_close); 
 
   if (socket(AF_UNIX,SOCK_DGRAM,0)!=3) exit(2);
-  n = 1;
+  int n = 1;
   if (setsockopt(3,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   n = strlen(user);
   if (n > UNIX_PATH_MAX) exit(4);
