@@ -64,31 +64,28 @@ main(int argc, char **argv)
   while (1)
   {
 
-    if (poll(fds,1,-1))
+    poll(fds,1,-1);
+
+    usleep((int)(LIMIT*1000000));
+
+    for (n=0;n<1024;++n)
     {
+      if (read(0,buffer+n,1)<1) exit(4);
+      if (buffer[n] == '\n') break;
+    } if (buffer[n] != '\n') continue;
 
-      usleep((int)(LIMIT*1000000));
+    root = opendir("/");
+    if (!root) exit(5);
 
-      for (n=0;n<1024;++n)
-      {
-        if (read(0,buffer+n,1)<1) exit(4);
-        if (buffer[n] == '\n') break;
-      } if (buffer[n] != '\n') continue;
-
-      root = opendir("/");
-      if (!root) exit(5);
-
-      while ((path = readdir(root)))
-      {
-        if (path->d_name[0] == '.') continue;
-        pathlen = strlen(path->d_name);
-        if (pathlen > UNIX_PATH_MAX) continue;
-        memset(paths.sun_path,0,sizeof(paths.sun_path));
-        memmove(&paths.sun_path,path->d_name,pathlen);
-        sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
-      } closedir(root);
-
-    }
+    while ((path = readdir(root)))
+    {
+      if (path->d_name[0] == '.') continue;
+      pathlen = strlen(path->d_name);
+      if (pathlen > UNIX_PATH_MAX) continue;
+      memset(paths.sun_path,0,sizeof(paths.sun_path));
+      memmove(&paths.sun_path,path->d_name,pathlen);
+      sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
+    } closedir(root);
 
   }
 }
