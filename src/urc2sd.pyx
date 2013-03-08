@@ -65,29 +65,21 @@ sock.bind(str(os.getpid()))
 sock.setblocking(0)
 sd=sock.fileno()
 
-client_POLLIN=select.poll()
-client_POLLIN.register(rd,3)
+# why doesn't python have pollfd.revents?
+poll=select.poll()
+poll.register(rd,select.POLLIN|select.POLLPRI)
+poll.register(sd,select.POLLIN)
+poll=poll.poll
 
-server_POLLIN=select.poll()
-server_POLLIN.register(sd,3)
+client_events=select.poll()
+client_events.register(rd,select.POLLIN|select.POLLPRI)
+def client_revents():
+  return len(client_events.poll(0))
 
-now = time.time()
-def limit():
-  if ((time.time() - now) > LIMIT):
-    global now
-    now = time.time()
-    return 0
-  return 1
-
-def client_poll():
-  return len( client_POLLIN.poll(256-
-    (256*len( server_POLLIN.poll(0)))
-  ))
-
-def server_poll():
-  return len( server_POLLIN.poll(256-
-    (256*len( client_POLLIN.poll(0)))
-  ))
+server_events=select.poll()
+server_events.register(sd,select.POLLIN)
+def server_revents():
+  return len(server_events.poll(0))
 
 def try_write(fd,buffer):
   try:
@@ -113,7 +105,12 @@ try_write(wr,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n')
 try_write(wr,'NICK '+nick+'\n')
 
 while 1:
-  if (client_poll() and limit()):
+
+  poll(-1)
+
+  if (client_revents()):
+
+    time.sleep(LIMIT)
 
     buffer = str()
     while 1:
@@ -219,7 +216,9 @@ while 1:
 
     EOF() if EOF else EOF
 
-  while (server_poll() and limit()):
+  while (server_revents()):
+
+    time.sleep(LIMIT)
 
     buffer = os.read(sd,1024)
     if not buffer:
