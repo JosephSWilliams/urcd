@@ -1,4 +1,4 @@
-#define USAGE "Usage: urcstream /path/to/sockets/\n"
+#define USAGE "Usage: urcrecv /path/to/sockets/\n"
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
