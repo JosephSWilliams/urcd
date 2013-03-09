@@ -54,7 +54,6 @@ main(int argc, char **argv)
   fds[0].fd = 0;
   fds[0].events = POLLIN | POLLPRI;
 
-
   DIR *root;
   int pathlen;
   struct dirent *path;
