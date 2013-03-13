@@ -69,15 +69,15 @@ main(int argc, char **argv)
   fds[0].fd = 3;
   fds[0].events = POLLIN;
 
-  unsigned int pathlen;
   struct sockaddr_un path;
   path.sun_family = AF_UNIX;
+  socklen_t path_len = sizeof(struct sockaddr_un);
 
   while (1)
   {
     poll(fds,1,-1);
     memset(path.sun_path,0,UNIX_PATH_MAX);
-    n = recvfrom(3,buffer,1024,0,(struct sockaddr *)&path,&pathlen);
+    n = recvfrom(3,buffer,1024,0,(struct sockaddr *)&path,&path_len);
     if (n<1) sock_close(7);
     if (!strlen(path.sun_path)) continue;
     if (buffer[n-1] != '\n') continue;
