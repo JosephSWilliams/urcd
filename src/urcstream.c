@@ -111,7 +111,7 @@ main(int argc, char **argv)
         pathlen = strlen(path->d_name);
         if (pathlen > UNIX_PATH_MAX) continue;
         if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
-        memset(paths.sun_path,0,sizeof(paths.sun_path));
+        memset(paths.sun_path,0,UNIX_PATH_MAX);
         memmove(&paths.sun_path,path->d_name,pathlen);
         sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
       } closedir(root);
