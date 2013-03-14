@@ -82,6 +82,6 @@ main(int argc, char **argv)
     if (n<1) sock_close(8);
     if (!strlen(path.sun_path)) continue;
     if (buffer[n-1] != '\n') continue;
-    if (write(wr,buffer,n)<0) sock_close(8);
+    if (write(wr,buffer,n)<0) sock_close(9);
   }
 }
