@@ -77,11 +77,10 @@ main(int argc, char **argv)
   {
     poll(fds,1,-1);
     memset(path.sun_path,0,UNIX_PATH_MAX);
-    if (recvfrom(3,buffer,0,MSG_PEEK,(struct sockaddr *)&path,&path_len)<0) sock_close(7); /* hack around NULL sun_path bug */
     n = recvfrom(3,buffer,1024,0,(struct sockaddr *)&path,&path_len);
-    if (n<1) sock_close(8);
-    if (!strlen(path.sun_path)) continue;
+    if (n<1) sock_close(7);
+    if (!path_len) continue;
     if (buffer[n-1] != '\n') continue;
-    if (write(wr,buffer,n)<0) sock_close(9);
+    if (write(wr,buffer,n)<0) sock_close(8);
   }
 }
