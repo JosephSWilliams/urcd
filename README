@@ -34,7 +34,6 @@ install:
   svstat /service/urcd
 
 adding curvecp:
-
   mkdir -p /services/urcd-curvecp
 
   ln -s `pwd`/env /services/urcd-curvecp/env
@@ -56,9 +55,10 @@ adding curvecp:
 
   curvecp + irc client (test):
 
-    tcpserver 127.0.0.1 6667 ./ucspi-server2client \
+    tcpserver 127.0.0.1 6667 \
       curvecpclient irc.d3v11.ano `curvecpprintkey /services/urcd-curvecp/curvecp` \
-      `cat env/addr` `cat env/port` 01110101011100100110001101100100 curvecpmessage ./ucspi-stream &
+      `cat env/addr` `cat env/port` 01110101011100100110001101100100 \
+      curvecpmessage -c ./ucspi-stream &
 
     irssi -c 127.0.0.1
 
