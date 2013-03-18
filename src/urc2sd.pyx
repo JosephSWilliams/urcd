@@ -13,27 +13,24 @@ import re
 import os
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
-user  = str(os.getpid())
-RE    = 'a-zA-Z0-9^(\)\-_{\}[\]|'
-nick  = open('nick','rb').read().split('\n')[0]
+user = str(os.getpid())
+RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
+nick = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],64)
 for dst in open('channels','rb').read().split('\n'):
-  if dst:
-    channels.append(dst.lower())
+  if dst: channels.append(dst.lower())
 
 auto_cmd = collections.deque([],64)
 for cmd in open('auto_cmd','rb').read().split('\n'):
-  if cmd:
-    auto_cmd.append(cmd)
+  if cmd: auto_cmd.append(cmd)
 
 def sock_close(sn,sf):
   try:
     os.remove(str(os.getpid()))
   except:
     pass
-  if sn:
-    sys.exit(0)
+  if sn: sys.exit(0)
 
 signal.signal(1 ,sock_close)
 signal.signal(2 ,sock_close)
@@ -73,19 +70,24 @@ poll=poll.poll
 
 client_events=select.poll()
 client_events.register(rd,select.POLLIN|select.POLLPRI)
-def client_revents():
-  return len(client_events.poll(0))
+def client_revents(): return len(client_events.poll(0))
 
 server_events=select.poll()
 server_events.register(sd,select.POLLIN)
-def server_revents():
-  return len(server_events.poll(0))
+def server_revents(): return len(server_events.poll(0))
 
 def try_write(fd,buffer):
   try:
     os.write(fd,buffer)
   except:
     sock_close(15,0)
+
+def sock_write(buffer):
+  for path in os.listdir(root):
+    try:
+      if path != user: sock.sendto(buffer+'\n',path)
+    except:
+      pass
 
 def EOF():
   global EOF
@@ -108,81 +110,45 @@ while 1:
 
   poll(-1)
 
-  if (client_revents()):
+  if client_revents():
 
     time.sleep(LIMIT)
 
     buffer = str()
     while 1:
       byte = os.read(rd,1)
-      if not byte:
-        sock_close(15,0)
-      if byte == '\n':
-        break
-      if byte != '\r' and len(buffer)<768:
-        buffer+=byte
+      if not byte: sock_close(15,0)
+      if byte == '\n': break
+      if byte != '\r' and len(buffer)<768: buffer+=byte
 
     # PRIVMSG, NOTICE, TOPIC
     if re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
-
       src = buffer[1:].split('!',1)[0]
-
-      if src == nick:
-        continue
-
-      for path in os.listdir(root):
-        try:
-          if path != user:
-            sock.sendto(buffer+'\n',path)
-        except:
-          pass
+      if src == nick: continue
+      sock_write(buffer+'\n')
 
     # PART
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ PART #['+RE+']+( :)?',buffer.upper()):
-
-      if len(buffer.split(' :'))<2:
-        buffer += ' :'
-
-      for path in os.listdir(root):
-        try:
-          if path != user:
-            sock.sendto(buffer+'\n',path)
-        except:
-          pass
+      if len(buffer.split(' :'))<2: buffer += ' :'
+      sock_write(buffer+'\n')
 
     # QUIT
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT( :)?',buffer.upper()):
-
-      if len(buffer.split(' :'))<2:
-        buffer += ' :'
-
-      for path in os.listdir(root):
-        try:
-          if path != user:
-            sock.sendto(buffer+'\n',path)
-        except:
-          pass
+      if len(buffer.split(' :'))<2: buffer += ' :'
+      sock_write(buffer+'\n')
 
     # PING
     elif re.search('^PING :?.+$',buffer.upper()):
       dst = buffer.split(' ',1)[1]
       try_write(wr,'PONG '+dst+'\n')
 
-    # :nick!user@serv JOIN :#channel
+    # JOIN
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
-
-      for path in os.listdir(root):
-        try:
-          if path != user:
-            sock.sendto(buffer+'\n',path)
-        except:
-          pass
-
+      sock_write(buffer+'\n')
       dst = buffer.split(':')[2].lower()
-      if not dst in channels:
-        channels.append(dst)
+      if not dst in channels: channels.append(dst)
 
-    # :nick!* NICK nick_
+    # NICK
     elif re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
       nick = buffer.split(' ')[2]
 
@@ -190,18 +156,12 @@ while 1:
       nick+='_'
       try_write(wr,'NICK '+nick+'\n')
 
-    # :oper!user@serv KICK #channel nick :msg
+    # KICK
     elif re.search('^:.+ KICK #['+RE+']+ ['+RE+']+',buffer.upper()):
 
-      if len(buffer.split(' :'))<2:
-        buffer += ' :'
+      if len(buffer.split(' :'))<2: buffer += ' :'
 
-      for path in os.listdir(root):
-        try:
-          if path != user:
-            sock.sendto(buffer+'\n',path)
-        except:
-          pass
+      sock_write(buffer+'\n')
 
       if buffer.split(' ')[3].lower() == nick.lower():
         dst = buffer.split(' ')[2].lower()
@@ -216,13 +176,12 @@ while 1:
 
     EOF() if EOF else EOF
 
-  while (server_revents()):
+  while server_revents():
 
     time.sleep(LIMIT)
 
     buffer = os.read(sd,1024)
-    if not buffer:
-      break
+    if not buffer: break
 
     buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
     buffer = re.sub('[\x02\x0f]','',buffer)
@@ -233,14 +192,10 @@ while 1:
     buffer = buffer.replace('\\\\','\\')
 
     if re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
-
       dst = buffer.split(' ',3)[2].lower()
-
       if dst in channels:
-
-        cmd    = buffer.split(' ',3)[1].upper()
-        src    = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
-        msg    = buffer.split(':',2)[2]
+        cmd = buffer.split(' ',3)[1].upper()
+        src = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
+        msg = buffer.split(':',2)[2]
         buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
-
         try_write(wr,buffer)
