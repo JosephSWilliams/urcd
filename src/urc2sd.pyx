@@ -85,7 +85,7 @@ def try_write(fd,buffer):
 def sock_write(buffer):
   for path in os.listdir(root):
     try:
-      if path != user: sock.sendto(buffer+'\n',path)
+      if path != user: sock.sendto(buffer,path)
     except:
       pass
 
@@ -117,7 +117,7 @@ while 1:
     buffer = str()
     while 1:
       byte = os.read(rd,1)
-      if not byte: sock_close(15,0)
+      if byte == '': sock_close(15,0)
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer+=byte
 
