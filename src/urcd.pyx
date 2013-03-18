@@ -247,7 +247,6 @@ while 1:
         continue
 
       try_write(wr,':'+serv+' 341 '+Nick+' '+dst+' '+msg+'\n')
-
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n')
 
     # /JOIN
@@ -273,18 +272,15 @@ while 1:
           names = collections.deque([],CHANLIMIT),
           topic = None,
         )
-
-        if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
-
-        if channel_struct[dst]['topic']:
-          try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
+        else:
+          if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
+          if channel_struct[dst]['topic']:
+            try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
 
         try_write(wr,':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n')
-
         try_write(wr,':'+serv+' 353 '+Nick+' = '+dst+' :'+Nick+' ')
         for src in channel_struct[dst]['names']: try_write(wr,src+' ')
         try_write(wr,'\n')
-
         try_write(wr,':'+serv+' 366 '+Nick+' '+dst+' :EOF NAMES\n')
 
         if len(channel_struct[dst]['names'])==CHANLIMIT:
