@@ -168,7 +168,7 @@ while 1:
         try_write(wr,'JOIN '+dst+'\n')
         channels.remove(dst)
 
-    # :nick!user@serv INVITE nick :#channel
+    # INVITE
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
       dst = buffer.split(':',2)[2].lower()
       if not dst in channels:
