@@ -84,6 +84,13 @@ def try_write(fd,buffer):
   except:
     sock_close(15,0)
 
+def sock_write(buffer):
+  for path in os.listdir(root):
+    try:
+      if path != user: sock.sendto(buffer,path)
+    except:
+      pass
+
 while 1:
 
   poll(-1)
@@ -95,7 +102,7 @@ while 1:
     buffer = str()
     while 1:
       byte = os.read(rd,1)
-      if not byte: sock_close(15,0)
+      if byte == '': sock_close(15,0)
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer+=byte
 
@@ -184,11 +191,7 @@ while 1:
         channel_struct[dst]['names'].remove(nick)
         continue
 
-      for path in os.listdir(root):
-        try:
-          if path != user: sock.sendto(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',path)
-        except:
-          pass
+      sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
     # /PING
     elif re.search('^PING :?.+$',buffer.upper()):
@@ -245,11 +248,7 @@ while 1:
 
       try_write(wr,':'+serv+' 341 '+Nick+' '+dst+' '+msg+'\n')
 
-      for path in os.listdir(root):
-        try:
-          if path != user: sock.sendto(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n',path)
-        except:
-          pass
+      sock_write(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n')
 
     # /JOIN
     elif re.search('^JOIN :?[#'+RE+',]+$',buffer.upper()):
@@ -360,7 +359,6 @@ while 1:
           if len(channel_struct.keys())>=CHANLIMIT:
 
             for dst in channel_struct.keys():
-
               if not dst in channels:
                 del channel_struct[dst]
                 break
@@ -417,7 +415,6 @@ while 1:
         if len(channel_struct.keys())>=CHANLIMIT:
 
           for dst in channel_struct.keys():
-
             if not dst in channels:
               del channel_struct[dst]
               break
@@ -478,7 +475,6 @@ while 1:
         if len(channel_struct.keys())>=CHANLIMIT:
 
           for dst in channel_struct.keys():
-
             if not dst in channels:
               del channel_struct[dst]
               break
