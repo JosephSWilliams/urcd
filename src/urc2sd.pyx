@@ -20,7 +20,7 @@ re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
 re_CLIENT_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_KICK = re.compile('^:.+ KICK #['+RE+']+ ['+RE+']+',re.IGNORECASE).search
 re_BUFFER_X02_X0F = re.compile('[\x02\x0f]',re.IGNORECASE).sub
-re_BUFFER_CTCP_ACTION = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
+re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('\x03[0-9]?[0-9]?((?<=[0-9]),[0-9]?[0-9]?)?',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',re.IGNORECASE).search
 
@@ -111,8 +111,10 @@ def INIT():
     time.sleep(len(channels)*2)
     try_write(wr,'JOIN '+dst+'\n')
 
-try_write(wr,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n')
-try_write(wr,'NICK '+nick+'\n')
+try_write(wr,
+  'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n'
+  'NICK '+nick+'\n'
+)
 
 while 1:
 
@@ -185,7 +187,7 @@ while 1:
 
     buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
     buffer = re_BUFFER_X02_X0F('',buffer)
-    buffer = re_BUFFER_CTCP_ACTION('*',buffer)
+    buffer = re_BUFFER_CTCP_DCC('*',buffer)
     buffer = re_BUFFER_COLOUR('',buffer)
     buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]
     buffer = buffer.replace("\\'","'")
