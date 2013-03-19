@@ -13,31 +13,31 @@ import re
 import os
 
 RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
-RE_SPLIT = re.compile(' +:?',re.IGNORECASE)
-RE_CHATZILLA = re.compile(' $',re.IGNORECASE)
-RE_MIRC = re.compile('^NICK :',re.IGNORECASE)
-RE_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE)
-RE_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE)
-RE_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) #?['+RE+']+ :.*$',re.IGNORECASE)
-RE_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE #['+RE+']+( [-+a-zA-Z]+)?$',re.IGNORECASE)
-RE_CLIENT_MODE_NICK = re.compile('^MODE ['+RE+']+$',re.IGNORECASE)
-RE_CLIENT_MODE_NICK_ARG = re.compile('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',re.IGNORECASE)
-RE_CLIENT_AWAY_OFF = re.compile('^AWAY ?$',re.IGNORECASE)
-RE_CLIENT_AWAY_ON = re.compile('^AWAY .+$',re.IGNORECASE)
-RE_CLIENT_WHO = re.compile('^WHO .+',re.IGNORECASE)
-RE_CLIENT_INVITE = re.compile('^INVITE ['+RE+']+ #['+RE+']+$',re.IGNORECASE)
-RE_CLIENT_JOIN = re.compile('^JOIN :?[#'+RE+',]+$',re.IGNORECASE)
-RE_CLIENT_PART = re.compile('^PART #['+RE+',]+$',re.IGNORECASE)
-RE_CLIENT_LIST = re.compile('^LIST',re.IGNORECASE)
-RE_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE)
-RE_CLIENT_USER = re.compile('^USER .*$',re.IGNORECASE)
-RE_BUFFER_X02_X0F = re.compile('[\x02\x0f]',re.IGNORECASE)
-RE_BUFFER_CTCP_ACTION = re.compile('\x01(ACTION )?',re.IGNORECASE)
-RE_BUFFER_COLOUR = re.compile('\x03[0-9]?[0-9]?((?<=[0-9]),[0-9]?[0-9]?)?',re.IGNORECASE)
-RE_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) #?['+RE+']+ :.*$',re.IGNORECASE)
-RE_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',re.IGNORECASE)
-RE_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IGNORECASE)
-RE_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE)
+re_SPLIT = re.compile(' +:?',re.IGNORECASE).split
+re_CHATZILLA = re.compile(' $',re.IGNORECASE).sub
+re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
+re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
+re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
+re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) #?['+RE+']+ :.*$',re.IGNORECASE).search
+re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE #['+RE+']+( [-+a-zA-Z]+)?$',re.IGNORECASE).search
+re_CLIENT_MODE_NICK = re.compile('^MODE ['+RE+']+$',re.IGNORECASE).search
+re_CLIENT_MODE_NICK_ARG = re.compile('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',re.IGNORECASE).search
+re_CLIENT_AWAY_OFF = re.compile('^AWAY ?$',re.IGNORECASE).search
+re_CLIENT_AWAY_ON = re.compile('^AWAY .+$',re.IGNORECASE).search
+re_CLIENT_WHO = re.compile('^WHO .+',re.IGNORECASE).search
+re_CLIENT_INVITE = re.compile('^INVITE ['+RE+']+ #['+RE+']+$',re.IGNORECASE).search
+re_CLIENT_JOIN = re.compile('^JOIN :?[#'+RE+',]+$',re.IGNORECASE).search
+re_CLIENT_PART = re.compile('^PART #['+RE+',]+$',re.IGNORECASE).search
+re_CLIENT_LIST = re.compile('^LIST',re.IGNORECASE).search
+re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
+re_CLIENT_USER = re.compile('^USER .*$',re.IGNORECASE).search
+re_BUFFER_X02_X0F = re.compile('[\x02\x0f]',re.IGNORECASE).sub
+re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
+re_BUFFER_COLOUR = re.compile('\x03[0-9]?[0-9]?((?<=[0-9]),[0-9]?[0-9]?)?',re.IGNORECASE).sub
+re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) #?['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',re.IGNORECASE).search
+re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
+re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
@@ -131,10 +131,10 @@ while 1:
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer+=byte
 
-    buffer = re.sub(RE_CHATZILLA,'',buffer)
-    buffer = re.sub(RE_MIRC,'NICK ',buffer)
+    buffer = re_CHATZILLA('',buffer)
+    buffer = re_MIRC('NICK ',buffer)
 
-    if re.search(RE_CLIENT_NICK,buffer):
+    if re_CLIENT_NICK(buffer):
 
       if not nick:
         Nick = buffer.split(' ')[1]
@@ -178,11 +178,11 @@ while 1:
 
     elif not nick: pass
 
-    elif re.search(RE_CLIENT_PRIVMSG_NOTICE_TOPIC_PART,buffer):
+    elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
 
       cmd = buffer.split(' ',1)[0].upper()
       dst = buffer.split(' ',2)[1]
-      msg = re.split(RE_SPLIT,buffer,2)[2]
+      msg = re_SPLIT(buffer,2)[2]
 
       if dst[0] == '#':
         if len(dst)>CHANNELLEN:
@@ -216,30 +216,30 @@ while 1:
 
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
-    elif re.search(RE_CLIENT_PING,buffer):
-      dst = re.split(RE_SPLIT,buffer)[1]
+    elif re_CLIENT_PING(buffer):
+      dst = re_SPLIT(buffer)[1]
       try_write(wr,':'+serv+' PONG '+serv+' :'+dst+'\n')
 
-    elif re.search(RE_CLIENT_MODE_CHANNEL_ARG,buffer):
+    elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = buffer.split(' ')[1]
       try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
       try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(time.time()))+'\n')
 
-    elif re.search(RE_CLIENT_MODE_NICK,buffer):
+    elif re_CLIENT_MODE_NICK(buffer):
       dst = buffer.split(' ')[1]
       try_write(wr,':'+serv+' 221 '+dst+' :+i\n')
 
-    elif re.search(RE_CLIENT_MODE_NICK_ARG,buffer):
+    elif re_CLIENT_MODE_NICK_ARG(buffer):
       dst = buffer.split(' ')[1]
       try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n')
 
-    elif re.search(RE_CLIENT_AWAY_OFF,buffer):
+    elif re_CLIENT_AWAY_OFF(buffer):
       try_write(wr,':'+serv+' 305 '+Nick+' :WB, :-)\n')
 
-    elif re.search(RE_CLIENT_AWAY_ON,buffer):
+    elif re_CLIENT_AWAY_ON(buffer):
       try_write(wr,':'+serv+' 306 '+Nick+' :HB, :-)\n')
 
-    elif re.search(RE_CLIENT_WHO,buffer):
+    elif re_CLIENT_WHO(buffer):
 
       dst = buffer.split(' ',2)[1].lower()
 
@@ -248,7 +248,7 @@ while 1:
           try_write(wr,':'+serv+' 352 '+Nick+' '+dst+' '+src+' '+serv+' '+src+' '+src+' H :0 '+src+'\n')
       try_write(wr,':'+serv+' 315 '+Nick+' '+dst+' :EOF WHO\n')
 
-    elif re.search(RE_CLIENT_INVITE,buffer):
+    elif re_CLIENT_INVITE(buffer):
 
       dst = buffer.split(' ')[1]
       msg = buffer.split(' ')[2]
@@ -264,9 +264,9 @@ while 1:
       try_write(wr,':'+serv+' 341 '+Nick+' '+dst+' '+msg+'\n')
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n')
 
-    elif re.search(RE_CLIENT_JOIN,buffer):
+    elif re_CLIENT_JOIN(buffer):
 
-      dst = re.split(RE_SPLIT,buffer,2)[1].lower()
+      dst = re_SPLIT(buffer,2)[1].lower()
 
       for dst in dst.split(','):
 
@@ -302,7 +302,7 @@ while 1:
 
         channel_struct[dst]['names'].append(nick)
 
-    elif re.search(RE_CLIENT_PART,buffer):
+    elif re_CLIENT_PART(buffer):
 
       dst = buffer.split(' ')[1].lower()
 
@@ -312,7 +312,7 @@ while 1:
           channels.remove(dst)
           channel_struct[dst]['names'].remove(nick)
 
-    elif re.search(RE_CLIENT_LIST,buffer):
+    elif re_CLIENT_LIST(buffer):
 
       try_write(wr,':'+serv+' 321 '+Nick+' channel :users name\n')
 
@@ -324,9 +324,9 @@ while 1:
 
       try_write(wr,':'+serv+' 323 '+Nick+' :EOF LIST\n')
 
-    elif re.search(RE_CLIENT_QUIT,buffer): sock_close(15,0)
+    elif re_CLIENT_QUIT(buffer): sock_close(15,0)
 
-    elif re.search(RE_CLIENT_USER,buffer): pass
+    elif re_CLIENT_USER(buffer): pass
 
     else:
       buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
@@ -340,14 +340,14 @@ while 1:
     if not buffer: break
 
     buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
-    buffer = re.sub(RE_BUFFER_X02_X0F,'',buffer)
-    buffer = re.sub(RE_BUFFER_CTCP_ACTION,'*',buffer)
-    buffer = re.sub(RE_BUFFER_COLOUR,'',buffer)
+    buffer = re_BUFFER_X02_X0F('',buffer)
+    buffer = re_BUFFER_CTCP_DCC('*',buffer)
+    buffer = re_BUFFER_COLOUR('',buffer)
     buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]+'\n'
     buffer = buffer.replace("\\'","'")
     buffer = buffer.replace('\\\\','\\')
 
-    if re.search(RE_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART,buffer):
+    if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
 
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
       if len(src)>NICKLEN: continue
@@ -406,7 +406,7 @@ while 1:
 
       if dst == nick or dst in channels: try_write(wr,buffer)
 
-    elif re.search(RE_SERVER_JOIN,buffer):
+    elif re_SERVER_JOIN(buffer):
 
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
       if len(src)>NICKLEN: continue
@@ -446,7 +446,7 @@ while 1:
 
         channel_struct[dst]['names'].append(src)
 
-    elif re.search(RE_SERVER_QUIT,buffer):
+    elif re_SERVER_QUIT(buffer):
 
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
       if src == nick: continue
@@ -464,7 +464,7 @@ while 1:
             try_write(wr,buffer)
             cmd = '\x00'
 
-    elif re.search(RE_SERVER_KICK,buffer):
+    elif re_SERVER_KICK(buffer):
 
       src = buffer.split(' ',4)[3].lower()
       if len(src)>NICKLEN: continue
