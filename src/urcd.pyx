@@ -12,7 +12,7 @@ import sys
 import re
 import os
 
-RE = 'A-Z0-9^(\)\-_{\}[\]|'
+RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
 RE_SPLIT = re.compile(' +:?',re.IGNORECASE)
 RE_CHATZILLA = re.compile(' $',re.IGNORECASE)
 RE_MIRC = re.compile('^NICK :',re.IGNORECASE)

@@ -12,9 +12,20 @@ import sys
 import re
 import os
 
+RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
+RE_CLIENT_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',re.IGNORECASE)
+RE_CLIENT_PART = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ PART #['+RE+']+( :)?',re.IGNORECASE)
+RE_CLIENT_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT( :)?',re.IGNORECASE)
+RE_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE)
+RE_CLIENT_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',re.IGNORECASE)
+RE_CLIENT_KICK = re.compile('^:.+ KICK #['+RE+']+ ['+RE+']+',re.IGNORECASE)
+RE_BUFFER_X02_X0F = re.compile('[\x02\x0f]',re.IGNORECASE)
+RE_BUFFER_CTCP_ACTION = re.compile('\x01(ACTION )?',re.IGNORECASE)
+RE_BUFFER_COLOUR = re.compile('\x03[0-9]?[0-9]?((?<=[0-9]),[0-9]?[0-9]?)?',re.IGNORECASE)
+RE_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',re.IGNORECASE)
+
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 user = str(os.getpid())
-RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
 nick = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],64)
@@ -62,7 +73,6 @@ sock.bind(str(os.getpid()))
 sock.setblocking(0)
 sd=sock.fileno()
 
-# why doesn't python have pollfd.revents?
 poll=select.poll()
 poll.register(rd,select.POLLIN|select.POLLPRI)
 poll.register(sd,select.POLLIN)
@@ -89,19 +99,17 @@ def sock_write(buffer):
     except:
       pass
 
-def EOF():
-  global EOF
+def INIT():
+  global INIT
+  INIT = 0
 
   for cmd in auto_cmd:
     time.sleep(len(auto_cmd))
     try_write(wr,cmd+'\n')
 
   for dst in channels:
-    time.sleep(len(channels))
+    time.sleep(len(channels)*2)
     try_write(wr,'JOIN '+dst+'\n')
-
-  del EOF
-  EOF = 0
 
 try_write(wr,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n')
 try_write(wr,'NICK '+nick+'\n')
@@ -121,34 +129,28 @@ while 1:
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer+=byte
 
-    # PRIVMSG, NOTICE, TOPIC
-    if re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
+    if re.search(RE_CLIENT_PRIVMSG_NOTICE_TOPIC,buffer):
       src = buffer[1:].split('!',1)[0]
       if src == nick: continue
       sock_write(buffer+'\n')
 
-    # PART
-    elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ PART #['+RE+']+( :)?',buffer.upper()):
+    elif re.search(RE_CLIENT_PART,buffer):
       if len(buffer.split(' :'))<2: buffer += ' :'
       sock_write(buffer+'\n')
 
-    # QUIT
-    elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT( :)?',buffer.upper()):
+    elif re.search(RE_CLIENT_QUIT,buffer):
       if len(buffer.split(' :'))<2: buffer += ' :'
       sock_write(buffer+'\n')
 
-    # PING
-    elif re.search('^PING :?.+$',buffer.upper()):
+    elif re.search(RE_CLIENT_PING,buffer):
       dst = buffer.split(' ',1)[1]
       try_write(wr,'PONG '+dst+'\n')
 
-    # JOIN
-    elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',buffer.upper()):
+    elif re.search(RE_CLIENT_JOIN,buffer):
       sock_write(buffer+'\n')
       dst = buffer.split(':')[2].lower()
       if not dst in channels: channels.append(dst)
 
-    # NICK
     elif re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
       nick = buffer.split(' ')[2]
 
@@ -156,8 +158,7 @@ while 1:
       nick+='_'
       try_write(wr,'NICK '+nick+'\n')
 
-    # KICK
-    elif re.search('^:.+ KICK #['+RE+']+ ['+RE+']+',buffer.upper()):
+    elif re.search(RE_CLIENT_KICK,buffer):
 
       if len(buffer.split(' :'))<2: buffer += ' :'
 
@@ -168,13 +169,12 @@ while 1:
         try_write(wr,'JOIN '+dst+'\n')
         channels.remove(dst)
 
-    # INVITE
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
       dst = buffer.split(':',2)[2].lower()
       if not dst in channels:
         try_write(wr,'JOIN '+dst+'\n')
 
-    EOF() if EOF else EOF
+    if INIT: INIT()
 
   while server_revents():
 
@@ -184,14 +184,14 @@ while 1:
     if not buffer: break
 
     buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
-    buffer = re.sub('[\x02\x0f]','',buffer)
-    buffer = re.sub('\x01(ACTION )?','*',buffer) # contains potential irssi bias
-    buffer = re.sub('\x03[0-9]?[0-9]?((?<=[0-9]),[0-9]?[0-9]?)?','',buffer)
+    buffer = re.sub(RE_BUFFER_X02_X0F,'',buffer)
+    buffer = re.sub(RE_BUFFER_CTCP_ACTION,'*',buffer)
+    buffer = re.sub(RE_BUFFER_COLOUR,'',buffer)
     buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]
     buffer = buffer.replace("\\'","'")
     buffer = buffer.replace('\\\\','\\')
 
-    if re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',buffer.upper()):
+    if re.search(RE_SERVER_PRIVMSG_NOTICE_TOPIC,buffer):
       dst = buffer.split(' ',3)[2].lower()
       if dst in channels:
         cmd = buffer.split(' ',3)[1].upper()
