@@ -99,8 +99,9 @@ def sock_write(buffer):
     except:
       pass
 
-def EOF():
-  global EOF
+def INIT():
+  global INIT
+  INIT = 0
 
   for cmd in auto_cmd:
     time.sleep(len(auto_cmd))
@@ -109,9 +110,6 @@ def EOF():
   for dst in channels:
     time.sleep(len(channels)*2)
     try_write(wr,'JOIN '+dst+'\n')
-
-  del EOF
-  EOF = 0
 
 try_write(wr,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n')
 try_write(wr,'NICK '+nick+'\n')
@@ -176,7 +174,7 @@ while 1:
       if not dst in channels:
         try_write(wr,'JOIN '+dst+'\n')
 
-    EOF() if EOF else EOF
+    if INIT: INIT()
 
   while server_revents():
 
