@@ -343,7 +343,7 @@ while 1:
     buffer = re_BUFFER_X02_X0F('',buffer)
     buffer = re_BUFFER_CTCP_DCC('*',buffer)
     buffer = re_BUFFER_COLOUR('',buffer)
-    buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-4]+'\n'
+    buffer = str({str():buffer})[6:-4]+'\n'
     buffer = buffer.replace("\\'","'")
     buffer = buffer.replace('\\\\','\\')
 
