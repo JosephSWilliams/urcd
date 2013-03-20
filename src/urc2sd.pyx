@@ -100,6 +100,9 @@ def sock_write(buffer):
       pass
 
 def INIT():
+
+  if poll(8192): return
+
   global INIT
   INIT = 0
 
