@@ -34,9 +34,6 @@ main(int argc, char **argv)
     exit(64);
   }
 
-  int wr;
-  if (getenv("CURVECPCLIENT")) wr = 1; else wr = 7;
-
   char buffer[1024] = {0};
   char user[UNIX_PATH_MAX] = {0};
   if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
@@ -81,6 +78,6 @@ main(int argc, char **argv)
     if (n<1) sock_close(7);
     if (!path_len) continue;
     if (buffer[n-1] != '\n') continue;
-    if (write(wr,buffer,n)<0) sock_close(8);
+    if (write(7,buffer,n)<0) sock_close(8);
   }
 }

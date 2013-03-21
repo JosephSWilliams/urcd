@@ -11,8 +11,8 @@ printf $5 > /services/urcd-curvecpsend-"$1:$2"/pubkey || exit 1
 
 printf \
 "#!/bin/sh -e
-export CURVECPCLIENT=1
-exec curvecpclient \`cat serv\` \`cat pubkey\` $1 $2 01110101011100100110001101100100 curvecpmessage ./urcsend $3\n" > \
+export TCPCLIENT=1
+exec curvecpclient \`cat serv\` \`cat pubkey\` $1 $2 01110101011100100110001101100100 curvecpmessage -c ./urcsend $3\n" > \
 /services/urcd-curvecpsend-"$1:$2"/run || exit
 
 chmod +x /services/urcd-curvecpsend-"$1:$2"/run || exit 1
