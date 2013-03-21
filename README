@@ -7,7 +7,7 @@ depends:
   sh, gcc
 
 recommends:
-  python-dev(>=2.6), cython(>=0.17.3),
+  python-dev(>=2.6), cython(>=0.18.0),
   nacl(curvecp support), nacltaia-otr
 
 install:
