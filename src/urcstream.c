@@ -34,9 +34,8 @@ main(int argc, char **argv)
     exit(64);
   }
 
-  int rd, wr = 1;
-  if (getenv("TCPCLIENT")) wr += 6;
-  rd = wr - 1;
+  int rd = 0, wr = 1;
+  if (getenv("TCPCLIENT")){ rd = 6; wr = 7; }
 
   char buffer[1024] = {0};
   char user[UNIX_PATH_MAX] = {0};
