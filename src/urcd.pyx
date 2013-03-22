@@ -416,7 +416,9 @@ while 1:
               del channel_struct[dst]
               break
 
-        channel_struct[ buffer.split(':')[2].split('\n',1)[0].lower() ] = dict(
+          dst = buffer.split(':')[2].split('\n',1)[0].lower()
+
+        channel_struct[dst] = dict(
           names = collections.deque([],CHANLIMIT),
           topic = None,
         )
