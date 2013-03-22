@@ -136,7 +136,7 @@ while 1:
       byte = os.read(rd,1)
       if byte == '': sock_close(15,0)
       if byte == '\n': break
-      if byte != '\r' and len(buffer)<768: buffer+=byte
+      if byte != '\r' and len(buffer)<768: buffer += byte
 
     if re_CLIENT_PRIVMSG_NOTICE_TOPIC(buffer):
       if buffer[1:].split('!',1)[0] == nick: continue
