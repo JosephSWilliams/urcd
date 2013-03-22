@@ -188,7 +188,7 @@ while 1:
 
     time.sleep(LIMIT)
 
-    buffer = os.read(sd,1024).split('\n')[0]
+    buffer = os.read(sd,1024).split('\n',1)[0]
     if not buffer: continue
 
     buffer = re_BUFFER_CTCP_DCC('',buffer)

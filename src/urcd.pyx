@@ -332,14 +332,14 @@ while 1:
     elif re_CLIENT_USER(buffer): pass
 
     else:
-      buffer = str({str():buffer})[6:][:len(str({str():buffer})[6:])-2]
+      buffer = str({str():buffer})[6:-2]
       buffer = buffer.replace("\\'","'")
       buffer = buffer.replace('\\\\','\\')
       try_write(wr,':'+serv+' NOTICE '+Nick+' :ERROR: '+buffer+'\n')
 
   while server_revents():
 
-    buffer = os.read(sd,1024).split('\n')[0]
+    buffer = os.read(sd,1024).split('\n',1)[0]
     if not buffer: continue
 
     buffer = re_BUFFER_CTCP_DCC('',buffer)
