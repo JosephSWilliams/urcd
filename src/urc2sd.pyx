@@ -191,7 +191,7 @@ while 1:
     buffer = os.read(sd,1024).split('\n',1)[0]
     if not buffer: continue
 
-    buffer = re_BUFFER_CTCP_DCC('',buffer)
+    buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:
       buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
