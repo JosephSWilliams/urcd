@@ -25,7 +25,6 @@ re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',re.IGNORECASE).search
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
-
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 
@@ -82,13 +81,13 @@ poll.register(rd,select.POLLIN|select.POLLPRI)
 poll.register(sd,select.POLLIN)
 poll=poll.poll
 
-client_events=select.poll()
-client_events.register(rd,select.POLLIN|select.POLLPRI)
-def client_revents(): return len(client_events.poll(0))
+client_revents=select.poll()
+client_revents.register(rd,select.POLLIN|select.POLLPRI)
+client_revents=client_revents.poll
 
-server_events=select.poll()
-server_events.register(sd,select.POLLIN)
-def server_revents(): return len(server_events.poll(0))
+server_revents=select.poll()
+server_revents.register(sd,select.POLLIN)
+server_revents=server_revents.poll
 
 def try_write(fd,buffer):
   try:
@@ -105,8 +104,7 @@ def sock_write(buffer):
 
 def INIT():
 
-  if poll(8192): return
-
+  if client_revents(8192): return
   global INIT
   INIT = 0
 
@@ -127,7 +125,7 @@ while 1:
 
   poll(-1)
 
-  if client_revents():
+  if client_revents(0):
 
     if not INIT: time.sleep(LIMIT)
 
@@ -180,11 +178,11 @@ while 1:
       if not dst in channels:
         try_write(wr,'JOIN '+dst+'\n')
 
-    if INIT:
-      INIT()
-      continue
+  if INIT:
+    INIT()
+    continue
 
-  while server_revents():
+  while server_revents(0):
 
     time.sleep(LIMIT)
 
