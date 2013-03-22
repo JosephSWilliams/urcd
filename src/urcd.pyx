@@ -61,9 +61,9 @@ def sock_close(sn,sf):
     pass
   if sn: sys.exit(0)
 
-signal.signal(1 ,sock_close)
-signal.signal(2 ,sock_close)
-signal.signal(15,sock_close)
+signal.signal(signal.SIGHUP,sock_close)
+signal.signal(signal.SIGINT,sock_close)
+signal.signal(signal.SIGTERM,sock_close)
 
 rd = 0
 if os.access('stdin',1):
@@ -85,7 +85,7 @@ os.setuid(uid)
 root = os.getcwd()
 del uid, gid
 
-sock=socket.socket(1,2)
+sock=socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
 sock_close(0,0)
 sock.bind(str(os.getpid()))
 sock.setblocking(0)
