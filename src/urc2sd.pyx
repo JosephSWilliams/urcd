@@ -19,12 +19,15 @@ re_CLIENT_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT( :)?',re.IG
 re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
 re_CLIENT_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_KICK = re.compile('^:.+ KICK #['+RE+']+ ['+RE+']+',re.IGNORECASE).search
-re_BUFFER_X02_X0F = re.compile('[\x02\x0f]',re.IGNORECASE).sub
-re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
-re_BUFFER_COLOUR = re.compile('\x03[0-9]?[0-9]?((?<=[0-9]),[0-9]?[0-9]?)?',re.IGNORECASE).sub
+re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
+re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',re.IGNORECASE).search
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
+
+COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
+UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
+
 user = str(os.getpid())
 nick = open('nick','rb').read().split('\n')[0]
 
@@ -185,16 +188,15 @@ while 1:
 
     time.sleep(LIMIT)
 
-    buffer = os.read(sd,1024)
-    if not buffer: break
+    buffer = os.read(sd,1024).split('\n')[0]
+    if not buffer: continue
 
-    buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
-    buffer = re_BUFFER_X02_X0F('',buffer)
-    buffer = re_BUFFER_CTCP_DCC('*',buffer)
-    buffer = re_BUFFER_COLOUR('',buffer)
-    buffer = str({str():buffer})[6:-4]+'\n'
-    buffer = buffer.replace("\\'","'")
-    buffer = buffer.replace('\\\\','\\')
+    buffer = re_BUFFER_CTCP_DCC('',buffer)
+    if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
+    if not UNICODE:
+      buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
+      buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
+    buffer += '\n'
 
     if re_SERVER_PRIVMSG_NOTICE_TOPIC(buffer):
       dst = buffer.split(' ',3)[2].lower()
