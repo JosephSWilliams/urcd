@@ -39,14 +39,12 @@ re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IG
 re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
-
+COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
+UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
-
-COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
-UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 
 nick = str()
 Nick = str()
@@ -98,13 +96,13 @@ poll.register(rd,select.POLLIN|select.POLLPRI)
 poll.register(sd,select.POLLIN)
 poll=poll.poll
 
-client_events=select.poll()
-client_events.register(rd,select.POLLIN|select.POLLPRI)
-def client_revents(): return len(client_events.poll(0))
+client_revents=select.poll()
+client_revents.register(rd,select.POLLIN|select.POLLPRI)
+client_revents=client_revents.poll
 
-server_events=select.poll()
-server_events.register(sd,select.POLLIN)
-def server_revents(): return len(server_events.poll(0))
+server_revents=select.poll()
+server_revents.register(sd,select.POLLIN)
+server_revents=server_revents.poll
 
 def try_write(fd,buffer):
   try:
@@ -123,7 +121,7 @@ while 1:
 
   poll(-1)
 
-  if client_revents():
+  if client_revents(0):
 
     time.sleep(LIMIT)
 
@@ -324,7 +322,7 @@ while 1:
       buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
       try_write(wr,':'+serv+' NOTICE '+Nick+' :ERROR: '+buffer+'\n')
 
-  while server_revents():
+  while server_revents(0):
 
     buffer = os.read(sd,1024).split('\n',1)[0]
     if not buffer: continue
