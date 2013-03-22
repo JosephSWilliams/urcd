@@ -13,6 +13,7 @@ import re
 import os
 
 RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
+re_SPLIT = re.compile(' +',re.IGNORECASE).split
 re_CLIENT_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) #['+RE+']+ :.*$',re.IGNORECASE).search
 re_CLIENT_PART = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ PART #['+RE+']+( :)?',re.IGNORECASE).search
 re_CLIENT_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT( :)?',re.IGNORECASE).search
@@ -114,7 +115,7 @@ def INIT():
     try_write(wr,cmd+'\n')
 
   for dst in channels:
-    time.sleep(len(channels)*2)
+    time.sleep(len(channels))
     try_write(wr,'JOIN '+dst+'\n')
 
 try_write(wr,
@@ -138,8 +139,7 @@ while 1:
       if byte != '\r' and len(buffer)<768: buffer+=byte
 
     if re_CLIENT_PRIVMSG_NOTICE_TOPIC(buffer):
-      src = buffer[1:].split('!',1)[0]
-      if src == nick: continue
+      if buffer[1:].split('!',1)[0] == nick: continue
       sock_write(buffer+'\n')
 
     elif re_CLIENT_PART(buffer):
@@ -151,8 +151,7 @@ while 1:
       sock_write(buffer+'\n')
 
     elif re_CLIENT_PING(buffer):
-      dst = buffer.split(' ',1)[1]
-      try_write(wr,'PONG '+dst+'\n')
+      try_write(wr,'PONG '+re_SPLIT(buffer,1)[1]+'\n')
 
     elif re_CLIENT_JOIN(buffer):
       sock_write(buffer+'\n')
@@ -160,7 +159,7 @@ while 1:
       if not dst in channels: channels.append(dst)
 
     elif re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
-      nick = buffer.split(' ')[2]
+      nick = re_SPLIT(buffer)[2]
 
     elif re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
       nick+='_'
@@ -172,13 +171,12 @@ while 1:
 
       sock_write(buffer+'\n')
 
-      if buffer.split(' ')[3].lower() == nick.lower():
-        dst = buffer.split(' ')[2].lower()
-        try_write(wr,'JOIN '+dst+'\n')
+      if re_SPLIT(buffer,4)[3].lower() == nick.lower():
+        try_write(wr,'JOIN '+re_SPLIT(buffer,4)[2]+'\n')
         channels.remove(dst)
 
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
-      dst = buffer.split(':',2)[2].lower()
+      dst = buffer[1:].split(':',1)[1].lower()
       if not dst in channels:
         try_write(wr,'JOIN '+dst+'\n')
 
@@ -199,9 +197,9 @@ while 1:
     buffer += '\n'
 
     if re_SERVER_PRIVMSG_NOTICE_TOPIC(buffer):
-      dst = buffer.split(' ',3)[2].lower()
+      dst = re_SPLIT(buffer,3)[2].lower()
       if dst in channels:
-        cmd = buffer.split(' ',3)[1].upper()
+        cmd = re_SPLIT(buffer,3)[1].upper()
         src = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
         msg = buffer.split(':',2)[2]
         buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'

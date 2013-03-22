@@ -140,7 +140,7 @@ while 1:
     if re_CLIENT_NICK(buffer):
 
       if not nick:
-        Nick = buffer.split(' ')[1]
+        Nick = buffer.split(' ',1)[1]
         nick = Nick.lower()
 
         if len(nick)>NICKLEN:
@@ -163,7 +163,7 @@ while 1:
         continue
 
       src  = nick
-      Nick = buffer.split(' ')[1]
+      Nick = buffer.split(' ',1)[1]
       nick = Nick.lower()
 
       if len(nick)>NICKLEN:
@@ -183,9 +183,9 @@ while 1:
 
     elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
 
-      cmd = buffer.split(' ',1)[0].upper()
-      dst = buffer.split(' ',2)[1]
-      msg = re_SPLIT(buffer,2)[2]
+      cmd, dst, msg = re_SPLIT(buffer,2)
+      cmd = cmd.upper()
+      dst = dst.lower()
 
       if dst[0] == '#':
         if len(dst)>CHANNELLEN:
@@ -220,20 +220,17 @@ while 1:
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
     elif re_CLIENT_PING(buffer):
-      dst = re_SPLIT(buffer)[1]
-      try_write(wr,':'+serv+' PONG '+serv+' :'+dst+'\n')
+      try_write(wr,':'+serv+' PONG '+serv+' :'+re_SPLIT(buffer,2)[1]+'\n')
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
-      dst = buffer.split(' ')[1]
+      dst = re_SPLIT(buffer,2)[1]
       try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
       try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(time.time()))+'\n')
 
     elif re_CLIENT_MODE_NICK(buffer):
-      dst = buffer.split(' ')[1]
-      try_write(wr,':'+serv+' 221 '+dst+' :+i\n')
+      try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+i\n')
 
     elif re_CLIENT_MODE_NICK_ARG(buffer):
-      dst = buffer.split(' ')[1]
       try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n')
 
     elif re_CLIENT_AWAY_OFF(buffer):
@@ -243,9 +240,7 @@ while 1:
       try_write(wr,':'+serv+' 306 '+Nick+' :HB, :-)\n')
 
     elif re_CLIENT_WHO(buffer):
-
-      dst = buffer.split(' ',2)[1].lower()
-
+      dst = re_SPLIT(buffer,2)[1].lower()
       if dst in channel_struct.keys():
         for src in channel_struct[dst]['names']:
           try_write(wr,':'+serv+' 352 '+Nick+' '+dst+' '+src+' '+serv+' '+src+' '+src+' H :0 '+src+'\n')
@@ -253,8 +248,7 @@ while 1:
 
     elif re_CLIENT_INVITE(buffer):
 
-      dst = buffer.split(' ')[1]
-      msg = buffer.split(' ')[2]
+      dst, msg = re_SPLIT(buffer,2)[1:3]
 
       if len(dst)>NICKLEN:
         try_write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
@@ -269,9 +263,7 @@ while 1:
 
     elif re_CLIENT_JOIN(buffer):
 
-      dst = re_SPLIT(buffer,2)[1].lower()
-
-      for dst in dst.split(','):
+      for dst in re_SPLIT(buffer,2)[1].lower().split(','):
 
         if len(channels)>CHANLIMIT:
           try_write(wr,'ERROR : EMSGSIZE:CHANLIMIT='+str(CHANLIMIT)+'\n')
@@ -306,10 +298,7 @@ while 1:
         channel_struct[dst]['names'].append(nick)
 
     elif re_CLIENT_PART(buffer):
-
-      dst = buffer.split(' ')[1].lower()
-
-      for dst in dst.split(','):
+      for dst in re_SPLIT(buffer,2)[1].lower().split(','):
         if dst in channels:
           try_write(wr,':'+Nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
           channels.remove(dst)
@@ -332,9 +321,7 @@ while 1:
     elif re_CLIENT_USER(buffer): pass
 
     else:
-      buffer = str({str():buffer})[6:-2]
-      buffer = buffer.replace("\\'","'")
-      buffer = buffer.replace('\\\\','\\')
+      buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
       try_write(wr,':'+serv+' NOTICE '+Nick+' :ERROR: '+buffer+'\n')
 
   while server_revents():
@@ -354,8 +341,7 @@ while 1:
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
       if len(src)>NICKLEN: continue
 
-      cmd = buffer.split(' ',3)[1].upper()
-      dst = buffer.split(' ',3)[2].lower()
+      cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
 
       if dst[0] == '#':
 
@@ -370,19 +356,19 @@ while 1:
                 del channel_struct[dst]
                 break
 
-            dst = buffer.split(' ',3)[2].lower()
+            dst = re_SPLIT(buffer,3)[2].lower()
 
           channel_struct[dst] = dict(
             names = collections.deque([],CHANLIMIT),
             topic = None,
           )
 
-        if cmd == 'TOPIC':
+        if cmd == 'topic':
           msg = buffer.split(':',2)[2].split('\n',1)[0]
           if len(msg)>TOPICLEN: continue
           channel_struct[dst]['topic'] = msg
 
-        if cmd == 'PART':
+        if cmd == 'part':
           if src != nick and src in channel_struct[dst]['names']:
             channel_struct[dst]['names'].remove(src)
             try_write(wr,buffer)
@@ -392,7 +378,7 @@ while 1:
 
           if dst in channels:
 
-            try_write(wr,buffer.split(' ',1)[0]+' JOIN :'+dst+'\n')
+            try_write(wr,re_SPLIT(buffer,1)[0]+' JOIN :'+dst+'\n')
 
             if len(channel_struct[dst]['names'])==CHANLIMIT:
 
@@ -404,7 +390,7 @@ while 1:
 
           channel_struct[dst]['names'].append(src)
 
-      elif cmd == 'PART': continue
+      elif cmd == 'part': continue
 
       if dst == nick or dst in channels: try_write(wr,buffer)
 
@@ -425,9 +411,7 @@ while 1:
               del channel_struct[dst]
               break
 
-          dst = buffer.split(':')[2].split('\n',1)[0].lower()
-
-        channel_struct[dst] = dict(
+        channel_struct[ buffer.split(':')[2].split('\n',1)[0].lower() ] = dict(
           names = collections.deque([],CHANLIMIT),
           topic = None,
         )
@@ -455,7 +439,6 @@ while 1:
       if len(src)>NICKLEN: continue
 
       cmd = '\x01'
-
       for dst in channel_struct.keys():
 
         if src in channel_struct[dst]['names']:
@@ -468,10 +451,9 @@ while 1:
 
     elif re_SERVER_KICK(buffer):
 
-      src = buffer.split(' ',4)[3].lower()
-      if len(src)>NICKLEN: continue
+      dst, src = re_SPLIT(buffer.lower(),4)[2:4]
 
-      dst = buffer.split(' ',3)[2].lower()
+      if len(src)>NICKLEN: continue
       if len(dst)>CHANNELLEN: continue
 
       if not dst in channel_struct.keys():
@@ -483,7 +465,7 @@ while 1:
               del channel_struct[dst]
               break
 
-          dst = buffer.split(' ',3)[2].lower()
+          dst = re_SPLIT(buffer,3)[2].lower()
 
         channel_struct[dst] = dict(
           names = collections.deque([],CHANLIMIT),
@@ -496,5 +478,4 @@ while 1:
           if src in channel_struct[dst]['names']:
             channel_struct[dst]['names'].remove(src)
 
-        dst = buffer.split(' ',3)[2].lower()
-        if dst in channels: try_write(wr,buffer)
+        if re_SPLIT(buffer,3)[2].lower() in channels: try_write(wr,buffer)
