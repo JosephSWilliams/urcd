@@ -129,7 +129,7 @@ while 1:
 
   if client_revents():
 
-    time.sleep(LIMIT)
+    if not INIT: time.sleep(LIMIT)
 
     buffer = str()
     while 1:
@@ -180,7 +180,9 @@ while 1:
       if not dst in channels:
         try_write(wr,'JOIN '+dst+'\n')
 
-    if INIT: INIT()
+    if INIT:
+      INIT()
+      continue
 
   while server_revents():
 
