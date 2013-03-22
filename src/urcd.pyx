@@ -132,7 +132,7 @@ while 1:
       byte = os.read(rd,1)
       if byte == '': sock_close(15,0)
       if byte == '\n': break
-      if byte != '\r' and len(buffer)<768: buffer+=byte
+      if byte != '\r' and len(buffer)<768: buffer += byte
 
     buffer = re_CHATZILLA('',buffer)
     buffer = re_MIRC('NICK ',buffer)
