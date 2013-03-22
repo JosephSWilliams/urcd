@@ -64,6 +64,7 @@ def sock_close(sn,sf):
 signal.signal(signal.SIGHUP,sock_close)
 signal.signal(signal.SIGINT,sock_close)
 signal.signal(signal.SIGTERM,sock_close)
+signal.signal(signal.SIGCHLD,sock_close)
 
 rd = 0
 if os.access('stdin',1):
@@ -104,6 +105,12 @@ server_revents=select.poll()
 server_revents.register(sd,select.POLLIN)
 server_revents=server_revents.poll
 
+def try_read(fd,buffer_len):
+  try:
+    return os.read(fd,buffer_len)
+  except:
+    sock_close(15,0)
+
 def try_write(fd,buffer):
   try:
     os.write(fd,buffer)
@@ -127,7 +134,7 @@ while 1:
 
     buffer = str()
     while 1:
-      byte = os.read(rd,1)
+      byte = try_read(rd,1)
       if byte == '': sock_close(15,0)
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
@@ -324,7 +331,7 @@ while 1:
 
   while server_revents(0):
 
-    buffer = os.read(sd,1024).split('\n',1)[0]
+    buffer = try_read(sd,1024).split('\n',1)[0]
     if not buffer: continue
 
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
