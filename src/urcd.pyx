@@ -31,19 +31,22 @@ re_CLIENT_PART = re.compile('^PART #['+RE+',]+$',re.IGNORECASE).search
 re_CLIENT_LIST = re.compile('^LIST',re.IGNORECASE).search
 re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
 re_CLIENT_USER = re.compile('^USER .*$',re.IGNORECASE).search
-re_BUFFER_X02_X0F = re.compile('[\x02\x0f]',re.IGNORECASE).sub
-re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
-re_BUFFER_COLOUR = re.compile('\x03[0-9]?[0-9]?((?<=[0-9]),[0-9]?[0-9]?)?',re.IGNORECASE).sub
+re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
+re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) #?['+RE+']+ :.*$',re.IGNORECASE).search
 re_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',re.IGNORECASE).search
 re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
 re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
+
 NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
+
+COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
+UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 
 nick = str()
 Nick = str()
@@ -149,7 +152,7 @@ while 1:
           ':'+serv+' 002 '+Nick+' :'+Nick+'!'+user+'@'+serv+'\n'
           ':'+serv+' 003 '+Nick+' :'+serv+'\n'
           ':'+serv+' 004 '+Nick+' '+serv+' 0.0 + :+\n'
-          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+':\n'
+          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+' COLOUR='+str(COLOUR)+' UNICODE='+str(UNICODE)+':\n'
           ':'+serv+' 254 '+Nick+' '+str(CHANLIMIT)+' :CHANNEL(S)\n'
           ':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n'
         )
@@ -336,16 +339,15 @@ while 1:
 
   while server_revents():
 
-    buffer = os.read(sd,1024)
-    if not buffer: break
+    buffer = os.read(sd,1024).split('\n')[0]
+    if not buffer: continue
 
-    buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
-    buffer = re_BUFFER_X02_X0F('',buffer)
-    buffer = re_BUFFER_CTCP_DCC('*',buffer)
-    buffer = re_BUFFER_COLOUR('',buffer)
-    buffer = str({str():buffer})[6:-4]+'\n'
-    buffer = buffer.replace("\\'","'")
-    buffer = buffer.replace('\\\\','\\')
+    buffer = re_BUFFER_CTCP_DCC('',buffer)
+    if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
+    if not UNICODE:
+      buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
+      buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
+    buffer += '\n'
 
     if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
 
