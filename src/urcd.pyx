@@ -480,9 +480,7 @@ while 1:
         )
 
       if src != nick:
-
-        for dst in channel_struct.keys():
-          if src in channel_struct[dst]['names']:
-            channel_struct[dst]['names'].remove(src)
-
-        if re_SPLIT(buffer,3)[2].lower() in channels: try_write(wr,buffer)
+        dst = re_SPLIT(buffer,3)[2].lower()
+        if src in channel_struct[dst]['names']:
+          channel_struct[dst]['names'].remove(src)
+          if dst in channels: try_write(wr,buffer)
