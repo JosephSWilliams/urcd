@@ -182,8 +182,7 @@ while 1:
 
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :#['+RE+']+$',buffer.upper()):
       dst = buffer[1:].split(':',1)[1].lower()
-      if not dst in channels:
-        try_write(wr,'JOIN '+dst+'\n')
+      if not dst in channels: try_write(wr,'JOIN '+dst+'\n')
 
   if INIT:
     INIT()
