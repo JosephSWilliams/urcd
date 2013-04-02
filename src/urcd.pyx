@@ -157,7 +157,7 @@ while 1:
           ':'+serv+' 002 '+Nick+' :'+Nick+'!'+user+'@'+serv+'\n'
           ':'+serv+' 003 '+Nick+' :'+serv+'\n'
           ':'+serv+' 004 '+Nick+' '+serv+' 0.0 + :+\n'
-          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+' COLOUR='+str(COLOUR)+' UNICODE='+str(UNICODE)+':\n'
+          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CASEMAPPING=ascii CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+' COLOUR='+str(COLOUR)+' UNICODE='+str(UNICODE)+':\n'
           ':'+serv+' 254 '+Nick+' '+str(CHANLIMIT)+' :CHANNEL(S)\n'
           ':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n'
         )
