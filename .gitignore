@@ -5,6 +5,7 @@ urcd
 urc2sd
 urcrecv
 urcsend
+urccache
 urcstream
 socket
 supervise
