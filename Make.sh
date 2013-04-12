@@ -23,6 +23,8 @@ gcc src/urchub.c -o urchub || exit 1
 
 gcc src/urchubstream.c -o urchubstream || exit 1
 
+gcc src/urcstream2hub.c -o urcstream2hub -l tai || exit 1
+
 gcc src/urccache.c -o urccache -l tai -l nacl /usr/lib/randombytes.o || exit 1
 
 gcc src/ucspi-client2server.c -o ucspi-client2server || exit 1

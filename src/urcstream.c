@@ -55,6 +55,7 @@ main(int argc, char **argv)
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
+  int sockfd;
   struct sockaddr_un sock;
   memset(&sock,0,sizeof(sock));
   sock.sun_family = AF_UNIX;
@@ -65,19 +66,20 @@ main(int argc, char **argv)
     exit(signum);
   } signal(SIGINT,sock_close); signal(SIGHUP,sock_close); signal(SIGTERM,sock_close); 
 
-  if (socket(AF_UNIX,SOCK_DGRAM,0)!=3) exit(2);
+  sockfd = socket(AF_UNIX,SOCK_DGRAM,0);
+  if (socket(AF_UNIX,SOCK_DGRAM,0)<0) exit(2);
   n = 1;
-  if (setsockopt(3,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
+  if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   int userlen = strlen(user);
   if (userlen > UNIX_PATH_MAX) exit(4);
   memmove(&sock.sun_path,user,userlen+1);
   unlink(sock.sun_path);
-  if (bind(3,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(5);
-  if (fcntl(3,F_SETFL,O_NONBLOCK)<0) sock_close(6);
+  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(5);
+  if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) sock_close(6);
 
   struct pollfd fds[2];
   fds[0].fd = rd; fds[0].events = POLLIN | POLLPRI;
-  fds[1].fd = 3; fds[1].events = POLLIN;
+  fds[1].fd = sockfd; fds[1].events = POLLIN;
 
   DIR *root;
   int pathlen;
@@ -112,14 +114,14 @@ main(int argc, char **argv)
         if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
         memset(paths.sun_path,0,UNIX_PATH_MAX);
         memmove(&paths.sun_path,path->d_name,pathlen);
-        sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
+        sendto(sockfd,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
       } closedir(root);
 
     }
 
     urcwrite: while (poll(fds+1,1,0))
     {
-      n = read(3,buffer,1024);
+      n = read(sockfd,buffer,1024);
       if (n<1) sock_close(9);
       if (buffer[n-1] != '\n') continue;
       if (write(wr,buffer,n)<0) sock_close(10);

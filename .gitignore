@@ -9,6 +9,7 @@ urcsend
 urccache
 urcstream
 urchubstream
+urcstream2hub
 socket
 supervise
 stdin

@@ -1,0 +1,26 @@
+#!/bin/sh
+[ -z $3 ] && \
+  echo $0' <addr> <port> </path/to/hub/socket/>' 1>&2 && \
+  exit 64
+
+mkdir -p /services/urcd-hubconnect-"$1:$2" || exit 1
+
+printf '#!/bin/sh -e\n' > \
+  /services/urcd-hubconnect-"$1:$2"/run || exit 1
+
+printf 'export TCPCLIENT=1\n' >> \
+  /services/urcd-hubconnect-"$1:$2"/run || exit 1
+
+printf "exec tcpclient $1 $2 ./urchubstream $3\n" >> \
+  /services/urcd-hubconnect-"$1:$2"/run || exit 1
+
+chmod +x /services/urcd-hubconnect-"$1:$2"/run || exit 1
+
+test -L /services/urcd-hubconnect-"$1:$2"/urchubstream || \
+  ln -s `pwd`/urchubstream /services/urcd-hubconnect-"$1:$2"/urchubstream || \
+  exit 1
+
+test -L /service/urcd-hubconnect-"$1:$2" || \
+  ln -s /services/urcd-hubconnect-"$1:$2" \
+    /service/urcd-hubconnect-"$1:$2" || \
+    exit 1

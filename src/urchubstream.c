@@ -71,7 +71,6 @@ main(int argc, char **argv)
   struct sockaddr_un hub;
   hub.sun_family = AF_UNIX;
   memmove(&hub.sun_path,"hub\0",4);
-  if (connect(3,(struct sockaddr*)&hub,sizeof(hub))<0) sock_close(7);
 
   int i, l;
 
@@ -83,27 +82,27 @@ main(int argc, char **argv)
     if (fds[0].revents)
     {
 
-      if (read(rd,buffer,2)<2) sock_close(8);
+      if (read(rd,buffer,2)<2) sock_close(7);
 
       n = 2;
       l = 2 + 16 + 8 + buffer[0] * 256 + buffer[1];
-      if (l>2+16+8+1024) sock_close(9);
+      if (l>2+16+8+1024) sock_close(8);
 
       while (n<l)
       {
         i = read(rd,buffer+n,l-n);
-        if (i<1) sock_close(10);
+        if (i<1) sock_close(9);
         n += i;
-      } if (write(3,buffer,n)<0) usleep(250000);
+      } if (sendto(3,buffer,n,0,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(250000);
 
     }
 
     while (poll(fds+1,1,0))
     {
       n = read(3,buffer,2+16+8+1024);
-      if (n<1) sock_close(11);
+      if (n<1) sock_close(10);
       if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
-      if (write(wr,buffer,n)<0) sock_close(12);
+      if (write(wr,buffer,n)<0) sock_close(11);
     }
 
   }
