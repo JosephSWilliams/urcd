@@ -14,7 +14,7 @@ struct taia *t;
 {
   struct timeval now;
   gettimeofday(&now,(struct timezone *) 0);
-  t->sec.x = 4611686018427387786ULL + (uint64) now.tv_sec; /* -128ULL */
+  t->sec.x = 4611686018427387914ULL - 128ULL + (uint64) now.tv_sec;
   t->nano = 1000 * now.tv_usec + 500;
   t->atto = 0;
 }
@@ -44,7 +44,7 @@ main(int argc, char **argv)
   while (1)
   {
 
-    if (read(0,buffer,2)<2) exit(1);
+    readbuffer: if (read(0,buffer,2)<2) exit(1);
 
     n = 0;
     l = 16 + 8 + buffer[0] * 256 + buffer[1];
@@ -59,10 +59,14 @@ main(int argc, char **argv)
     taia_slow(taia);
     taia_pack(taia,taia);
 
-    if (taia_less(buffer,taia))
+    for (i=0;i<16;++i)
     {
-      if (write(1,"\2",1)<1) exit(3);
-      continue;
+      if (taia[i] < buffer[i]) break;
+      if (taia[i] > buffer[i]) 
+      {
+        if (write(1,"\2",1)<1) exit(3);
+        goto readbuffer;
+      }
     }
 
     memcpy(buffer+l,salt,32);
