@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@ main(int argc, char **argv)
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
   struct sockaddr_un sock;
-  memset(&sock,0,sizeof(sock));
+  bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
 
   void sock_close(int signum)
@@ -57,7 +58,7 @@ main(int argc, char **argv)
   if (setsockopt(3,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   n = strlen(user);
   if (n > UNIX_PATH_MAX) exit(4);
-  memmove(&sock.sun_path,user,n+1);
+  memcpy(&sock.sun_path,user,n+1);
   unlink(sock.sun_path);
   if (bind(3,(struct sockaddr *)&sock,sizeof(sock.sun_family)+n)<0) exit(5);
   if (fcntl(3,F_SETFL,O_NONBLOCK)<0) sock_close(6);
@@ -73,7 +74,7 @@ main(int argc, char **argv)
   while (1)
   {
     poll(fds,1,-1);
-    memset(path.sun_path,0,UNIX_PATH_MAX);
+    bzero(path.sun_path,UNIX_PATH_MAX);
     n = recvfrom(3,buffer,1024,0,(struct sockaddr *)&path,&path_len);
     if (n<1) sock_close(7);
     if (!path_len) continue;
