@@ -18,25 +18,25 @@ re_CHATZILLA = re.compile(' $',re.IGNORECASE).sub
 re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
 re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
 re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
-re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) #?['+RE+']+ :.*$',re.IGNORECASE).search
-re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE #['+RE+']+( [-+a-zA-Z]+)?$',re.IGNORECASE).search
+re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
+re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE [#&!+]['+RE+']+( [-+a-zA-Z]+)?$',re.IGNORECASE).search
 re_CLIENT_MODE_NICK = re.compile('^MODE ['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_MODE_NICK_ARG = re.compile('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',re.IGNORECASE).search
 re_CLIENT_AWAY_OFF = re.compile('^AWAY ?$',re.IGNORECASE).search
 re_CLIENT_AWAY_ON = re.compile('^AWAY .+$',re.IGNORECASE).search
 re_CLIENT_WHO = re.compile('^WHO .+',re.IGNORECASE).search
-re_CLIENT_INVITE = re.compile('^INVITE ['+RE+']+ #['+RE+']+$',re.IGNORECASE).search
-re_CLIENT_JOIN = re.compile('^JOIN :?[#'+RE+',]+$',re.IGNORECASE).search
-re_CLIENT_PART = re.compile('^PART #['+RE+',]+$',re.IGNORECASE).search
+re_CLIENT_INVITE = re.compile('^INVITE ['+RE+']+ [#&!+]['+RE+']+$',re.IGNORECASE).search
+re_CLIENT_JOIN = re.compile('^JOIN :?([#&!+]['+RE+']+,?)+$',re.IGNORECASE).search
+re_CLIENT_PART = re.compile('^PART [#&!+]['+RE+',]+$',re.IGNORECASE).search
 re_CLIENT_LIST = re.compile('^LIST',re.IGNORECASE).search
 re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
 re_CLIENT_USER = re.compile('^USER .*$',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
-re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) #?['+RE+']+ :.*$',re.IGNORECASE).search
-re_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :#['+RE+']+$',re.IGNORECASE).search
+re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
 re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
-re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK #['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
@@ -157,7 +157,7 @@ while 1:
           ':'+serv+' 002 '+Nick+' :'+Nick+'!'+user+'@'+serv+'\n'
           ':'+serv+' 003 '+Nick+' :'+serv+'\n'
           ':'+serv+' 004 '+Nick+' '+serv+' 0.0 + :+\n'
-          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CASEMAPPING=ascii CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+' COLOUR='+str(COLOUR)+' UNICODE='+str(UNICODE)+':\n'
+          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CHANTYPES=#&!+ CASEMAPPING=ascii CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+' COLOUR='+str(COLOUR)+' UNICODE='+str(UNICODE)+':\n'
           ':'+serv+' 254 '+Nick+' '+str(CHANLIMIT)+' :CHANNEL(S)\n'
           ':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n'
         )
@@ -192,7 +192,7 @@ while 1:
       cmd = cmd.upper()
       dst = dst.lower()
 
-      if dst[0] == '#':
+      if dst[0] in ['#','&','!','+']:
         if len(dst)>CHANNELLEN:
           try_write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
           continue
@@ -209,7 +209,7 @@ while 1:
 
         try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
-        if dst[0] == '#':
+        if dst[0] in ['#','&','!','+']:
           if not dst in channel_struct.keys(): channel_struct[dst] = dict(
             names = collections.deque([],CHANLIMIT),
             topic = msg,
@@ -348,7 +348,7 @@ while 1:
 
       cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
 
-      if dst[0] == '#':
+      if dst[0] in ['#','&','!','+']:
 
         if len(dst)>CHANNELLEN: continue
 
