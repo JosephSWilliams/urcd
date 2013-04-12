@@ -1,0 +1,18 @@
+#!/bin/sh -e
+
+n=`ls /services/ | grep urcd-hub | wc -l`
+mkdir -p /services/urcd-hub$n
+mkdir -p /services/urcd-hub$n/socket/
+
+chown urcd /services/urcd-hub$n/socket/
+
+echo '#!/bin/sh -e' > /services/urcd-hub$n/run
+echo 'exec ./urchub ./urccache `pwd`/socket/' >> /services/urcd-hub$n/run
+chmod +x /services/urcd-hub$n/run
+
+test -L /services/urcd-hub$n/urchub || ln -s `pwd`/urchub /services/urcd-hub$n/urchub
+test -L /services/urcd-hub$n/urccache || ln -s `pwd`/urccache /services/urcd-hub$n/urccache
+test -L /service/urcd-hub$n || ln -s /services/urcd-hub$n /service/urcd-hub$n
+
+sleep 4
+svstat /service/urcd-hub$n
