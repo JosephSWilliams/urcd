@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -54,7 +55,7 @@ main(int argc, char **argv)
   int sockfd;
 
   struct sockaddr_un sock;
-  memset(&sock,0,sizeof(sock));
+  bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
 
   void sock_close(int signum)
@@ -69,7 +70,7 @@ main(int argc, char **argv)
   if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(4);
   int userlen = strlen(user);
   if (userlen > UNIX_PATH_MAX) exit(5);
-  memmove(&sock.sun_path,user,userlen+1);
+  memcpy(&sock.sun_path,user,userlen+1);
   unlink(sock.sun_path);
   if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(6);
   if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) sock_close(7);
@@ -94,7 +95,7 @@ main(int argc, char **argv)
 
     poll(fds,1,-1);
 
-    memset(recvpath.sun_path,0,UNIX_PATH_MAX);
+    bzero(recvpath.sun_path,UNIX_PATH_MAX);
     n = recvfrom(sockfd,buffer,65536,0,(struct sockaddr *)&recvpath,&recvpath_len);
     if (n<1) sock_close(8);
     if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
@@ -113,8 +114,8 @@ main(int argc, char **argv)
       if (sendpath_len > UNIX_PATH_MAX) continue;
       if ((sendpath_len == userlen) && (!memcmp(sendpath->d_name,user,userlen))) continue;
       if ((sendpath_len == strlen_recvpath) && (!memcmp(sendpath->d_name,recvpath.sun_path,strlen_recvpath))) continue;
-      memset(sendpaths.sun_path,0,UNIX_PATH_MAX);
-      memmove(&sendpaths.sun_path,sendpath->d_name,sendpath_len);
+      bzero(sendpaths.sun_path,UNIX_PATH_MAX);
+      memcpy(&sendpaths.sun_path,sendpath->d_name,sendpath_len);
       sendto(sockfd,buffer,n,0,(struct sockaddr *)&sendpaths,sizeof(sendpaths));
     } closedir(root);
 

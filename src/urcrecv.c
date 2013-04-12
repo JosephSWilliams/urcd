@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -41,8 +42,7 @@ main(int argc, char **argv)
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
   struct sockaddr_un sock;
-  memset(&sock,0,sizeof(sock));
-  memset(sock.sun_path,0,sizeof(sock.sun_path));
+  bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
 
   if (socket(AF_UNIX,SOCK_DGRAM,0)!=3) exit(1);
@@ -81,8 +81,8 @@ main(int argc, char **argv)
       if (path->d_name[0] == '.') continue;
       pathlen = strlen(path->d_name);
       if (pathlen > UNIX_PATH_MAX) continue;
-      memset(paths.sun_path,0,UNIX_PATH_MAX);
-      memmove(&paths.sun_path,path->d_name,pathlen);
+      bzero(paths.sun_path,UNIX_PATH_MAX);
+      memcpy(&paths.sun_path,path->d_name,pathlen);
       sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
     } closedir(root);
 
