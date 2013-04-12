@@ -3,14 +3,17 @@ urcd:
   af_unix relay chat daemon accessories...
 
 depends:
-  ucspi-tcp, python(>=2.6), daemontools,
-  sh, gcc
+  nacl, libtai, ucspi-tcp, python(>=2.6),
+  daemontools, sh, gcc
 
 recommends:
   python-dev(>=2.6), cython(>=0.18.0),
   nacl(curvecp support), nacltaia-otr
 
 install:
+  ./install-libtai.sh
+  ./install-nacl.sh
+
   useradd urcd
 
   # python2.6

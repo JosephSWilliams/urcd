@@ -19,3 +19,5 @@ auto_cmd
 nick
 ucspi-client2server
 ucspi-socks4aclient
+libtai-*
+nacl-*
