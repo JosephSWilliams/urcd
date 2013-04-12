@@ -69,7 +69,9 @@ main(int argc, char **argv)
   fds[1].fd = 3; fds[1].events = POLLIN;
 
   struct sockaddr_un hub;
+  memset(&hub,0,sizeof(hub));
   hub.sun_family = AF_UNIX;
+  memset(hub.sun_path,0,UNIX_PATH_MAX);
   memmove(&hub.sun_path,"hub\0",4);
 
   int i, l;
