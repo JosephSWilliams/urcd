@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -66,7 +67,7 @@ main(int argc, char **argv)
 
   int sockfd;
   struct sockaddr_un sock;
-  memset(&sock,0,sizeof(sock));
+  bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
 
   void sock_close(int signum)
@@ -81,7 +82,7 @@ main(int argc, char **argv)
   if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(6);
   int userlen = strlen(user);
   if (userlen > UNIX_PATH_MAX) exit(7);
-  memmove(&sock.sun_path,user,userlen+1);
+  memcpy(&sock.sun_path,user,userlen+1);
   unlink(sock.sun_path);
   if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(8);
   if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) sock_close(9);
@@ -91,10 +92,9 @@ main(int argc, char **argv)
   fds[1].fd = sockfd; fds[1].events = POLLIN;
 
   struct sockaddr_un hub;
-  memset(&hub,0,sizeof(hub));
+  bzero(&hub,sizeof(hub));
   hub.sun_family = AF_UNIX;
-  memset(hub.sun_path,0,UNIX_PATH_MAX);
-  memmove(&hub.sun_path,"hub\0",4);
+  memcpy(&hub.sun_path,"hub\0",4);
 
   while (1)
   {

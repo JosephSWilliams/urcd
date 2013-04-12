@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -45,7 +46,7 @@ main(int argc, char **argv)
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
   struct sockaddr_un sock;
-  memset(&sock,0,sizeof(sock));
+  bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
 
   void sock_close(int signum)
@@ -59,7 +60,7 @@ main(int argc, char **argv)
   if (setsockopt(3,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   int userlen = strlen(user);
   if (userlen > UNIX_PATH_MAX) exit(4);
-  memmove(&sock.sun_path,user,userlen+1);
+  memcpy(&sock.sun_path,user,userlen+1);
   unlink(sock.sun_path);
   if (bind(3,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(5);
   if (fcntl(3,F_SETFL,O_NONBLOCK)<0) sock_close(6);
@@ -69,10 +70,9 @@ main(int argc, char **argv)
   fds[1].fd = 3; fds[1].events = POLLIN;
 
   struct sockaddr_un hub;
-  memset(&hub,0,sizeof(hub));
+  bzero(&hub,sizeof(hub));
   hub.sun_family = AF_UNIX;
-  memset(hub.sun_path,0,UNIX_PATH_MAX);
-  memmove(&hub.sun_path,"hub\0",4);
+  memcpy(&hub.sun_path,"hub\0",4);
 
   int i, l;
 

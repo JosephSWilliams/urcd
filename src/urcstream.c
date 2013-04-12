@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -57,7 +58,7 @@ main(int argc, char **argv)
 
   int sockfd;
   struct sockaddr_un sock;
-  memset(&sock,0,sizeof(sock));
+  bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
 
   void sock_close(int signum)
@@ -72,7 +73,7 @@ main(int argc, char **argv)
   if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   int userlen = strlen(user);
   if (userlen > UNIX_PATH_MAX) exit(4);
-  memmove(&sock.sun_path,user,userlen+1);
+  memcpy(&sock.sun_path,user,userlen+1);
   unlink(sock.sun_path);
   if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(5);
   if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) sock_close(6);
@@ -112,8 +113,8 @@ main(int argc, char **argv)
         pathlen = strlen(path->d_name);
         if (pathlen > UNIX_PATH_MAX) continue;
         if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
-        memset(paths.sun_path,0,UNIX_PATH_MAX);
-        memmove(&paths.sun_path,path->d_name,pathlen);
+        bzero(paths.sun_path,UNIX_PATH_MAX);
+        memcpy(&paths.sun_path,path->d_name,pathlen);
         sendto(sockfd,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
       } closedir(root);
 
