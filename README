@@ -11,6 +11,9 @@ recommends:
   nacl(curvecp support), nacltaia-otr
 
 install:
+  ./install-libtai.sh
+  ./install-nacl.sh
+
   useradd urcd
 
   # python2.6
