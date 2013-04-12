@@ -62,7 +62,7 @@ main(int argc, char **argv)
     for (i=0;i<16;++i)
     {
       if (taia[i] < buffer[i]) break;
-      if (taia[i] > buffer[i]) 
+      if (taia[i] > buffer[i])
       {
         if (write(1,"\2",1)<1) exit(3);
         goto readbuffer;
