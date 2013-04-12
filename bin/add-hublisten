@@ -1,0 +1,23 @@
+#!/bin/sh
+[ -z $3 ] && \
+  echo $0' <addr> <port> </path/to/hub/socket/>' 1>&2 && \
+  exit 64
+
+mkdir -p /services/urcd-hublisten-"$1:$2" || exit 1
+
+printf '#!/bin/sh -e\n' > \
+  /services/urcd-hublisten-"$1:$2"/run || exit 1
+
+printf "exec tcpserver $1 $2 ./urchubstream $3\n" >> \
+  /services/urcd-hublisten-"$1:$2"/run || exit 1
+
+chmod +x /services/urcd-hublisten-"$1:$2"/run || exit 1
+
+test -L /services/urcd-hublisten-"$1:$2"/urchubstream || \
+  ln -s `pwd`/urchubstream /services/urcd-hublisten-"$1:$2"/urchubstream || \
+  exit 1
+
+test -L /service/urcd-hublisten-"$1:$2" || \
+  ln -s /services/urcd-hublisten-"$1:$2" \
+    /service/urcd-hublisten-"$1:$2" || \
+    exit 1

@@ -9,14 +9,14 @@
 #include <taia.h>
 #include <pwd.h>
 
-void taia_slow(t,s,n,a)
+void taia_slow(t)
 struct taia *t;
 {
   struct timeval now;
   gettimeofday(&now,(struct timezone *) 0);
-  t->sec.x = 4611686018427387914ULL + (uint64) now.tv_sec - s;
-  t->nano = 1000 * now.tv_usec + 500 - n;
-  t->atto = 0 - a;
+  t->sec.x = 4611686018427387786ULL + (uint64) now.tv_sec; /* -128ULL */
+  t->nano = 1000 * now.tv_usec + 500;
+  t->atto = 0;
 }
 
 main(int argc, char **argv)
@@ -56,7 +56,7 @@ main(int argc, char **argv)
       n += i;
     }
 
-    taia_slow(taia,128ULL,0UL,0UL);
+    taia_slow(taia);
     taia_pack(taia,taia);
 
     if (taia_less(buffer,taia))
