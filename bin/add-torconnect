@@ -14,7 +14,7 @@ printf '#!/bin/sh -e\n' > \
 printf 'export TCPCLIENT=1\n' >> \
   /services/urcd-torconnect-"$1:$2"/run || exit 1
 
-printf "exec tcpclient 127.0.0.1 9050 ./ucspi-socks4aclient $1 $2 ./urcstream $3\n" >> \
+printf "exec tcpclient -H -R 127.0.0.1 9050 ./ucspi-socks4aclient $1 $2 ./urcstream $3\n" >> \
   /services/urcd-torconnect-"$1:$2"/run || exit 1
 
 chmod +x /services/urcd-torconnect-"$1:$2"/run || exit 1

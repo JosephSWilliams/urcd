@@ -8,7 +8,7 @@ mkdir -p /services/urcd-tcprecv-"$1:$2" || exit 1
 printf '#!/bin/sh -e\n' > \
   /services/urcd-tcprecv-"$1:$2"/run || exit 1
 
-printf "exec tcpserver $1 $2 ./urcrecv $3\n" >> \
+printf "exec tcpserver -H -R $1 $2 ./urcrecv $3\n" >> \
   /services/urcd-tcprecv-"$1:$2"/run || exit 1
 
 chmod +x /services/urcd-tcprecv-"$1:$2"/run || exit 1

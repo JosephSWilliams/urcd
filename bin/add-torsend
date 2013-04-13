@@ -11,7 +11,7 @@ test -L /services/urcd-torsend-"$1:$2"/ucspi-socks4aclient || \
 printf '#!/bin/sh -e\n' > \
   /services/urcd-torsend-"$1:$2"/run || exit 1
 
-printf "exec tcpclient 127.0.0.1 9050 ./ucspi-socks4aclient $1 $2 ./urcsend $3\n" >> \
+printf "exec tcpclient -H -R 127.0.0.1 9050 ./ucspi-socks4aclient $1 $2 ./urcsend $3\n" >> \
   /services/urcd-torsend-"$1:$2"/run || exit 1
 
 chmod +x /services/urcd-torsend-"$1:$2"/run || exit 1

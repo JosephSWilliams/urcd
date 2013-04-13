@@ -11,7 +11,7 @@ printf '#!/bin/sh -e\n' > \
 printf 'export TCPCLIENT=1\n' >> \
   /services/urcd-hubconnect-"$1:$2"/run || exit 1
 
-printf "exec tcpclient $1 $2 ./urchubstream $3\n" >> \
+printf "exec tcpclient -H -R $1 $2 ./urchubstream $3\n" >> \
   /services/urcd-hubconnect-"$1:$2"/run || exit 1
 
 chmod +x /services/urcd-hubconnect-"$1:$2"/run || exit 1
