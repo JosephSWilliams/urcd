@@ -103,6 +103,7 @@ main(int argc, char **argv)
         if (read(rd,buffer+n,1)<1) sock_close(7);
         if (buffer[n] == '\n') break;
       } if (buffer[n] != '\n') goto urcwrite;
+      ++n;
 
       root = opendir("/");
       if (!root) sock_close(8);
@@ -115,7 +116,7 @@ main(int argc, char **argv)
         if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
         bzero(paths.sun_path,UNIX_PATH_MAX);
         memcpy(&paths.sun_path,path->d_name,pathlen);
-        sendto(sockfd,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
+        sendto(sockfd,buffer,n,0,(struct sockaddr *)&paths,sizeof(paths));
       } closedir(root);
 
     }

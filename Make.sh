@@ -1,5 +1,10 @@
 #!/bin/sh -v
 
+if [ -e '/usr/lib/libnacl.so' ]; then
+  echo $0': fatal error: move /usr/lib/libnacl.so temporarily' 1>&2
+  exit 255
+fi
+
 unset HEADERS
 
 if   [ -e '/usr/include/python2.6/Python.h'       ] &&
