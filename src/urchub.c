@@ -50,7 +50,7 @@ main(int argc, char **argv)
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[2])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
-  unsigned char buffer[65536];
+  unsigned char buffer[2+16+8+65536];
   char user[] = "hub\0";
   int sockfd;
 
@@ -98,7 +98,7 @@ main(int argc, char **argv)
     bzero(recvpath.sun_path,UNIX_PATH_MAX);
     n = recvfrom(sockfd,buffer,65536,0,(struct sockaddr *)&recvpath,&recvpath_len);
     if (n<1) sock_close(8);
-    if (n != 2 + 16 + 8 + (unsigned char)buffer[0] * 256 + (unsigned char)buffer[1]) continue;
+    if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
     if (write(cachein[1],buffer,n)<0) sock_close(9);
     if (read(cacheout[0],ret,1)<1) sock_close(10);
     if (ret[0]) continue;
