@@ -30,13 +30,19 @@ gcc src/urchubstream.c -o urchubstream || exit 1
 
 gcc src/urcstream2hub.c -o urcstream2hub -l tai || exit 1
 
-gcc src/urccache.c -o urccache -l tai -l nacl /usr/lib/randombytes.o || exit 1
-
 gcc src/ucspi-client2server.c -o ucspi-client2server || exit 1
 
 gcc src/ucspi-server2client.c -o ucspi-server2client || exit 1
 
 gcc src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
+
+gcc src/check-taia.c -o check-taia -l tai || exit 1
+
+if ! $(./check-taia) ; then
+  gcc src/urccache-ntma.c -o urccache -l nacl || exit 1
+else
+  gcc src/urccache.c -o urccache -l tai -l nacl /usr/lib/randombytes.o || exit 1
+fi
 
 if ! $(which cython 2>&1 >/dev/null); then
   cp src/urcd.pyx urcd || exit 1
