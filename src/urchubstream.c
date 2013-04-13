@@ -87,7 +87,7 @@ main(int argc, char **argv)
       if (read(rd,buffer,2)<2) sock_close(7);
 
       n = 2;
-      l = 2 + 16 + 8 + buffer[0] * 256 + buffer[1];
+      l = 2 + 16 + 8 + (unsigned char)buffer[0] * 256 + (unsigned char)buffer[1];
       if (l>2+16+8+1024) sock_close(8);
 
       while (n<l)
