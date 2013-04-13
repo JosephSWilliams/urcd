@@ -72,6 +72,7 @@ main(int argc, char **argv)
       if (read(0,buffer+n,1)<1) exit(4);
       if (buffer[n] == '\n') break;
     } if (buffer[n] != '\n') continue;
+    ++n;
 
     root = opendir("/");
     if (!root) exit(5);
@@ -83,7 +84,7 @@ main(int argc, char **argv)
       if (pathlen > UNIX_PATH_MAX) continue;
       bzero(paths.sun_path,UNIX_PATH_MAX);
       memcpy(&paths.sun_path,path->d_name,pathlen);
-      sendto(3,buffer,n+1,0,(struct sockaddr *)&paths,sizeof(paths));
+      sendto(3,buffer,n,0,(struct sockaddr *)&paths,sizeof(paths));
     } closedir(root);
 
   }
