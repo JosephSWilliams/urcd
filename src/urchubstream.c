@@ -73,7 +73,7 @@ main(int argc, char **argv)
   hub.sun_family = AF_UNIX;
   memcpy(&hub.sun_path,"hub\0",4);
 
-  char buffer[2+16+8+1024] = {0};
+  unsigned char buffer[2+16+8+1024] = {0};
   int i, l;
 
   while (1)
