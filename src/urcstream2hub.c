@@ -124,7 +124,7 @@ main(int argc, char **argv)
       n = read(sockfd,buffer,2+16+8+1024);
       if (n<1) sock_close(12);
       if (buffer[n-1] != '\n') continue;
-      if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
+      if (n != 2 + 16 + 8 + (unsigned char)buffer[0] * 256 + (unsigned char)buffer[1]) continue;
       if (write(urcstreamin[1],buffer+2+16+8,-2-16-8+n)<0) sock_close(13);
     }
 
