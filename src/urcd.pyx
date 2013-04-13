@@ -375,8 +375,9 @@ while 1:
 
         if cmd == 'part':
           if src != nick:
-            if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
-            if dst in channels: try_write(wr,buffer)
+            if src in channel_struct[dst]['names']:
+              channel_struct[dst]['names'].remove(src)
+              if dst in channels: try_write(wr,buffer)
           continue
 
         if src != nick and not src in channel_struct[dst]['names']:
