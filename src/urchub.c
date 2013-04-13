@@ -98,7 +98,7 @@ main(int argc, char **argv)
     bzero(recvpath.sun_path,UNIX_PATH_MAX);
     n = recvfrom(sockfd,buffer,65536,0,(struct sockaddr *)&recvpath,&recvpath_len);
     if (n<1) sock_close(8);
-    if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
+    if (n != (int) 2 + 16 + 8 + buffer[0] * 256 + buffer[1]) continue;
     if (write(cachein[1],buffer,n)<0) sock_close(9);
     if (read(cacheout[0],ret,1)<1) sock_close(10);
     if (ret[0]) continue;
