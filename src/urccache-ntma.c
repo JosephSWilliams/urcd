@@ -43,14 +43,14 @@ main(int argc, char **argv)
 
     for (i=131072*32-32;i>-32;i-=32) if (!crypto_verify_32(hash,cache+i))
     {
-      if (write(1,"\1",1)<1) exit(4);
+      if (write(1,"\1",1)<1) exit(3);
       goto readbuffer;
     }
 
     memcpy(cache,cache+32,131072*32-32);
     memcpy(cache+131072*32-32,hash,32);
 
-    if (write(1,"\0",1)<1) exit(5);
+    if (write(1,"\0",1)<1) exit(4);
 
   }
 
