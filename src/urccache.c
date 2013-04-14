@@ -118,7 +118,7 @@ main(int argc, char **argv)
       bzero(cached,256);
     } ++cached[hash[0]];
 
-    usleep((int) (cached[hash[0]] / 1024.0 * 500000.0));
+    usleep((int) (cached[hash[0]] / 1024.0 * 250000.0));
 
   }
 
