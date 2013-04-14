@@ -112,13 +112,13 @@ main(int argc, char **argv)
     if (write(1,"\0",1)<1) exit(6);
 
     if (cached[hash[0]] == 1024.0) cached[hash[0]] = 0.0;
-    if (time((long *) 0) - timecached >= 128)
+    if (time((long *) 0) - timecached >= 256)
     {
       timecached = time((long *) 0);
       bzero(cached,256);
     } ++cached[hash[0]];
 
-    usleep((int) (cached[hash[0]] / 1024.0 * 250000.0));
+    usleep((int) (cached[hash[0]] / 1024.0 * 500000.0));
 
   }
 
