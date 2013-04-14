@@ -43,6 +43,8 @@ if ! $(./check-taia) ; then
   gcc src/urccache-static.c -o urccache -l nacl || exit 1
 else
   gcc src/urccache.c -o urccache -l tai -l nacl /usr/lib/randombytes.o || exit 1
+  printf '' | ./urccache `pwd`/src/
+  if [ $? != 1 ] ; then gcc src/urccache-static.c -o urccache -l nacl || exit 1 ; fi
 fi
 
 if ! $(which cython 2>&1 >/dev/null); then
