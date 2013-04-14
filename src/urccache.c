@@ -54,7 +54,6 @@ main(int argc, char **argv)
   float cached[256];
   bzero(cached,256);
   int i, n, l;
-  float f;
 
   while (1)
   {
