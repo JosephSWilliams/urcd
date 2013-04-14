@@ -36,10 +36,11 @@ gcc src/ucspi-server2client.c -o ucspi-server2client || exit 1
 
 gcc src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 
-gcc src/check-taia.c -o check-taia -l tai || exit 1
+
+gcc src/check-taia.c -o check-taia -l tai -l nacl || exit 1
 
 if ! $(./check-taia) ; then
-  gcc src/urccache-ntma.c -o urccache -l nacl || exit 1
+  gcc src/urccache-amd64-gentoo.c -o urccache -l nacl || exit 1
 else
   gcc src/urccache.c -o urccache -l tai -l nacl /usr/lib/randombytes.o || exit 1
 fi

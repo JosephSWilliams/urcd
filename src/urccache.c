@@ -9,14 +9,23 @@
 #include <taia.h>
 #include <pwd.h>
 
-void taia_slow(t)
-struct taia *t;
+void taia_aprx(a,b)
+struct taia *a;
+struct taia *b;
 {
   struct timeval now;
   gettimeofday(&now,(struct timezone *) 0);
-  t->sec.x = 4611686018427387914ULL - 128ULL + (uint64) now.tv_sec;
-  t->nano = 1000 * now.tv_usec + 500;
-  t->atto = 0;
+
+  a->sec.x = 4611686018427387914ULL + (uint64) now.tv_sec;
+  a->nano = 1000 * now.tv_usec + 500;
+  a->atto = 0;
+
+  b->sec.x = a->sec.x;
+  b->nano = a->nano;
+  b->atto = a->atto;
+
+  b->sec.x += 128ULL;
+  a->sec.x -= 128ULL;
 }
 
 main(int argc, char **argv)
@@ -35,9 +44,10 @@ main(int argc, char **argv)
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
-  unsigned char cache[256][16384]={0};
+  unsigned char cache[256][32768]={0};
   unsigned char buffer[16+8+65536+32];
-  unsigned char taia[16];
+  unsigned char taia0[16];
+  unsigned char taia1[16];
   unsigned char hash[32];
   int i, n, l;
 
@@ -56,15 +66,26 @@ main(int argc, char **argv)
       n += i;
     }
 
-    taia_slow(taia);
-    taia_pack(taia,taia);
+    taia_aprx(taia0,taia1);
+    taia_pack(taia0,taia0);
+    taia_pack(taia1,taia1);
 
     for (i=0;i<16;++i)
     {
-      if (taia[i] < buffer[i]) break;
-      if (taia[i] > buffer[i])
+      if (taia0[i] < buffer[i]) break;
+      if (taia0[i] > buffer[i])
       {
-        if (write(1,"\2",1)<1) exit(3);
+        if (write(1,"\3",1)<1) exit(3);
+        goto readbuffer;
+      }
+    }
+
+    for (i=0;i<16;++i)
+    {
+      if (taia1[i] > buffer[i]) break;
+      if (taia1[i] < buffer[i])
+      {
+        if (write(1,"\2",1)<1) exit(4);
         goto readbuffer;
       }
     }
@@ -73,17 +94,17 @@ main(int argc, char **argv)
     crypto_hash_sha256(hash,buffer,l+32);
 
     n = 0;
-    for (i=0;i<16384;i+=32) if (!crypto_verify_32(hash,cache[hash[0]]+i)) n|=1; else n|=0;
+    for (i=0;i<32768;i+=32) if (!crypto_verify_32(hash,cache[hash[0]]+i)) n|=1; else n|=0;
     if (n)
     {
-      if (write(1,"\1",1)<1) exit(4);
+      if (write(1,"\1",1)<1) exit(5);
       continue;
     }
 
-    memcpy(cache[hash[0]],cache[hash[0]]+32,16384-32);
-    memcpy(cache[hash[0]]+16384-32,hash,32);
+    memcpy(cache[hash[0]],cache[hash[0]]+32,32768-32);
+    memcpy(cache[hash[0]]+32768-32,hash,32);
 
-    if (write(1,"\0",1)<1) exit(5);
+    if (write(1,"\0",1)<1) exit(6);
     usleep(250000);
 
   }
