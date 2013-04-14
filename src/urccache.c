@@ -4,6 +4,7 @@
 #include <nacl/randombytes.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <strings.h>
 #include <stdlib.h>
 #include <string.h>
 #include <taia.h>
@@ -44,12 +45,16 @@ main(int argc, char **argv)
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
+  unsigned long timecached = time((long *) 0);
   unsigned char cache[256][32768]={0};
   unsigned char buffer[16+8+65536+32];
   unsigned char taia0[16];
   unsigned char taia1[16];
   unsigned char hash[32];
+  float cached[256];
+  bzero(cached,256);
   int i, n, l;
+  float f;
 
   while (1)
   {
@@ -105,7 +110,15 @@ main(int argc, char **argv)
     memcpy(cache[hash[0]]+32768-32,hash,32);
 
     if (write(1,"\0",1)<1) exit(6);
-    usleep(250000);
+
+    if (cached[hash[0]] == 1024.0) cached[hash[0]] = 0.0;
+    if (time((long *) 0) - timecached >= 128)
+    {
+      timecached = time((long *) 0);
+      bzero(cached,256);
+    } ++cached[hash[0]];
+
+    usleep((int) (cached[hash[0]] / 1024.0 * 250000.0));
 
   }
 
