@@ -1,6 +1,6 @@
 #include <string.h>
 
-void tai_inc(unsigned char *t, unsigned char *u, unsigned char *v)
+tai_inc(unsigned char *t, unsigned char *u, unsigned char *v)
 {
 
   static int i;
@@ -11,7 +11,7 @@ void tai_inc(unsigned char *t, unsigned char *u, unsigned char *v)
   {
 
     if (!v[i]) continue;
-    if (t[i] + v[i] > 255){ t[i] += v[i]; continue; } t[i] += v[i];
+    if (t[i] + v[i] < 256){ t[i] += v[i]; continue; } t[i] += v[i];
     if (!i) break;
     if (t[i-1] < 255){ ++t[i-1]; continue; } ++t[i-1];
     if (!i-1) continue;
