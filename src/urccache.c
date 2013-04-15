@@ -30,12 +30,12 @@ main(int argc, char **argv)
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
   unsigned long timecached = time((long *) 0);
-  unsigned char cache[256][32768]={0};
+  unsigned char cache[256][16384]={0};
   unsigned char buffer[16+8+65536+32];
   unsigned char hash[32];
   unsigned char ts[16];
   float cached[256];
-  bzero(cached,256);
+  bzero(cached,sizeof(cached));
   int i, n, l;
 
   while (1)
@@ -84,26 +84,26 @@ main(int argc, char **argv)
     crypto_hash_sha256(hash,buffer,l+32);
 
     n = 0;
-    for (i=0;i<32768;i+=32) if (!crypto_verify_32(hash,cache[hash[0]]+i)) n|=1; else n|=0;
+    for (i=0;i<16384;i+=32) if (!crypto_verify_32(hash,cache[hash[0]]+i)) n|=1; else n|=0;
     if (n)
     {
       if (write(1,"\1",1)<1) exit(5);
       continue;
     }
 
-    memcpy(cache[hash[0]],cache[hash[0]]+32,32768-32);
-    memcpy(cache[hash[0]]+32768-32,hash,32);
+    memcpy(cache[hash[0]],cache[hash[0]]+32,16384-32);
+    memcpy(cache[hash[0]]+16384-32,hash,32);
 
     if (write(1,"\0",1)<1) exit(6);
 
-    if (cached[hash[0]] == 1024.0) cached[hash[0]] = 0.0;
+    if (cached[hash[0]] == 512.0) cached[hash[0]] = 0.0;
     if (time((long *) 0) - timecached >= 256)
     {
       timecached = time((long *) 0);
-      bzero(cached,256);
+      bzero(cached,sizeof(cached));
     } ++cached[hash[0]];
 
-    usleep((int) (cached[hash[0]] / 1024.0 * 250000.0));
+    usleep((int) (cached[hash[0]] / 512.0 * 1000000.0));
 
   }
 
