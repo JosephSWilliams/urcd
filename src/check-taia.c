@@ -11,9 +11,9 @@
 main()
 {
 
-  unsigned char slow[16];
-  unsigned char norm[16];
-  unsigned char fast[16];
+  unsigned char slow[16] = {0};
+  unsigned char norm[16] = {0};
+  unsigned char fast[16] = {0};
 
   taia_now(norm);
 
