@@ -19,8 +19,11 @@ main()
 
   taia_pack(norm,norm);
 
-  tai_dec(slow,norm,"\0\0\0\0\0\0\0\x80");
-  tai_inc(fast,norm,"\0\0\0\0\0\0\0\x80");
+  memcpy(slow,norm,16);
+  memcpy(fast,norm,16);
+
+  tai_dec(slow,slow,"\0\0\0\0\0\0\0\x80");
+  tai_inc(fast,fast,"\0\0\0\0\0\0\0\x80");
 
   write(1,slow,16);
   write(1,norm,16);
