@@ -10,24 +10,8 @@
 #include <taia.h>
 #include <pwd.h>
 
-void taia_aprx(a,b)
-struct taia *a;
-struct taia *b;
-{
-  struct timeval now;
-  gettimeofday(&now,(struct timezone *) 0);
-
-  a->sec.x = 4611686018427387914ULL + (uint64) now.tv_sec;
-  a->nano = 1000 * now.tv_usec + 500;
-  a->atto = 0;
-
-  b->sec.x = a->sec.x;
-  b->nano = a->nano;
-  b->atto = a->atto;
-
-  b->sec.x += 128ULL;
-  a->sec.x -= 128ULL;
-}
+#include "tai_dec.h"
+#include "tai_inc.h"
 
 main(int argc, char **argv)
 {
@@ -48,9 +32,8 @@ main(int argc, char **argv)
   unsigned long timecached = time((long *) 0);
   unsigned char cache[256][32768]={0};
   unsigned char buffer[16+8+65536+32];
-  unsigned char taia0[16];
-  unsigned char taia1[16];
   unsigned char hash[32];
+  unsigned char ts[16];
   float cached[256];
   bzero(cached,256);
   int i, n, l;
@@ -70,24 +53,27 @@ main(int argc, char **argv)
       n += i;
     }
 
-    taia_aprx(taia0,taia1);
-    taia_pack(taia0,taia0);
-    taia_pack(taia1,taia1);
+    taia_now(ts);
+    taia_pack(ts,ts);
+
+    tai_dec(ts,ts,"\0\0\0\0\0\0\0\x80");
 
     for (i=0;i<16;++i)
     {
-      if (taia0[i] < buffer[i]) break;
-      if (taia0[i] > buffer[i])
+      if (ts[i] < buffer[i]) break;
+      if (ts[i] > buffer[i])
       {
         if (write(1,"\3",1)<1) exit(3);
         goto readbuffer;
       }
     }
 
+    tai_inc(ts,ts,"\0\0\0\0\0\0\1\0");
+
     for (i=0;i<16;++i)
     {
-      if (taia1[i] > buffer[i]) break;
-      if (taia1[i] < buffer[i])
+      if (ts[i] > buffer[i]) break;
+      if (ts[i] < buffer[i])
       {
         if (write(1,"\2",1)<1) exit(4);
         goto readbuffer;
