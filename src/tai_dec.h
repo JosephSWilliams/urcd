@@ -1,6 +1,6 @@
 #include <string.h>
 
-void tai_dec(unsigned char *t, unsigned char *u, unsigned char *v)
+tai_dec(unsigned char *t, unsigned char *u, unsigned char *v)
 {
 
   static int i;
