@@ -5,24 +5,8 @@
 #include <string.h>
 #include <taia.h>
 
-void taia_aprx(a,b)
-struct taia *a;
-struct taia *b;
-{
-  struct timeval now;
-  gettimeofday(&now,(struct timezone *) 0);
-
-  a->sec.x = 4611686018427387914ULL + (uint64) now.tv_sec;
-  a->nano = 1000 * now.tv_usec + 500;
-  a->atto = 0;
-
-  b->sec.x = a->sec.x;
-  b->nano = a->nano;
-  b->atto = a->atto;
-
-  b->sec.x += 128ULL;
-  a->sec.x -= 128ULL;
-}
+#include "tai_dec.h"
+#include "tai_inc.h"
 
 main()
 {
@@ -32,11 +16,11 @@ main()
   unsigned char taia2[16];
 
   taia_now(taia1);
-  taia_aprx(taia0,taia2);
 
-  taia_pack(taia0,taia0);
   taia_pack(taia1,taia1);
-  taia_pack(taia2,taia2);
+
+  tai_dec(taia0,taia1,"\0\0\0\0\0\0\0\x80");
+  tai_inc(taia2,taia1,"\0\0\0\0\0\0\0\x80");
 
   int i;
 
