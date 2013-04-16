@@ -85,12 +85,10 @@ main(int argc, char **argv)
     memcpy(buffer+l,salt,32);
     crypto_hash_sha256(hash,buffer,l+32);
 
-    n = 0;
-    for (i=0;i<16384;i+=32) if (!crypto_verify_32(hash,cache[hash[0]]+i)) n|=1; else n|=0;
-    if (n)
+    for (i=16384-32;i>-32;i-=32) if (!crypto_verify_32(hash,cache[hash[0]]+i))
     {
       if (write(1,"\1",1)<1) exit(5);
-      continue;
+      goto readbuffer;
     }
 
     memcpy(cache[hash[0]],cache[hash[0]]+32,16384-32);
