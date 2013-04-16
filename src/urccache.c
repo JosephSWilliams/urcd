@@ -29,16 +29,14 @@ main(int argc, char **argv)
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
+  unsigned long timecached = time((long *) 0);
   unsigned char cache[256][16384]={0};
   unsigned char buffer[16+8+65536+32];
   unsigned char hash[32];
   unsigned char ts[16];
-  int i, n, l;
-
   float cached[256];
   bzero(cached,sizeof(cached));
-  unsigned long timecached[256];
-  for (i=0;i<256;++i) timecached[i] = time((long *) 0);
+  int i, n, l;
 
   while (1)
   {
@@ -99,9 +97,9 @@ main(int argc, char **argv)
     if (write(1,"\0",1)<1) exit(6);
 
     if (cached[hash[0]] == 512.0) cached[hash[0]] = 0.0;
-    if (time((long *) 0) - timecached[hash[0]] >= 256)
+    if (time((long *) 0) - timecached >= 256)
     {
-      timecached[hash[0]] = time((long *) 0);
+      timecached = time((long *) 0);
       bzero(cached,sizeof(cached));
     } ++cached[hash[0]];
 
