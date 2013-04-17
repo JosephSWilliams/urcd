@@ -131,6 +131,12 @@ server2server (curvecp):
   # transit nodes may use ./add-curvecplisten and clients can
   # stream with ./add-curvecpconnect
 
+hub2hub:
+  ./bin/add-urchub
+  ./bin/add-urcstream2hub /service/urcd/socket/ /service/urcd-hub0/socket/
+  ./bin/add-hublisten your.urcd.ano 1234 /service/urcd-hub0/socket/
+  ./bin/add-hubconnect peer.urcd.ano 4321 /service/urcd-hub0/socket/
+
 urc2sd:
   mkdir -p /services/urc2sd
 
