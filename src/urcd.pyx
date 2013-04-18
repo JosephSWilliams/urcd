@@ -26,7 +26,7 @@ re_CLIENT_AWAY_OFF = re.compile('^AWAY ?$',re.IGNORECASE).search
 re_CLIENT_AWAY_ON = re.compile('^AWAY .+$',re.IGNORECASE).search
 re_CLIENT_WHO = re.compile('^WHO .+',re.IGNORECASE).search
 re_CLIENT_INVITE = re.compile('^INVITE ['+RE+']+ [#&!+]['+RE+']+$',re.IGNORECASE).search
-re_CLIENT_JOIN = re.compile('^JOIN :?([#&!+]['+RE+']+,?)+ (.*)?$',re.IGNORECASE).search
+re_CLIENT_JOIN = re.compile('^JOIN :?([#&!+]['+RE+']+,?)+ ?',re.IGNORECASE).search
 re_CLIENT_PART = re.compile('^PART [#&!+]['+RE+',]+$',re.IGNORECASE).search
 re_CLIENT_LIST = re.compile('^LIST',re.IGNORECASE).search
 re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
@@ -327,7 +327,7 @@ while 1:
 
     else:
       buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
-      try_write(wr,':'+serv+' NOTICE '+Nick+'*'[len(Nick):]+' :ERROR: '+buffer+'\n')
+      try_write(wr,':'+serv+' NOTICE '+Nick+' :ERROR: '+buffer+'\n')
 
   while server_revents(0):
 
