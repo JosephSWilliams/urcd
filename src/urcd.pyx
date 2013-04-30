@@ -17,6 +17,7 @@ re_SPLIT = re.compile(' +:?',re.IGNORECASE).split
 re_CHATZILLA = re.compile(' $',re.IGNORECASE).sub
 re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
 re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
+re_CLIENT_PONG = re.compile('^PONG :?.+$',re.IGNORECASE).search
 re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
 re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE [#&!+]['+RE+']+( [-+a-zA-Z]+)?$',re.IGNORECASE).search
@@ -124,11 +125,24 @@ def sock_write(buffer):
     except:
       pass
 
+ping_n = 0
+ping_t = time.time()
+
 while 1:
 
-  poll(-1)
+  poll(32768)
 
-  if client_revents(0):
+  if not client_revents(0):
+    if time.time() - ping_t >= 32:
+      if ping_n == 4: sock_close(15,0)
+      try_write(wr,"PING :LAG"+str(int(time.time()))+"\n")
+      ping_t = time.time()
+      ping_n += 1
+
+  else:
+
+    ping_n = 0
+    ping_t = time.time()
 
     time.sleep(LIMIT)
 
@@ -141,6 +155,8 @@ while 1:
 
     buffer = re_CHATZILLA('',buffer)
     buffer = re_MIRC('NICK ',buffer)
+
+    if re_CLIENT_PONG(buffer): continue
 
     if re_CLIENT_NICK(buffer):
 
