@@ -154,10 +154,11 @@ while 1:
 
   else:
 
-    time.sleep(LIMIT)
+    server_revents(LIMIT*1000)
 
     buffer = str()
     while 1:
+      if not client_revents(0): sock_close(15,0)
       byte = try_read(rd,1)
       if byte == '': sock_close(15,0)
       if byte == '\n': break
