@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+from random import randrange
 import unicodedata
 import collections
 import subprocess
+import binascii
 import codecs
 import select
 import socket
@@ -125,24 +127,28 @@ def sock_write(buffer):
     except:
       pass
 
+def randombytes(n):
+  return ''.join(chr(randrange(0,256)) for byte in xrange(0,n))
+
+ping_i = 0
 ping_n = 0
+ping_u = 0
+ping_b = binascii.hexlify(randombytes(32)).upper()
 ping_t = time.time()
+try_write(wr,"PING :" + ping_b + "\n")
 
 while 1:
 
-  poll(32768)
+  poll(16384)
 
   if not client_revents(0):
-    if time.time() - ping_t >= 32:
-      if ping_n == 4: sock_close(15,0)
-      try_write(wr,"PING :LAG"+str(int(time.time()))+"\n")
+    if time.time() - ping_t >= 16:
+      if not ping_i or not ping_u or ping_n == 7: sock_close(15,0)
+      try_write(wr,"PING :" + ping_b + "\n")
       ping_t = time.time()
       ping_n += 1
 
   else:
-
-    ping_n = 0
-    ping_t = time.time()
 
     time.sleep(LIMIT)
 
@@ -156,9 +162,17 @@ while 1:
     buffer = re_CHATZILLA('',buffer)
     buffer = re_MIRC('NICK ',buffer)
 
-    if re_CLIENT_PONG(buffer): continue
+    if re_CLIENT_PONG(buffer):
 
-    if re_CLIENT_NICK(buffer):
+      cmd = re_SPLIT(buffer,2)[1].upper()
+
+      if cmd == ping_b:
+        ping_i = 1
+        ping_n = 0
+        ping_b = binascii.hexlify(randombytes(32)).upper()
+        ping_t = time.time()
+
+    elif re_CLIENT_NICK(buffer):
 
       if not nick:
         Nick = buffer.split(' ',1)[1]
@@ -339,7 +353,7 @@ while 1:
 
     elif re_CLIENT_QUIT(buffer): sock_close(15,0)
 
-    elif re_CLIENT_USER(buffer): pass
+    elif re_CLIENT_USER(buffer): ping_u = 1
 
     else:
       buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
