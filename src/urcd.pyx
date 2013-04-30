@@ -177,6 +177,8 @@ while 1:
         ping_b = binascii.hexlify(randombytes(32)).upper()
         ping_t = time.time()
 
+    elif re_CLIENT_USER(buffer): ping_u = 1
+
     elif re_CLIENT_NICK(buffer):
 
       if not nick:
@@ -219,7 +221,7 @@ while 1:
 
       try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+Nick+'\n')
 
-    elif not nick: pass
+    elif not nick or not ping_i or not ping_u: pass
 
     elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
 
@@ -357,8 +359,6 @@ while 1:
       try_write(wr,':'+serv+' 323 '+Nick+' :EOF LIST\n')
 
     elif re_CLIENT_QUIT(buffer): sock_close(15,0)
-
-    elif re_CLIENT_USER(buffer): ping_u = 1
 
     else:
       buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
