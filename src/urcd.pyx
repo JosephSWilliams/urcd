@@ -138,7 +138,7 @@ ping_t = time.time()
 
 try_write(wr,
   ':'+serv+' NOTICE * :\x1b[8m\n'
-  'PING :'+ping_b+'\n'
+  'PING  :'+ping_b+'\n'
 )
 
 while 1:
@@ -148,7 +148,7 @@ while 1:
   if not client_revents(0):
     if time.time() - ping_t >= 16:
       if not nick or not ping_i or not ping_u or ping_n == 7: sock_close(15,0)
-      try_write(wr,"PING :" + ping_b + "\n")
+      try_write(wr,"PING  :" + ping_b + "\n")
       ping_t = time.time()
       ping_n += 1
 
