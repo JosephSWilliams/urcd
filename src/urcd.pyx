@@ -177,7 +177,7 @@ while 1:
         ping_b = binascii.hexlify(randombytes(32)).upper()
         ping_t = time.time()
 
-    elif re_CLIENT_USER(buffer): ping_u = 1
+    elif not ping_u and re_CLIENT_USER(buffer): ping_u = 1
 
     elif re_CLIENT_NICK(buffer):
 
@@ -221,7 +221,7 @@ while 1:
 
       try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+Nick+'\n')
 
-    elif not nick or not ping_i or not ping_u: pass
+    elif not nick or not ping_i or not ping_u or ping_n: pass
 
     elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
 
