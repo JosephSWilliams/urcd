@@ -174,6 +174,9 @@ while 1:
         ping_b = binascii.hexlify(randombytes(32)).upper()
         ping_t = time.time()
 
+    elif re_CLIENT_PING(buffer):
+      try_write(wr,':'+serv+' PONG '+serv+' :'+re_SPLIT(buffer,2)[1]+'\n')
+
     elif not ping_u and re_CLIENT_USER(buffer): ping_u = 1
 
     elif re_CLIENT_NICK(buffer):
@@ -257,9 +260,6 @@ while 1:
         continue
 
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
-
-    elif re_CLIENT_PING(buffer):
-      try_write(wr,':'+serv+' PONG '+serv+' :'+re_SPLIT(buffer,2)[1]+'\n')
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
