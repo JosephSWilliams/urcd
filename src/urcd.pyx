@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-from random import randrange
 import unicodedata
 import collections
 import subprocess
-import binascii
 import codecs
 import select
 import socket
@@ -19,7 +17,6 @@ re_SPLIT = re.compile(' +:?',re.IGNORECASE).split
 re_CHATZILLA = re.compile(' $',re.IGNORECASE).sub
 re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
 re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
-re_CLIENT_PONG = re.compile('^PONG :?.+$',re.IGNORECASE).search
 re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
 re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE [#&!+]['+RE+']+( [-+a-zA-Z]+)?$',re.IGNORECASE).search
@@ -127,35 +124,16 @@ def sock_write(buffer):
     except:
       pass
 
-def randombytes(n):
-  return ''.join(chr(randrange(0,256)) for byte in xrange(0,n))
-
-ping_i = 0
-ping_n = 0
-ping_u = 0
-ping_b = binascii.hexlify(randombytes(32)).upper()
-ping_t = time.time()
-
-try_write(wr,':'+serv+' NOTICE * :\x1b[8m\nPING :'+ping_b+'\n')
-
 while 1:
 
-  poll(16384)
+  poll(-1)
 
-  if not client_revents(0):
-    if time.time() - ping_t >= 16:
-      if not nick or not ping_i or not ping_u or ping_n == 7: sock_close(15,0)
-      try_write(wr,'PING :'+ping_b+'\n')
-      ping_t = time.time()
-      ping_n += 1
+  if client_revents(0):
 
-  else:
-
-    server_revents(LIMIT*1000)
+    time.sleep(LIMIT)
 
     buffer = str()
     while 1:
-      if not client_revents(0): sock_close(15,0)
       byte = try_read(rd,1)
       if byte == '': sock_close(15,0)
       if byte == '\n': break
@@ -164,22 +142,7 @@ while 1:
     buffer = re_CHATZILLA('',buffer)
     buffer = re_MIRC('NICK ',buffer)
 
-    if re_CLIENT_PONG(buffer):
-
-      cmd = re_SPLIT(buffer,2)[1].upper()
-
-      if cmd == ping_b:
-        ping_i = 1
-        ping_n = 0
-        ping_b = binascii.hexlify(randombytes(32)).upper()
-        ping_t = time.time()
-
-    elif re_CLIENT_PING(buffer):
-      try_write(wr,':'+serv+' PONG '+serv+' :'+re_SPLIT(buffer,2)[1]+'\n')
-
-    elif not ping_u and re_CLIENT_USER(buffer): ping_u = 1
-
-    elif re_CLIENT_NICK(buffer):
+    if re_CLIENT_NICK(buffer):
 
       if not nick:
         Nick = buffer.split(' ',1)[1]
@@ -221,7 +184,7 @@ while 1:
 
       try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+Nick+'\n')
 
-    elif not nick or not ping_i or not ping_u or ping_n: pass
+    elif not nick: pass
 
     elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
 
@@ -260,6 +223,9 @@ while 1:
         continue
 
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
+
+    elif re_CLIENT_PING(buffer):
+      try_write(wr,':'+serv+' PONG '+serv+' :'+re_SPLIT(buffer,2)[1]+'\n')
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
@@ -356,6 +322,8 @@ while 1:
       try_write(wr,':'+serv+' 323 '+Nick+' :EOF LIST\n')
 
     elif re_CLIENT_QUIT(buffer): sock_close(15,0)
+
+    elif re_CLIENT_USER(buffer): pass
 
     else:
       buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
