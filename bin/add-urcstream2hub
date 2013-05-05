@@ -6,6 +6,9 @@
 n=`ls /services | grep urcd-stream2hub | wc -l`
 
 mkdir -p /services/urcd-stream2hub$n
+mkdir -p /services/urcd-stream2hub$n/env
+
+echo '0.0' > /services/urcd-stream2hub$n/env/LIMIT
 
 echo '#!/bin/sh -e' > /services/urcd-stream2hub$n/run
 echo "exec ./urcstream2hub $2 ./urcstream $1" >> /services/urcd-stream2hub$n/run
