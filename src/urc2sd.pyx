@@ -40,10 +40,8 @@ for cmd in open('auto_cmd','rb').read().split('\n'):
   if cmd: auto_cmd.append(cmd)
 
 def sock_close(sn,sf):
-  try:
-    os.remove(str(os.getpid()))
-  except:
-    pass
+  try: os.remove(str(os.getpid()))
+  except: pass
   if sn: sys.exit(0)
 
 signal.signal(signal.SIGHUP,sock_close)
@@ -57,11 +55,11 @@ if os.access('stdin',1):
   rd = p.stdout.fileno()
   del p
 
-wr = 1
 if os.access('stdout',1):
-  p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE)
-  wr = p.stdin.fileno()
+  p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+  pipefd = ( p.stdout.fileno(), p.stdin.fileno() )
   del p
+else: pipefd = os.pipe()
 
 uid, gid = pwd.getpwnam('urcd')[2:4]
 os.chdir(sys.argv[1])
@@ -79,6 +77,7 @@ sd=sock.fileno()
 
 poll=select.poll()
 poll.register(rd,select.POLLIN|select.POLLPRI)
+poll.register(pipefd[0],select.POLLIN)
 poll.register(sd,select.POLLIN)
 poll=poll.poll
 
@@ -86,28 +85,27 @@ client_revents=select.poll()
 client_revents.register(rd,select.POLLIN|select.POLLPRI)
 client_revents=client_revents.poll
 
+pipe_revents=select.poll()
+pipe_revents.register(pipefd[0],select.POLLIN)
+pipe_revents=pipe_revents.poll
+
 server_revents=select.poll()
 server_revents.register(sd,select.POLLIN)
 server_revents=server_revents.poll
 
 def try_read(fd,buffer_len):
-  try:
-    return os.read(fd,buffer_len)
-  except:
-    sock_close(15,0)
+  try: return os.read(fd,buffer_len)
+  except: sock_close(15,0)
 
 def try_write(fd,buffer):
-  try:
-    os.write(fd,buffer)
-  except:
-    sock_close(15,0)
+  try: os.write(fd,buffer)
+  except: sock_close(15,0)
 
 def sock_write(buffer):
   for path in os.listdir(root):
     try:
       if path != user: sock.sendto(buffer,path)
-    except:
-      pass
+    except: pass
 
 def INIT():
 
@@ -117,13 +115,13 @@ def INIT():
 
   for cmd in auto_cmd:
     time.sleep(len(auto_cmd))
-    try_write(wr,cmd+'\n')
+    try_write(pipefd[1],cmd+'\n')
 
   for dst in channels:
     time.sleep(len(channels))
-    try_write(wr,'JOIN '+dst+'\n')
+    try_write(pipefd[1],'JOIN '+dst+'\n')
 
-try_write(wr,
+try_write(pipefd[1],
   'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n'
   'NICK '+nick+'\n'
 )
@@ -132,9 +130,9 @@ while 1:
 
   poll(-1)
 
-  if client_revents(0):
+  if not INIT: time.sleep(LIMIT)
 
-    if not INIT: time.sleep(LIMIT)
+  if client_revents(0):
 
     buffer = str()
     while 1:
@@ -156,7 +154,7 @@ while 1:
       sock_write(buffer+'\n')
 
     elif re_CLIENT_PING(buffer):
-      try_write(wr,'PONG '+re_SPLIT(buffer,1)[1]+'\n')
+      try_write(pipefd[1],'PONG '+re_SPLIT(buffer,1)[1]+'\n')
 
     elif re_CLIENT_JOIN(buffer):
       sock_write(buffer+'\n')
@@ -168,7 +166,7 @@ while 1:
 
     elif re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
       nick+='_'
-      try_write(wr,'NICK '+nick+'\n')
+      try_write(pipefd[1],'NICK '+nick+'\n')
 
     elif re_CLIENT_KICK(buffer):
 
@@ -177,23 +175,31 @@ while 1:
       sock_write(buffer+'\n')
 
       if re_SPLIT(buffer,4)[3].lower() == nick.lower():
-        try_write(wr,'JOIN '+re_SPLIT(buffer,4)[2]+'\n')
+        try_write(pipefd[1],'JOIN '+re_SPLIT(buffer,4)[2]+'\n')
         channels.remove(dst)
 
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :[#&!+]['+RE+']+$',buffer.upper()):
       dst = buffer[1:].split(':',1)[1].lower()
-      if not dst in channels: try_write(wr,'JOIN '+dst+'\n')
+      if not dst in channels: try_write(pipefd[1],'JOIN '+dst+'\n')
 
   if INIT:
     INIT()
     continue
 
-  while server_revents(0):
-
-    time.sleep(LIMIT)
+  if server_revents(0):
 
     buffer = try_read(sd,1024).split('\n',1)[0]
     if not buffer: continue
+    try_write(pipefd[1],buffer+'\n')
+
+  if pipe_revents(0):
+
+    buffer = str()
+    while 1:
+      byte = try_read(pipefd[0],1)
+      if byte == '': sock_close(15,0)
+      if byte == '\n': break
+      if byte != '\r' and len(buffer)<768: buffer += byte
 
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
@@ -209,4 +215,4 @@ while 1:
         src = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
         msg = buffer.split(':',2)[2]
         buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
-        try_write(wr,buffer)
+        try_write(1,buffer)
