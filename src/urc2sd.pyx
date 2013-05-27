@@ -113,8 +113,8 @@ def INIT():
   if client_revents(8192): return
   global INIT
   INIT = 0
-  for cmd in auto_cmd: try_write(pipefd[1],cmd+'\n')
-  for dst in channels: try_write(pipefd[1],'JOIN '+dst+'\n')
+  for cmd in auto_cmd: try_write(1,cmd+'\n')
+  for dst in channels: try_write(1,'JOIN '+dst+'\n')
 
 while 1:
 
