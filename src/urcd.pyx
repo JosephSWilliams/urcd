@@ -28,7 +28,7 @@ re_CLIENT_AWAY_ON = re.compile('^AWAY .+$',re.IGNORECASE).search
 re_CLIENT_WHO = re.compile('^WHO .+',re.IGNORECASE).search
 re_CLIENT_INVITE = re.compile('^INVITE ['+RE+']+ [#&!+]['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_JOIN = re.compile('^JOIN :?([#&!+]['+RE+']+,?)+ ?',re.IGNORECASE).search
-re_CLIENT_PART = re.compile('^PART [#&!+]['+RE+',]+$',re.IGNORECASE).search
+re_CLIENT_PART = re.compile('^PART ([#&!+]['+RE+']+,?)+ ?',re.IGNORECASE).search
 re_CLIENT_LIST = re.compile('^LIST',re.IGNORECASE).search
 re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
 re_CLIENT_USER = re.compile('^USER .*$',re.IGNORECASE).search
@@ -44,6 +44,7 @@ LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('e
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
+PRESENCE = int(open('env/PRESENCE','rb').read().split('\n')[0]) if os.path.exists('env/PRESENCE') else 0
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
@@ -167,10 +168,11 @@ while 1:
           ':'+serv+' 002 '+Nick+' :'+Nick+'!'+user+'@'+serv+'\n'
           ':'+serv+' 003 '+Nick+' :'+serv+'\n'
           ':'+serv+' 004 '+Nick+' '+serv+' 0.0 + :+\n'
-          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CHANTYPES=#&!+ CASEMAPPING=ascii CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+' COLOUR='+str(COLOUR)+' UNICODE='+str(UNICODE)+':\n'
+          ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CHANTYPES=#&!+ CASEMAPPING=ascii CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+' COLOUR='+str(COLOUR)+' UNICODE='+str(UNICODE)+' PRESENCE='+str(PRESENCE)+':\n'
           ':'+serv+' 254 '+Nick+' '+str(CHANLIMIT)+' :CHANNEL(S)\n'
-          ':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n'
+          ':'+Nick+'!'+user+'@'+serv+' MODE '+Nick
         )
+        try_write(wr,' +\n') if PRESENCE else try_write(wr,' +i\n')
         try_write(wr,':'+serv+' 375 '+Nick+' :- '+serv+' MOTD -\n')
         for msg in motd: try_write(wr,':'+serv+' 372 '+Nick+' :- '+msg+'\n')
         try_write(wr,':'+serv+' 376 '+Nick+' :EOF MOTD\n')
@@ -226,11 +228,13 @@ while 1:
           )
           else: channel_struct[dst]['topic'] = msg
 
-      if cmd == 'PART' and dst in channels:
-        try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
-        channels.remove(dst)
-        channel_struct[dst]['names'].remove(nick)
-        continue
+      if cmd == 'PART':
+        if dst in channels:
+          try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
+          channels.remove(dst)
+          channel_struct[dst]['names'].remove(nick)
+        else: pass # return error to client?
+        if not PRESENCE: continue
 
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
@@ -243,10 +247,12 @@ while 1:
       try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(time.time()))+'\n')
 
     elif re_CLIENT_MODE_NICK(buffer):
-      try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+i\n')
+      if PRESENCE: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+\n')
+      else: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+i\n')
 
     elif re_CLIENT_MODE_NICK_ARG(buffer):
-      try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n')
+      if PRESENCE: try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +\n')
+      else: try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n')
 
     elif re_CLIENT_AWAY_OFF(buffer):
       try_write(wr,':'+serv+' 305 '+Nick+' :WB, :-)\n')
@@ -311,13 +317,16 @@ while 1:
           try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
 
         channel_struct[dst]['names'].append(nick)
+        if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n')
 
     elif re_CLIENT_PART(buffer):
       for dst in re_SPLIT(buffer,2)[1].lower().split(','):
         if dst in channels:
           try_write(wr,':'+Nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
+          if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' PART '+dst+' :\n')
           channels.remove(dst)
           channel_struct[dst]['names'].remove(nick)
+        else: pass # return error to client ?
 
     elif re_CLIENT_LIST(buffer):
 
@@ -331,7 +340,9 @@ while 1:
 
       try_write(wr,':'+serv+' 323 '+Nick+' :EOF LIST\n')
 
-    elif re_CLIENT_QUIT(buffer): sock_close(15,0)
+    elif re_CLIENT_QUIT(buffer):
+      if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :'+re_SPLIT(buffer,1)[1]+'\n')
+      sock_close(15,0)
 
     elif re_CLIENT_USER(buffer): pass
 
