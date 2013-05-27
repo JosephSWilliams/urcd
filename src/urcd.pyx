@@ -55,10 +55,8 @@ channels = collections.deque([],CHANLIMIT)
 channel_struct = dict()
 
 def sock_close(sn,sf):
-  try:
-    os.remove(str(os.getpid()))
-  except:
-    pass
+  try: os.remove(str(os.getpid()))
+  except: pass
   if sn: sys.exit(0)
 
 signal.signal(signal.SIGHUP,sock_close)
@@ -106,23 +104,18 @@ server_revents.register(sd,select.POLLIN)
 server_revents=server_revents.poll
 
 def try_read(fd,buffer_len):
-  try:
-    return os.read(fd,buffer_len)
-  except:
-    sock_close(15,0)
+  try: return os.read(fd,buffer_len)
+  except: sock_close(15,0)
 
 def try_write(fd,buffer):
-  try:
-    os.write(fd,buffer)
-  except:
-    sock_close(15,0)
+  try: return os.write(fd,buffer)
+  except: sock_close(15,0)
 
 def sock_write(buffer):
   for path in os.listdir(root):
     try:
       if path != user: sock.sendto(buffer,path)
-    except:
-      pass
+    except: pass
 
 while 1:
 
