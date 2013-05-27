@@ -21,7 +21,7 @@ re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
 re_CLIENT_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_KICK = re.compile('^:.+ KICK [#&!+]['+RE+']+ ['+RE+']+',re.IGNORECASE).search
 re_CLIENT_CHANMODE = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ MODE [#&!+]['+RE+']+ [-+][be] ['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ?',re.IGNORECASE).search
-re_CLIENT_BAN_EXCEPT = re.compile('^:['+RE+'!@~.]+ ((367)|(348)) ['+RE+']+ \S+ ',re.IGNORECASE).search
+re_CLIENT_BAN_EXCEPT = re.compile('^:['+RE+'!@~.]+ ((367)|(348)) ['+RE+']+ [#&!+]['+RE+']+ \S+ ',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
