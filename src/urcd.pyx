@@ -6,6 +6,7 @@ import codecs
 import select
 import socket
 import signal
+import shelve
 import time
 import pwd
 import sys
@@ -38,6 +39,7 @@ re_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :[#&!+]['+R
 re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
 re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
+URCDB = open('env/URCDB','rb').read().split('\n')[0] if os.path.exists('env/URCDB') else str()
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
@@ -49,15 +51,30 @@ CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.e
 nick = str()
 Nick = str()
 user = str(os.getpid())
-serv = open('env/serv','rb').read().split('\n')[0]
-motd = open('env/motd','rb').read().split('\n')
-channels = collections.deque([],CHANLIMIT)
 channel_struct = dict()
+channels = collections.deque([],CHANLIMIT)
+motd = open('env/motd','rb').read().split('\n')
+serv = open('env/serv','rb').read().split('\n')[0]
+
+if URCDB:
+  try: db = shelve.open(URCDB)
+  except:
+    os.remove(URCDB)
+    db = shelve.open(URCDB)
+  try: channel_struct = db['channel_struct']
+  except: channel_struct = dict()
+  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
 def sock_close(sn,sf):
   try: os.remove(str(os.getpid()))
   except: pass
-  if sn: sys.exit(0)
+  if sn:
+    if URCDB:
+      for dst in channels:
+        if dst in channel_struct.keys() and nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
+      db['channel_struct'] = channel_struct
+      db.close()
+    sys.exit(0)
 
 signal.signal(signal.SIGHUP,sock_close)
 signal.signal(signal.SIGINT,sock_close)
