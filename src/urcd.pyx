@@ -17,7 +17,7 @@ RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
 re_SPLIT = re.compile(' +:?',re.IGNORECASE).split
 re_CHATZILLA = re.compile(' $',re.IGNORECASE).sub
 re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
-re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
+re_CLIENT_PING_PONG = re.compile('^P[IO]NG :?.+$',re.IGNORECASE).search
 re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
 re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE [#&!+]['+RE+']+( [-+a-zA-Z]+)?$',re.IGNORECASE).search
@@ -138,7 +138,9 @@ def sock_write(buffer):
 
 while 1:
 
-  poll(TIMEOUT*1000)
+  if not poll(16348):
+    try_write(wr,'PING :LAG\n')
+    continue
 
   if not client_revents(0):
     if time.time() - seen >= TIMEOUT:
@@ -247,8 +249,9 @@ while 1:
 
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
-    elif re_CLIENT_PING(buffer):
-      try_write(wr,':'+serv+' PONG '+serv+' :'+re_SPLIT(buffer,2)[1]+'\n')
+    elif re_CLIENT_PING_PONG(buffer):
+      cmd, msg = re_SPLIT(buffer,2)[:2]
+      if cmd.upper() == 'PING': try_write(wr,':'+serv+' PONG '+serv+' :'+msg+'\n')
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
