@@ -163,7 +163,7 @@ while 1:
       sock_write(buffer+'\n')
       dst = buffer.split(':')[2].lower()
       if not dst in channels:
-        if len(channels) < CHANLIMIT:
+        if len(channels) - 1 < CHANLIMIT:
           BAN[dst] = list()
           EXCEPT[dst] = list()
           channels.append(dst)
