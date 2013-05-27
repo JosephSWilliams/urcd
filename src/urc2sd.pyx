@@ -113,8 +113,12 @@ def INIT():
   if client_revents(8192): return
   global INIT
   INIT = 0
-  for cmd in auto_cmd: try_write(1,cmd+'\n')
-  for dst in channels: try_write(1,'JOIN '+dst+'\n')
+  for cmd in auto_cmd:
+    time.sleep(LIMIT)
+    try_write(1,cmd+'\n')
+  for dst in channels:
+    time.sleep(LIMIT)
+    try_write(1,'JOIN '+dst+'\n')
 
 while 1:
 
@@ -144,7 +148,7 @@ while 1:
       sock_write(buffer+'\n')
 
     elif re_CLIENT_PING(buffer):
-      try_write(pipefd[1],'PONG '+re_SPLIT(buffer,1)[1]+'\n')
+      try_write(1,'PONG '+re_SPLIT(buffer,1)[1]+'\n')
 
     elif re_CLIENT_JOIN(buffer):
       sock_write(buffer+'\n')
@@ -156,7 +160,7 @@ while 1:
 
     elif re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
       nick+='_'
-      try_write(pipefd[1],'NICK '+nick+'\n')
+      try_write(1,'NICK '+nick+'\n')
 
     elif re_CLIENT_KICK(buffer):
 
@@ -165,12 +169,12 @@ while 1:
       sock_write(buffer+'\n')
 
       if re_SPLIT(buffer,4)[3].lower() == nick.lower():
-        try_write(pipefd[1],'JOIN '+re_SPLIT(buffer,4)[2]+'\n')
+        try_write(1,'JOIN '+re_SPLIT(buffer,4)[2]+'\n')
         channels.remove(dst)
 
     elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :[#&!+]['+RE+']+$',buffer.upper()):
       dst = buffer[1:].split(':',1)[1].lower()
-      if not dst in channels: try_write(pipefd[1],'JOIN '+dst+'\n')
+      if not dst in channels: try_write(1,'JOIN '+dst+'\n')
 
   if INIT:
     INIT()
