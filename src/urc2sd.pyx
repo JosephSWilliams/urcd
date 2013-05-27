@@ -30,7 +30,7 @@ LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('e
 INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('env/INVITE') else 0
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
-CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 32
+CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 16
 TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) * 1000 if os.path.exists('env/TIMEOUT') else 128 * 1000
 
 BAN = dict()
@@ -41,10 +41,7 @@ nick = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],CHANLIMIT)
 for dst in open('channels','rb').read().lower().split('\n'):
-  if dst:
-    channels.append(dst)
-    BAN[dst] = list()
-    EXCEPT[dst] = list()
+  if dst: channels.append(dst)
 
 auto_cmd = list()
 for cmd in open('auto_cmd','rb').read().split('\n'):
@@ -122,15 +119,16 @@ try_write(1,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\nNICK '+nick+'\n')
 
 def INIT():
   if client_revents(8192): return
-  global INIT, auto_cmd
+  global INIT, auto_cmd, channels
   INIT = 0
   for cmd in auto_cmd:
     time.sleep(LIMIT)
     try_write(1,cmd+'\n')
-  del auto_cmd
   for dst in channels:
     time.sleep(LIMIT)
     try_write(1,'JOIN '+dst+'\n')
+  channels = collections.deque([],CHANLIMIT)
+  del auto_cmd
 
 while 1:
 
