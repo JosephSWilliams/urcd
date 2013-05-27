@@ -193,7 +193,7 @@ while 1:
     elif re_CLIENT_CHANMODE(buffer):
       try:
         src, cmd, dst = re_SPLIT(buffer,5)[2:5]
-        dst = re.compile(re.sub('\*','.*',re.sub('\.','\.',dst)),re.IGNORECASE).search
+        dst = re.compile(re.escape(dst).replace('\\*','.*'),re.IGNORECASE).search
         src = src.lower()
         if cmd[1] == 'b':
           BAN[src].append(dst) if cmd[0] == '+' and not dst in BAN[src] else BAN[src].remove(dst)
@@ -204,7 +204,7 @@ while 1:
     elif re_CLIENT_BAN_EXCEPT(buffer):
       try:
         cmd, src, dst, msg = re_SPLIT(buffer,5)[1:5]
-        msg = re.compile(re.sub('\*','.*',re.sub('\.','\.',msg)),re.IGNORECASE).search
+        msg = re.compile(re.escape(msg).replace('\\*','.*'),re.IGNORECASE).search
         dst = dst.lower()
         if cmd == '367': BAN[dst].append(msg)
         if cmd == '348': EXCEPT[dst].append(msg)
