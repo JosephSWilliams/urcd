@@ -114,10 +114,10 @@ def INIT():
   global INIT
   INIT = 0
   for cmd in auto_cmd:
-    time.sleep(len(auto_cmd))
+    time.sleep(LIMIT)
     try_write(1,cmd+'\n')
   for dst in channels:
-    time.sleep(len(channels))
+    time.sleep(LIMIT)
     try_write(1,'JOIN '+dst+'\n')
 
 while 1:
