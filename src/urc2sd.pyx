@@ -163,12 +163,14 @@ while 1:
       sock_write(buffer+'\n')
       dst = buffer.split(':')[2].lower()
       if not dst in channels:
-        BAN[dst] = list()
-        EXCEPT[dst] = list()
-        channels.append(dst)
-        try_write(1,'MODE '+dst+' b\n')
-        time.sleep(LIMIT)
-        try_write(1,'MODE '+dst+' e\n')
+        if len(channels) < CHANLIMIT:
+          BAN[dst] = list()
+          EXCEPT[dst] = list()
+          channels.append(dst)
+          try_write(1,'MODE '+dst+' b\n')
+          time.sleep(LIMIT)
+          try_write(1,'MODE '+dst+' e\n')
+        else: try_write(1,'PART '+dst+' :CHANLIMIT\n')
 
     elif re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
       nick = re_SPLIT(buffer)[2]
