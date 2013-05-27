@@ -44,6 +44,7 @@ LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('e
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
+TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) if os.path.exists('env/TIMEOUT') else 128
 PRESENCE = int(open('env/PRESENCE','rb').read().split('\n')[0]) if os.path.exists('env/PRESENCE') else 0
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
@@ -137,16 +138,24 @@ def sock_write(buffer):
 
 while 1:
 
-  poll(-1)
+  poll(TIMEOUT*1000)
 
-  if client_revents(0):
+  if not client_revents(0):
+    if time.time() - seen >= TIMEOUT:
+      if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n')
+      sock_close(15,0)
+
+  else:
 
     time.sleep(LIMIT)
+    seen = time.time()
 
     buffer = str()
     while 1:
       byte = try_read(rd,1)
-      if byte == '': sock_close(15,0)
+      if byte == '':
+        if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :EOF\n')
+        sock_close(15,0)
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
 
