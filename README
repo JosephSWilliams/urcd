@@ -78,9 +78,8 @@ interface:
   writes to stdout will be written to the
   irc client
 
-  for urc2sd simply reverse this process. ie,
-  stdin will be stdout, and vice versa. happy
-  hacking :-)
+  for urc2sd follow the same process. happy
+  hacking.
 
 no censorship:
   urc network is a censorship resistant network.
