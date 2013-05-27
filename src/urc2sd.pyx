@@ -98,7 +98,7 @@ def try_read(fd,buffer_len):
   except: sock_close(15,0)
 
 def try_write(fd,buffer):
-  try: os.write(fd,buffer)
+  try: return os.write(fd,buffer)
   except: sock_close(15,0)
 
 def sock_write(buffer):
@@ -107,24 +107,14 @@ def sock_write(buffer):
       if path != user: sock.sendto(buffer,path)
     except: pass
 
-def INIT():
+try_write(1,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\nNICK '+nick+'\n')
 
+def INIT():
   if client_revents(8192): return
   global INIT
   INIT = 0
-
-  for cmd in auto_cmd:
-    time.sleep(len(auto_cmd))
-    try_write(pipefd[1],cmd+'\n')
-
-  for dst in channels:
-    time.sleep(len(channels))
-    try_write(pipefd[1],'JOIN '+dst+'\n')
-
-try_write(pipefd[1],
-  'USER '+nick+' '+nick+' '+nick+' :'+nick+'\n'
-  'NICK '+nick+'\n'
-)
+  for cmd in auto_cmd: try_write(1,cmd+'\n')
+  for dst in channels: try_write(1,'JOIN '+dst+'\n')
 
 while 1:
 
@@ -187,7 +177,6 @@ while 1:
     continue
 
   if server_revents(0):
-
     buffer = try_read(sd,1024).split('\n',1)[0]
     if not buffer: continue
     try_write(pipefd[1],buffer+'\n')
