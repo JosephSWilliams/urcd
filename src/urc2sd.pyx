@@ -39,9 +39,8 @@ user = str(os.getpid())
 nick = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],CHANLIMIT)
-for dst in open('channels','rb').read().split('\n'):
+for dst in open('channels','rb').read().lower().split('\n'):
   if dst:
-    dst = dst.lower()
     channels.append(dst)
     BAN[dst] = list()
     EXCEPT[dst] = list()
@@ -240,6 +239,7 @@ while 1:
       dst = re_SPLIT(buffer,3)[2].lower()
       if dst in channels:
         src = re_SPLIT(buffer[1:],1)[0]
+        cmd = 1
         for cmd in EXCEPT[dst]:
           if cmd(src):
             cmd = 0
