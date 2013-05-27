@@ -197,7 +197,7 @@ while 1:
         src = src.lower()
         if cmd[1] == 'b':
           BAN[src].append(dst) if cmd[0] == '+' and not dst in BAN[src] else BAN[src].remove(dst)
-        if cmd[1] == 'e':
+        elif cmd[1] == 'e':
           EXCEPT[src].append(dst) if cmd[0] == '+' and not dst in EXCEPT[src] else EXCEPT[src].remove(dst)
       except: pass
 
@@ -206,8 +206,10 @@ while 1:
         cmd, src, dst, msg = re_SPLIT(buffer,5)[1:5]
         msg = re.compile(re.escape(msg).replace('\\*','.*'),re.IGNORECASE).search
         dst = dst.lower()
-        if cmd == '367': BAN[dst].append(msg)
-        if cmd == '348': EXCEPT[dst].append(msg)
+        if cmd == '367':
+          if not msg in BAN[dst]: BAN[dst].append(msg)
+        elif cmd == '348':
+          if not msg in EXCEPT[dst]: EXCEPT.append(msg)
       except: pass
 
   if INIT:
