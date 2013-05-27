@@ -20,22 +20,33 @@ re_CLIENT_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT( :)?',re.IG
 re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
 re_CLIENT_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_KICK = re.compile('^:.+ KICK [#&!+]['+RE+']+ ['+RE+']+',re.IGNORECASE).search
+re_CLIENT_CHANMODE = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ MODE [#&!+]['+RE+']+ [-+][be] ['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ?',re.IGNORECASE).search
+re_CLIENT_BAN_EXCEPT = re.compile('^:['+RE+'!@~.]+ ((367)|(348)) ['+RE+']+ \S+ ',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
+INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('env/INVITE') else 0
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
+CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 32
+TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) * 1000 if os.path.exists('env/TIMEOUT') else 128 * 1000
+
+BAN = dict()
+EXCEPT = dict()
 
 user = str(os.getpid())
 nick = open('nick','rb').read().split('\n')[0]
 
-channels = collections.deque([],64)
-for dst in open('channels','rb').read().split('\n'):
-  if dst: channels.append(dst.lower())
+channels = collections.deque([],CHANLIMIT)
+for dst in open('channels','rb').read().lower().split('\n'):
+  if dst:
+    channels.append(dst)
+    BAN[dst] = list()
+    EXCEPT[dst] = list()
 
-auto_cmd = collections.deque([],64)
+auto_cmd = list()
 for cmd in open('auto_cmd','rb').read().split('\n'):
   if cmd: auto_cmd.append(cmd)
 
@@ -111,19 +122,19 @@ try_write(1,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\nNICK '+nick+'\n')
 
 def INIT():
   if client_revents(8192): return
-  global INIT
+  global INIT, auto_cmd
   INIT = 0
   for cmd in auto_cmd:
     time.sleep(LIMIT)
     try_write(1,cmd+'\n')
+  del auto_cmd
   for dst in channels:
     time.sleep(LIMIT)
     try_write(1,'JOIN '+dst+'\n')
 
 while 1:
 
-  poll(-1)
-
+  if not poll(TIMEOUT): sock_close(15,0)
   if not INIT: time.sleep(LIMIT)
 
   if client_revents(0):
@@ -153,7 +164,13 @@ while 1:
     elif re_CLIENT_JOIN(buffer):
       sock_write(buffer+'\n')
       dst = buffer.split(':')[2].lower()
-      if not dst in channels: channels.append(dst)
+      if not dst in channels:
+        BAN[dst] = list()
+        EXCEPT[dst] = list()
+        channels.append(dst)
+        try_write(1,'MODE '+dst+' b\n')
+        time.sleep(LIMIT)
+        try_write(1,'MODE '+dst+' e\n')
 
     elif re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
       nick = re_SPLIT(buffer)[2]
@@ -163,18 +180,37 @@ while 1:
       try_write(1,'NICK '+nick+'\n')
 
     elif re_CLIENT_KICK(buffer):
-
       if len(buffer.split(' :'))<2: buffer += ' :'
-
       sock_write(buffer+'\n')
-
       if re_SPLIT(buffer,4)[3].lower() == nick.lower():
         try_write(1,'JOIN '+re_SPLIT(buffer,4)[2]+'\n')
         channels.remove(dst)
+        del EXCEPT[dst]
+        del BAN[dst]
 
-    elif re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :[#&!+]['+RE+']+$',buffer.upper()):
+    elif INVITE and len(channels) < CHANLIMIT and re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :[#&!+]['+RE+']+$',buffer.upper()):
       dst = buffer[1:].split(':',1)[1].lower()
       if not dst in channels: try_write(1,'JOIN '+dst+'\n')
+
+    elif re_CLIENT_CHANMODE(buffer):
+      try:
+        src, cmd, dst = re_SPLIT(buffer,5)[2:5]
+        dst = re.compile(re.sub('\*','.*',re.sub('\.','\.',dst)),re.IGNORECASE).search
+        src = src.lower()
+        if cmd[1] == 'b':
+          BAN[src].append(dst) if cmd[0] == '+' and not dst in BAN[src] else BAN[src].remove(dst)
+        if cmd[1] == 'e':
+          EXCEPT[src].append(dst) if cmd[0] == '+' and not dst in EXCEPT[src] else EXCEPT[src].remove(dst)
+      except: pass
+
+    elif re_CLIENT_BAN_EXCEPT(buffer):
+      try:
+        cmd, src, dst, msg = re_SPLIT(buffer,5)[1:5]
+        msg = re.compile(re.sub('\*','.*',re.sub('\.','\.',msg)),re.IGNORECASE).search
+        dst = dst.lower()
+        if cmd == '367': BAN[dst].append(msg)
+        if cmd == '348': EXCEPT[dst].append(msg)
+      except: pass
 
   if INIT:
     INIT()
@@ -204,6 +240,18 @@ while 1:
     if re_SERVER_PRIVMSG_NOTICE_TOPIC(buffer):
       dst = re_SPLIT(buffer,3)[2].lower()
       if dst in channels:
+        src = re_SPLIT(buffer[1:],1)[0]
+        cmd = 1
+        for cmd in EXCEPT[dst]:
+          if cmd(src):
+            cmd = 0
+            break
+        if cmd:
+          for cmd in BAN[dst]:
+            if cmd(src):
+              cmd = 0
+              break
+          if cmd == 0: continue
         cmd = re_SPLIT(buffer,3)[1].upper()
         src = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
         msg = buffer.split(':',2)[2]
