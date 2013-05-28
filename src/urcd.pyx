@@ -52,6 +52,7 @@ CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.e
 
 nick = str()
 Nick = str()
+seen = float()
 user = str(os.getpid())
 channel_struct = dict()
 channels = collections.deque([],CHANLIMIT)
