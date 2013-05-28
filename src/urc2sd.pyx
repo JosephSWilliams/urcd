@@ -133,7 +133,7 @@ def INIT():
 
 while 1:
 
-  if poll(TIMEOUT<<4) and not INIT: time.sleep(LIMIT)
+  if poll(TIMEOUT<<10) and not INIT: time.sleep(LIMIT)
   now = time.time()
 
   if not client_revents(0):
