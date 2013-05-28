@@ -36,6 +36,7 @@ CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exi
 BAN = dict()
 EXCEPT = dict()
 seen = time.time()
+ping = time.time()
 user = str(os.getpid())
 nick = open('nick','rb').read().split('\n')[0]
 
