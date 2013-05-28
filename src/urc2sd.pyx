@@ -184,9 +184,8 @@ while 1:
       sock_write(buffer+'\n')
       if re_SPLIT(buffer,4)[3].lower() == nick.lower():
         try_write(1,'JOIN '+re_SPLIT(buffer,4)[2]+'\n')
+        del EXCEPT[dst], BAN[dst]
         channels.remove(dst)
-        del EXCEPT[dst]
-        del BAN[dst]
 
     elif INVITE and len(channels) < CHANLIMIT and re.search('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ INVITE '+re.escape(nick).upper()+' :[#&!+]['+RE+']+$',buffer.upper()):
       dst = buffer[1:].split(':',1)[1].lower()
