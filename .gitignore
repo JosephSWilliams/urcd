@@ -2,6 +2,7 @@ env
 conf
 build
 urcd
+urc.db
 urc2sd
 urchub
 urcrecv
