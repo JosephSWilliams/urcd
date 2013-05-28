@@ -39,6 +39,7 @@ re_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :[#&!+]['+R
 re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
 re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
+PING = int(open('env/PING','rb').read().split('\n')[0]) if os.path.exists('env/PING') else 0
 URCDB = open('env/URCDB','rb').read().split('\n')[0] if os.path.exists('env/URCDB') else str()
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
@@ -50,11 +51,14 @@ TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exist
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 
+PONG = int()
 nick = str()
 Nick = str()
 seen = float()
+ping = time.time()
 user = str(os.getpid())
 channel_struct = dict()
+WAIT = PING << 10 if PING else 16384
 channels = collections.deque([],CHANLIMIT)
 motd = open('env/motd','rb').read().split('\n')
 serv = open('env/serv','rb').read().split('\n')[0]
@@ -139,21 +143,23 @@ def sock_write(buffer):
 
 while 1:
 
-  if not poll(16348):
-    try_write(wr,'PING :LAG\n')
-    continue
+  poll(WAIT)
+  now = time.time()
 
   if not client_revents(0):
-    if time.time() - seen >= TIMEOUT:
-      if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n')
+    if now - seen >= TIMEOUT:
+      if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n')
       sock_close(15,0)
+    if now - ping >= WAIT:
+      if (PING and not PONG) or not nick: sock_close(15,0)
+      try_write(wr,'PING :'+user+'\n')
+      ping = now
 
   else:
 
     time.sleep(LIMIT)
-    seen = time.time()
+    buffer, seen, ping = str(), now, now
 
-    buffer = str()
     while 1:
       byte = try_read(rd,1)
       if byte == '':
@@ -253,6 +259,7 @@ while 1:
     elif re_CLIENT_PING_PONG(buffer):
       cmd, msg = re_SPLIT(buffer,2)[:2]
       if cmd.upper() == 'PING': try_write(wr,':'+serv+' PONG '+serv+' :'+msg+'\n')
+      elif msg.upper() == user.upper(): PONG = 1
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
@@ -357,7 +364,7 @@ while 1:
       if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :'+re_SPLIT(buffer,1)[1]+'\n')
       sock_close(15,0)
 
-    elif re_CLIENT_USER(buffer): pass
+    elif re_CLIENT_USER(buffer): try_write(wr,'PING :'+user+'\n')
 
     else:
       buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
