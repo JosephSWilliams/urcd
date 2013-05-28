@@ -72,6 +72,10 @@ if URCDB:
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
+for dst in channel_struct.keys():
+  channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
+  if channel_struct[dst]['topic']: channel_struct[dst]['topic'] = channel_struct[dst]['topic'][:TOPICLEN]
+
 def sock_close(sn,sf):
   try: os.remove(str(os.getpid()))
   except: pass
