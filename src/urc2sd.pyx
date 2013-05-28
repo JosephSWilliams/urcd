@@ -30,12 +30,12 @@ LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('e
 INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('env/INVITE') else 0
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
+TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) if os.path.exists('env/TIMEOUT') else 128
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 16
-TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) * 1000 if os.path.exists('env/TIMEOUT') else 128 * 1000
 
 BAN = dict()
 EXCEPT = dict()
-
+seen = time.time()
 user = str(os.getpid())
 nick = open('nick','rb').read().split('\n')[0]
 
@@ -132,12 +132,17 @@ def INIT():
 
 while 1:
 
-  if not poll(TIMEOUT): sock_close(15,0)
-  if not INIT: time.sleep(LIMIT)
+  if poll(TIMEOUT<<4) and not INIT: time.sleep(LIMIT)
+  now = time.time()
 
-  if client_revents(0):
+  if not client_revents(0):
+    if now - seen >= TIMEOUT: sock_close(15,0)
+    if now - ping >= TIMEOUT >> 4:
+      try_write(1,'PING :LAG\n')
+      ping = now
 
-    buffer = str()
+  else:
+    buffer, seen, ping = str(), now, now
     while 1:
       byte = try_read(rd,1)
       if byte == '': sock_close(15,0)
@@ -241,8 +246,7 @@ while 1:
     if re_SERVER_PRIVMSG_NOTICE_TOPIC(buffer):
       dst = re_SPLIT(buffer,3)[2].lower()
       if dst in channels:
-        src = re_SPLIT(buffer[1:],1)[0]
-        cmd = 1
+        cmd, src = 1, re_SPLIT(buffer[1:],1)[0]
         for cmd in EXCEPT[dst]:
           if cmd(src):
             cmd = 0
