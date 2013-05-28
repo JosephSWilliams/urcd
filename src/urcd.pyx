@@ -31,7 +31,7 @@ re_CLIENT_JOIN = re.compile('^JOIN :?([#&!+]['+RE+']+,?)+ ?',re.IGNORECASE).sear
 re_CLIENT_PART = re.compile('^PART ([#&!+]['+RE+']+,?)+ ?',re.IGNORECASE).search
 re_CLIENT_LIST = re.compile('^LIST',re.IGNORECASE).search
 re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
-re_CLIENT_USER = re.compile('^USER .*$',re.IGNORECASE).search
+re_CLIENT_USER = re.compile('^USER ',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
@@ -54,7 +54,7 @@ CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.e
 PONG = int()
 nick = str()
 Nick = str()
-seen = float()
+seen = time.time()
 ping = time.time()
 user = str(os.getpid())
 channel_struct = dict()
@@ -154,13 +154,12 @@ while 1:
     if now - seen >= TIMEOUT:
       if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n')
       sock_close(15,0)
-    if now - ping >= WAIT:
-      if (PING and not PONG) or not nick: sock_close(15,0)
+    if now - ping >= WAIT >> 10:
+      if (PING and not PONG) or (not nick): sock_close(15,0)
       try_write(wr,'PING :'+user+'\n')
       ping = now
 
   else:
-
     time.sleep(LIMIT)
     buffer, seen, ping = str(), now, now
 
@@ -218,6 +217,13 @@ while 1:
 
       try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+Nick+'\n')
 
+    elif re_CLIENT_USER(buffer): try_write(wr,'PING :'+user+'\n')
+
+    elif re_CLIENT_PING_PONG(buffer):
+      cmd, msg = re_SPLIT(buffer,2)[:2]
+      if cmd.upper() == 'PING': try_write(wr,':'+serv+' PONG '+serv+' :'+msg+'\n')
+      elif msg.upper() == user.upper(): PONG = 1
+
     elif not nick: pass
 
     elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
@@ -259,11 +265,6 @@ while 1:
         if not PRESENCE: continue
 
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
-
-    elif re_CLIENT_PING_PONG(buffer):
-      cmd, msg = re_SPLIT(buffer,2)[:2]
-      if cmd.upper() == 'PING': try_write(wr,':'+serv+' PONG '+serv+' :'+msg+'\n')
-      elif msg.upper() == user.upper(): PONG = 1
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
@@ -367,8 +368,6 @@ while 1:
     elif re_CLIENT_QUIT(buffer):
       if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :'+re_SPLIT(buffer,1)[1]+'\n')
       sock_close(15,0)
-
-    elif re_CLIENT_USER(buffer): try_write(wr,'PING :'+user+'\n')
 
     else:
       buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
