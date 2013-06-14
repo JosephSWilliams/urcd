@@ -41,6 +41,7 @@ re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK [#&!+]['+RE
 
 PING = int(open('env/PING','rb').read().split('\n')[0]) if os.path.exists('env/PING') else 0
 URCDB = open('env/URCDB','rb').read().split('\n')[0] if os.path.exists('env/URCDB') else str()
+FLOOD = int(open('env/FLOOD','rb').read().split('\n')[0]) if os.path.exists('env/FLOOD') else 0
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
@@ -54,10 +55,12 @@ CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.e
 PONG = int()
 nick = str()
 Nick = str()
+flood = int()
 seen = time.time()
 ping = time.time()
 user = str(os.getpid())
 channel_struct = dict()
+flood_expiry = time.time()
 WAIT = PING << 10 if PING else 16384
 channels = collections.deque([],CHANLIMIT)
 motd = open('env/motd','rb').read().split('\n')
@@ -92,17 +95,17 @@ signal.signal(signal.SIGINT,sock_close)
 signal.signal(signal.SIGTERM,sock_close)
 signal.signal(signal.SIGCHLD,sock_close)
 
-rd = 0
 if os.access('stdin',1):
   p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
   rd = p.stdout.fileno()
   del p
+else: rd = 0
 
-wr = 1
 if os.access('stdout',1):
   p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE)
   wr = p.stdin.fileno()
   del p
+else: wr = 1
 
 uid, gid = pwd.getpwnam('urcd')[2:4]
 os.chdir(sys.argv[1])
@@ -226,7 +229,12 @@ while 1:
 
     elif not nick: pass
 
-    elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
+    elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):      
+
+      if FLOOD:
+        if now - flood_expiry >= FLOOD: flood = 0
+        flood, flood_expiry = flood + 1, now
+        if flood >= FLOOD: continue
 
       cmd, dst, msg = re_SPLIT(buffer,2)
       cmd = cmd.upper()

@@ -1,4 +1,5 @@
 #include <sys/fcntl.h>
+#include <string.h>
 #include <poll.h>
 int main(){
 
