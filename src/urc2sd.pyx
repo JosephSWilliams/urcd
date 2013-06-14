@@ -162,16 +162,14 @@ while 1:
       if len(buffer.split(' :'))<2: buffer += ' :'
       sock_write(buffer+'\n')
 
-    elif re_CLIENT_PING(buffer):
-      try_write(1,'PONG '+re_SPLIT(buffer,1)[1]+'\n')
+    elif re_CLIENT_PING(buffer): try_write(1,'PONG '+re_SPLIT(buffer,1)[1]+'\n')
 
     elif re_CLIENT_JOIN(buffer):
       sock_write(buffer+'\n')
       dst = buffer.split(':')[2].lower()
       if not dst in channels:
         if len(channels) - 1 < CHANLIMIT:
-          BAN[dst] = list()
-          EXCEPT[dst] = list()
+          BAN[dst], EXCEPT[dst] = list(), list()
           channels.append(dst)
           try_write(1,'MODE '+dst+' b\n')
           time.sleep(LIMIT)
