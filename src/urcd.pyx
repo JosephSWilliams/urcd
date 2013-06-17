@@ -58,6 +58,7 @@ Nick = str()
 flood = int()
 seen = time.time()
 ping = time.time()
+sync = time.time()
 user = str(os.getpid())
 channel_struct = dict()
 flood_expiry = time.time()
@@ -152,6 +153,8 @@ while 1:
 
   poll(WAIT)
   now = time.time()
+
+  if URCDB and now - sync >= 128: db.sync()
 
   if not client_revents(0):
     if now - seen >= TIMEOUT:
@@ -512,9 +515,7 @@ while 1:
     elif re_SERVER_KICK(buffer):
 
       dst, src = re_SPLIT(buffer.lower(),4)[2:4]
-
-      if len(src)>NICKLEN: continue
-      if len(dst)>CHANNELLEN: continue
+      if len(src)>NICKLEN or len(dst)>CHANNELLEN: continue
 
       if not dst in channel_struct.keys():
 
