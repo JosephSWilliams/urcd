@@ -39,9 +39,10 @@ re_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :[#&!+]['+R
 re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
 re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
+### strange values will likely yield strange results ###
 PING = int(open('env/PING','rb').read().split('\n')[0]) if os.path.exists('env/PING') else 0
 URCDB = open('env/URCDB','rb').read().split('\n')[0] if os.path.exists('env/URCDB') else str()
-FLOOD = int(open('env/FLOOD','rb').read().split('\n')[0]) if os.path.exists('env/FLOOD') else 0
+FLOOD = int(open('env/FLOOD','rb').read().split('\n')[0]) if os.path.exists('env/FLOOD') else 8
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
@@ -55,17 +56,16 @@ CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.e
 PONG = int()
 nick = str()
 Nick = str()
-flood = int()
-seen = time.time()
-ping = time.time()
-sync = time.time()
+flood = FLOOD
+now = time.time()
 user = str(os.getpid())
-channel_struct = dict()
-flood_expiry = time.time()
+channel_struct = dict() ### operations assume nick is in channel_struct[dst]['names'] if dst in channels ###
 WAIT = PING << 10 if PING else 16384
 channels = collections.deque([],CHANLIMIT)
 motd = open('env/motd','rb').read().split('\n')
 serv = open('env/serv','rb').read().split('\n')[0]
+seen, ping, sync, flood_expiry = now, now, now, now
+active_clients = collections.deque([],CHANLIMIT*CHANLIMIT)
 
 if URCDB:
   try: db = shelve.open(URCDB)
@@ -79,6 +79,7 @@ if URCDB:
 for dst in channel_struct.keys():
   channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
   if channel_struct[dst]['topic']: channel_struct[dst]['topic'] = channel_struct[dst]['topic'][:TOPICLEN]
+  for src in channel_struct[dst]['names']: active_clients.append(src)
 
 def sock_close(sn,sf):
   try: os.remove(str(os.getpid()))
@@ -127,6 +128,7 @@ poll.register(rd,select.POLLIN|select.POLLPRI)
 poll.register(sd,select.POLLIN)
 poll=poll.poll
 
+### python doesn't have a way of testing pollfd.revents ###
 client_revents=select.poll()
 client_revents.register(rd,select.POLLIN|select.POLLPRI)
 client_revents=client_revents.poll
@@ -144,9 +146,10 @@ def try_write(fd,buffer):
   except: sock_close(15,0)
 
 def sock_write(buffer):
-  for path in os.listdir(root):
-    try:
-      if path != user: sock.sendto(buffer,path)
+  paths = os.listdir(root)
+  paths.remove(user) ### die on ENOENT ###
+  for path in paths:
+    try: sock.sendto(buffer,path)
     except: pass
 
 while 1:
@@ -154,7 +157,22 @@ while 1:
   poll(WAIT)
   now = time.time()
 
-  if URCDB and now - sync >= 128: db.sync()
+  while flood and now - flood_expiry >= FLOOD:
+    flood_expiry += FLOOD
+    flood -= 1
+
+  if now - sync >= TIMEOUT:
+    for dst in channel_struct.keys():
+      names = list(channel_struct[dst]['names'])
+      for src in names:
+        if src != nick and not src in active_clients:
+          if dst in channels: try_write(wr,':'+src+'!'+src+'@'+serv+' QUIT :ETIMEDOUT\n')
+          for dst in channel_struct.keys():
+            if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
+      if not names: del channel_struct[dst]
+      del names
+    sync, active_clients = now, collections.deque([],CHANLIMIT*CHANLIMIT)
+    if URCDB: db.sync()
 
   if not client_revents(0):
     if now - seen >= TIMEOUT:
@@ -169,7 +187,7 @@ while 1:
     time.sleep(LIMIT)
     buffer, seen, ping = str(), now, now
 
-    while 1:
+    while 1: ### python really sucks at this ###
       byte = try_read(rd,1)
       if byte == '':
         if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :EOF\n')
@@ -181,15 +199,13 @@ while 1:
     buffer = re_MIRC('NICK ',buffer)
 
     if re_CLIENT_NICK(buffer):
-
       if not nick:
         Nick = buffer.split(' ',1)[1]
         nick = Nick.lower()
-
         if len(nick)>NICKLEN:
-          try_write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+          try_write(wr,':'+serv+' 432 '+Nick+' :ERR_ERRONEUSNICKNAME\n')
+          Nick, nick = str(), str()
           continue
-
         try_write(wr,
           ':'+serv+' 001 '+Nick+' :'+serv+'\n'
           ':'+serv+' 002 '+Nick+' :'+Nick+'!'+user+'@'+serv+'\n'
@@ -202,25 +218,22 @@ while 1:
         try_write(wr,' +\n') if PRESENCE else try_write(wr,' +i\n')
         try_write(wr,':'+serv+' 375 '+Nick+' :- '+serv+' MOTD -\n')
         for msg in motd: try_write(wr,':'+serv+' 372 '+Nick+' :- '+msg+'\n')
-        try_write(wr,':'+serv+' 376 '+Nick+' :EOF MOTD\n')
+        try_write(wr,':'+serv+' 376 '+Nick+' :RPL_ENDOFMOTD\n')
         del motd
         continue
-
       src  = nick
       Nick = buffer.split(' ',1)[1]
       nick = Nick.lower()
-
       if len(nick)>NICKLEN:
-        try_write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+        try_write(wr,':'+serv+' 432 '+Nick+' :ERR_ERRONEUSNICKNAME\n')
+        Nick, nick = src, src
         continue
-
       for dst in channel_struct.keys():
         if dst in channels:
           channel_struct[dst]['names'].remove(src)
           if nick in channel_struct[dst]['names']:
             if src != nick: try_write(wr,':'+Nick+'!'+user+'@'+serv+' KICK '+dst+' '+Nick+' :NICK\n')
           else: channel_struct[dst]['names'].append(nick)
-
       try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+Nick+'\n')
 
     elif re_CLIENT_USER(buffer): try_write(wr,'PING :'+user+'\n')
@@ -233,54 +246,37 @@ while 1:
     elif not nick: pass
 
     elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):      
-
       if FLOOD:
-        if now - flood_expiry >= FLOOD: flood = 0
-        flood, flood_expiry = flood + 1, now
+        flood += 1
         if flood >= FLOOD: continue
-
       cmd, dst, msg = re_SPLIT(buffer,2)
       cmd = cmd.upper()
       dst = dst.lower()
-
       if dst[0] in ['#','&','!','+']:
         if len(dst)>CHANNELLEN:
-          try_write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+          try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
           continue
-
-      elif len(dst)>NICKLEN:
-        try_write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
-        continue
-
+      else:
+        if len(dst)>NICKLEN:
+          try_write(wr,':'+serv+' 401 '+Nick+' :ERR_NOSUCHNICK\n')
+          continue
+        active_clients.append(dst)
       if cmd == 'TOPIC':
-
-        if len(msg)>TOPICLEN:
-          try_write(wr,'ERROR : EMSGSIZE:TOPICLEN='+str(TOPICLEN)+'\n')
-          continue
-
-        try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
-
-        if dst[0] in ['#','&','!','+']:
-          if not dst in channel_struct.keys(): channel_struct[dst] = dict(
-            names = collections.deque([],CHANLIMIT),
-            topic = msg,
-          )
-          else: channel_struct[dst]['topic'] = msg
-
+        try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg[:TOPICLEN]+'\n')
+        if dst in channel_struct.keys(): channel_struct[dst]['topic'] = msg[:TOPICLEN]
       if cmd == 'PART':
         if dst in channels:
           try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
           channels.remove(dst)
           channel_struct[dst]['names'].remove(nick)
-        else: pass # return error to client?
+        else: try_write(wr,':'+serv+' 442 '+Nick+' '+dst+' :ERR_NOTONCHANNEL\n')
         if not PRESENCE: continue
-
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
       try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
-      try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(time.time()))+'\n')
+      try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
 
     elif re_CLIENT_MODE_NICK(buffer):
       if PRESENCE: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+\n')
@@ -290,50 +286,42 @@ while 1:
       if PRESENCE: try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +\n')
       else: try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n')
 
+    ### IRC does not provide AWAY broadcast ###
     elif re_CLIENT_AWAY_OFF(buffer):
-      try_write(wr,':'+serv+' 305 '+Nick+' :WB, :-)\n')
+      try_write(wr,':'+serv+' 305 '+Nick+' :RPL_UNAWAY\n')
 
     elif re_CLIENT_AWAY_ON(buffer):
-      try_write(wr,':'+serv+' 306 '+Nick+' :HB, :-)\n')
+      try_write(wr,':'+serv+' 306 '+Nick+' :RPL_AWAY\n')
 
     elif re_CLIENT_WHO(buffer):
       dst = re_SPLIT(buffer,2)[1].lower()
       if dst in channel_struct.keys():
         for src in channel_struct[dst]['names']:
           try_write(wr,':'+serv+' 352 '+Nick+' '+dst+' '+src+' '+serv+' '+src+' '+src+' H :0 '+src+'\n')
-      try_write(wr,':'+serv+' 315 '+Nick+' '+dst+' :EOF WHO\n')
+      try_write(wr,':'+serv+' 315 '+Nick+' '+dst+' :RPL_ENDOFWHO\n')
 
     elif re_CLIENT_INVITE(buffer):
-
       dst, msg = re_SPLIT(buffer,2)[1:3]
-
       if len(dst)>NICKLEN:
-        try_write(wr,'ERROR : EMSGSIZE:NICKLEN='+str(NICKLEN)+'\n')
+        try_write(wr,':'+serv+' 401 '+Nick+' :ERR_NOSUCHNICK\n')
         continue
-
       elif len(msg)>CHANNELLEN:
-        try_write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+        try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
         continue
-
+      active_clients.append(dst)
       try_write(wr,':'+serv+' 341 '+Nick+' '+dst+' '+msg+'\n')
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n')
 
     elif re_CLIENT_JOIN(buffer):
-
       for dst in re_SPLIT(buffer,2)[1].lower().split(','):
-
         if len(channels)>CHANLIMIT:
-          try_write(wr,'ERROR : EMSGSIZE:CHANLIMIT='+str(CHANLIMIT)+'\n')
+          try_write(wr,':'+serv+' 405 '+Nick+' :ERR_TOOMANYCHANNELS\n')
           continue
-
         if len(dst)>CHANNELLEN:
-          try_write(wr,'ERROR : EMSGSIZE:CHANNELLEN='+str(CHANNELLEN)+'\n')
+          try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
           continue
-
         if dst in channels: continue
-
         channels.append(dst)
-
         if not dst in channel_struct.keys(): channel_struct[dst] = dict(
           names = collections.deque([],CHANLIMIT),
           topic = None,
@@ -342,16 +330,13 @@ while 1:
           if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
           if channel_struct[dst]['topic']:
             try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
-
         try_write(wr,':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n')
         try_write(wr,':'+serv+' 353 '+Nick+' = '+dst+' :'+Nick+' ')
         for src in channel_struct[dst]['names']: try_write(wr,src+' ')
         try_write(wr,'\n')
-        try_write(wr,':'+serv+' 366 '+Nick+' '+dst+' :EOF NAMES\n')
-
+        try_write(wr,':'+serv+' 366 '+Nick+' '+dst+' :RPL_ENDOFNAMES\n')
         if len(channel_struct[dst]['names'])==CHANLIMIT:
           try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
-
         channel_struct[dst]['names'].append(nick)
         if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n')
 
@@ -362,33 +347,29 @@ while 1:
           if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' PART '+dst+' :\n')
           channels.remove(dst)
           channel_struct[dst]['names'].remove(nick)
-        else: pass # return error to client ?
+        else: try_write(wr,':'+serv+' 442 '+Nick+' '+dst+' :ERR_NOTONCHANNEL\n')
 
     elif re_CLIENT_LIST(buffer):
-
-      try_write(wr,':'+serv+' 321 '+Nick+' channel :users name\n')
-
+      try_write(wr,':'+serv+' 321 '+Nick+' CHANNELS :USERS NAMES\n')
       for dst in channel_struct.keys():
         if len(channel_struct[dst]['names']):
           try_write(wr,':'+serv+' 322 '+Nick+' '+dst+' '+str(len(channel_struct[dst]['names']))+' :[+n] ')
           if channel_struct[dst]['topic']: try_write(wr,channel_struct[dst]['topic'])
           try_write(wr,'\n')
-
-      try_write(wr,':'+serv+' 323 '+Nick+' :EOF LIST\n')
+      try_write(wr,':'+serv+' 323 '+Nick+' :RPL_LISTEND\n')
 
     elif re_CLIENT_QUIT(buffer):
       if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :'+re_SPLIT(buffer,1)[1]+'\n')
       sock_close(15,0)
 
-    else:
-      buffer = str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')
-      try_write(wr,':'+serv+' NOTICE '+Nick+' :ERROR: '+buffer+'\n')
+    ### implement new re_CLIENT_CMD's here ###
+
+    ### ERR_UKNOWNCOMMAND ###
+    else: try_write(wr,':'+serv+' 421 '+str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')+'\n')
 
   while server_revents(0):
-
     buffer = try_read(sd,1024).split('\n',1)[0]
     if not buffer: continue
-
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:
@@ -397,142 +378,99 @@ while 1:
     buffer += '\n'
 
     if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
-
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
       if len(src)>NICKLEN: continue
-
+      active_clients.append(src)
       cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
-
       if dst[0] in ['#','&','!','+']:
-
         if len(dst)>CHANNELLEN: continue
-
         if not dst in channel_struct.keys():
-
           if len(channel_struct.keys())>=CHANLIMIT:
-
             for dst in channel_struct.keys():
               if not dst in channels:
                 del channel_struct[dst]
                 break
-
             dst = re_SPLIT(buffer,3)[2].lower()
-
           channel_struct[dst] = dict(
             names = collections.deque([],CHANLIMIT),
             topic = None,
           )
-
-        if cmd == 'topic':
-          msg = buffer.split(':',2)[2].split('\n',1)[0]
-          if len(msg)>TOPICLEN: continue
-          channel_struct[dst]['topic'] = msg
-
+        if cmd == 'topic': channel_struct[dst]['topic'] = buffer.split(':',2)[2].split('\n',1)[0][:TOPICLEN]
         if cmd == 'part':
           if src != nick:
             if src in channel_struct[dst]['names']:
               channel_struct[dst]['names'].remove(src)
               if dst in channels: try_write(wr,buffer)
           continue
-
         if src != nick and not src in channel_struct[dst]['names']:
-
           if dst in channels:
-
             try_write(wr,re_SPLIT(buffer,1)[0]+' JOIN :'+dst+'\n')
-
             if len(channel_struct[dst]['names'])==CHANLIMIT:
-
               if nick != channel_struct[dst]['names'][0]:
                 try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
               else:
                 try_write(wr,':'+channel_struct[dst]['names'][1]+'!'+channel_struct[dst]['names'][1]+'@'+serv+' PART '+dst+'\n')
                 channel_struct[dst]['names'].append(nick)
-
           channel_struct[dst]['names'].append(src)
-
       elif cmd == 'part': continue
-
       if dst == nick or dst in channels: try_write(wr,buffer)
 
     elif re_SERVER_JOIN(buffer):
-
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
       if len(src)>NICKLEN: continue
-
+      active_clients.append(src)
       dst = buffer.split(':')[2].split('\n',1)[0].lower()
       if len(dst)>CHANNELLEN: continue
-
       if not dst in channel_struct.keys():
-
         if len(channel_struct.keys())>=CHANLIMIT:
-
           for dst in channel_struct.keys():
             if not dst in channels:
               del channel_struct[dst]
               break
-
           dst = buffer.split(':')[2].split('\n',1)[0].lower()
-
         channel_struct[dst] = dict(
           names = collections.deque([],CHANLIMIT),
           topic = None,
         )
-
       if src != nick and not src in channel_struct[dst]['names']:
-
         if dst in channels:
-
           try_write(wr,buffer)
-
           if len(channel_struct[dst]['names'])==CHANLIMIT:
-
             if nick != channel_struct[dst]['names'][0]:
               try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
             else:
               try_write(wr,':'+channel_struct[dst]['names'][1]+'!'+channel_struct[dst]['names'][1]+'@'+serv+' PART '+dst+'\n')
               channel_struct[dst]['names'].append(nick)
-
         channel_struct[dst]['names'].append(src)
 
     elif re_SERVER_QUIT(buffer):
-
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
       if src == nick: continue
       if len(src)>NICKLEN: continue
-
       cmd = '\x01'
       for dst in channel_struct.keys():
-
         if src in channel_struct[dst]['names']:
-
           channel_struct[dst]['names'].remove(src)
-
           if cmd == '\x01' and dst in channels:
             try_write(wr,buffer)
             cmd = '\x00'
+      while src in active_clients: active_clients.remove(src)
 
     elif re_SERVER_KICK(buffer):
-
       dst, src = re_SPLIT(buffer.lower(),4)[2:4]
       if len(src)>NICKLEN or len(dst)>CHANNELLEN: continue
-
+      while src in active_clients: active_clients.remove(src)
       if not dst in channel_struct.keys():
-
         if len(channel_struct.keys())>=CHANLIMIT:
-
           for dst in channel_struct.keys():
             if not dst in channels:
               del channel_struct[dst]
               break
-
           dst = re_SPLIT(buffer,3)[2].lower()
-
         channel_struct[dst] = dict(
           names = collections.deque([],CHANLIMIT),
           topic = None,
         )
-
       if src != nick:
         dst = re_SPLIT(buffer,3)[2].lower()
         if src in channel_struct[dst]['names']:

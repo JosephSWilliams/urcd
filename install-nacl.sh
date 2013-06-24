@@ -24,12 +24,12 @@ cd nacl-20110221
 # that works with shared objects.
 rm -r crypto_onetimeauth/poly1305/amd64
 
+# android patch
+echo 'gcc' >> okcompilers/c
+
 # patch the library for making shared objects on 64 bit
 # architectures by compiling with PIC.
 sed -i "s/$/ -fPIC/" okcompilers/c
-
-# android patch
-echo 'gcc' >> okcompilers/c
 
 ./do
 
