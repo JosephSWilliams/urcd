@@ -245,10 +245,12 @@ while 1:
 
     elif not nick: pass
 
-    elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):      
+    elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
       if FLOOD:
         flood += 1
-        if flood >= FLOOD: continue
+        if flood >= FLOOD:
+          try_write(wr,':'+serv+' NOTICE '+Nick+' :RPL_SPAM\n')
+          continue
       cmd, dst, msg = re_SPLIT(buffer,2)
       cmd = cmd.upper()
       dst = dst.lower()
@@ -260,7 +262,6 @@ while 1:
         if len(dst)>NICKLEN:
           try_write(wr,':'+serv+' 401 '+Nick+' :ERR_NOSUCHNICK\n')
           continue
-        active_clients.append(dst)
       if cmd == 'TOPIC':
         try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg[:TOPICLEN]+'\n')
         if dst in channel_struct.keys(): channel_struct[dst]['topic'] = msg[:TOPICLEN]
@@ -308,7 +309,6 @@ while 1:
       elif len(msg)>CHANNELLEN:
         try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
         continue
-      active_clients.append(dst)
       try_write(wr,':'+serv+' 341 '+Nick+' '+dst+' '+msg+'\n')
       sock_write(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n')
 
