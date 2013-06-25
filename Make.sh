@@ -5,6 +5,7 @@ if [ -e '/usr/lib/libnacl.so' ]; then
   exit 255
 fi
 
+touch conf-cc
 unset HEADERS
 
 if   [ -e '/usr/include/python2.6/Python.h'       ] &&
