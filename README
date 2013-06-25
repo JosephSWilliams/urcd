@@ -11,6 +11,9 @@ recommends:
   nacl(curvecp support), nacltaia-otr
 
 install:
+  # enomem workaround (thanks keiko)
+  # echo '--param gcc-min-expand=0 --param gcc-min-heapsize=8192' > conf-cc
+
   ./install-libtai.sh
   ./install-nacl.sh
 

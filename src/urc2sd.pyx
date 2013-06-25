@@ -111,9 +111,10 @@ def try_write(fd,buffer):
   except: sock_close(15,0)
 
 def sock_write(buffer):
-  for path in os.listdir(root):
-    try:
-      if path != user: sock.sendto(buffer,path)
+  paths = os.listdir(root)
+  paths.remove(user) ### die on ENOENT ###
+  for path in paths:
+    try: sock.sendto(buffer,path)
     except: pass
 
 try_write(1,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\nNICK '+nick+'\n')
