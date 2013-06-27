@@ -72,6 +72,8 @@ if URCDB:
   except:
     os.remove(URCDB)
     db = shelve.open(URCDB)
+  try: active_clients = collections.deque(list(db['active_clients']),CHANLIMIT*CHANLIMIT)
+  except: pass
   try: channel_struct = db['channel_struct']
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
@@ -89,6 +91,7 @@ def sock_close(sn,sf):
       for dst in channels:
         if dst in channel_struct.keys() and nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
       db['channel_struct'] = channel_struct
+      db['active_clients'] = active_clients
       db.close()
     sys.exit(0)
 
@@ -166,13 +169,12 @@ while 1:
       names = list(channel_struct[dst]['names'])
       for src in names:
         if src != nick and not src in active_clients:
-          if dst in channels: try_write(wr,':'+src+'!'+src+'@'+serv+' QUIT :ETIMEDOUT\n')
+          if dst in channels: try_write(wr,':'+src+'!'+src+'@'+serv+' QUIT :IDLE\n')
           for dst in channel_struct.keys():
             if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
-      if not names: del channel_struct[dst]
       del names
-    sync, active_clients = now, collections.deque([],CHANLIMIT*CHANLIMIT)
     if URCDB: db.sync()
+    sync = now
 
   if not client_revents(0):
     if now - seen >= TIMEOUT:
