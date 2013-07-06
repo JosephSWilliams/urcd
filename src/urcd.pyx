@@ -40,7 +40,7 @@ re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IG
 re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
 ### strange values will likely yield strange results ###
-PING = int(open('env/PING','rb').read().split('\n')[0]) if os.path.exists('env/PING') else 0
+PING = int(open('env/PING','rb').read().split('\n')[0]) if os.path.exists('env/PING') else 16
 URCDB = open('env/URCDB','rb').read().split('\n')[0] if os.path.exists('env/URCDB') else str()
 FLOOD = int(open('env/FLOOD','rb').read().split('\n')[0]) if os.path.exists('env/FLOOD') else 8
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
