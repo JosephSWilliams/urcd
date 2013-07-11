@@ -151,7 +151,7 @@ def try_write(fd,buffer):
   except: sock_close(15,0)
 
 if URCHUB:
-  def randombytes(n): return ''.join(chr(randrange(0,256)) for n in xrange(0,n))
+  def randombytes(n): return ''.join(chr(randrange(0,256)) for i in xrange(0,n))
   def taia_now(): return { 'sec':4611686018427387914L+long(now),'nano':long(1000000000*(now%1)+500),'atto':0 }
   def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
   def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
