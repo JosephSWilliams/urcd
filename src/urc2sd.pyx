@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from random import randrange
 import unicodedata
 import collections
 import subprocess
@@ -27,6 +28,7 @@ re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
+URCHUB = open('env/URCHUB','rb').read().split('\n')[0] if os.path.exists('env/URCHUB') else str()
 INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('env/INVITE') else 0
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
@@ -71,7 +73,7 @@ if os.access('stdout',1):
 else: pipefd = os.pipe()
 
 uid, gid = pwd.getpwnam('urcd')[2:4]
-os.chdir(sys.argv[1])
+os.chdir(os.path.dirname(URCHUB)) if URCHUB else os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
 os.setgid(gid)
 os.setuid(uid)
@@ -110,12 +112,22 @@ def try_write(fd,buffer):
   try: return os.write(fd,buffer)
   except: sock_close(15,0)
 
-def sock_write(buffer):
-  paths = os.listdir(root)
-  paths.remove(user) ### die on ENOENT ###
-  for path in paths:
-    try: sock.sendto(buffer,path)
+if URCHUB:
+  def randombytes(n): return ''.join(chr(randrange(0,256)) for i in xrange(0,n))
+  def taia_now(): return { 'sec':4611686018427387914L+long(now),'nano':long(1000000000*(now%1)+500),'atto':0 }
+  def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
+  def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
+  def sock_write(buffer):
+    buflen = len(buffer)
+    try: sock.sendto(chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())+randombytes(8)+buffer,'hub')
     except: pass
+else:
+  def sock_write(buffer):
+    paths = os.listdir(root)
+    paths.remove(user) ### die on ENOENT ###
+    for path in paths:
+      try: sock.sendto(buffer,path)
+      except: pass
 
 try_write(1,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\nNICK '+nick+'\n')
 
@@ -223,9 +235,8 @@ while 1:
     continue
 
   if server_revents(0):
-    buffer = try_read(sd,1024).split('\n',1)[0]
-    if not buffer: continue
-    try_write(pipefd[1],buffer+'\n')
+    buffer = try_read(sd,2+16+8+1024)[2+16+8:].split('\n',1)[0] if URCHUB else try_read(sd,1024).split('\n',1)[0]
+    if buffer: try_write(pipefd[1],buffer+'\n')
 
   if pipe_revents(0):
 
