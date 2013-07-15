@@ -55,19 +55,17 @@ TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exist
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 
-PONG = int()
 nick = str()
 Nick = str()
-flood = FLOOD
 now = time.time()
 user = str(os.getpid())
 channel_struct = dict() ### operations assume nick is in channel_struct[dst]['names'] if dst in channels ###
-WAIT = PING << 10 if PING else 16384
 channels = collections.deque([],CHANLIMIT)
 motd = open('env/motd','rb').read().split('\n')
 serv = open('env/serv','rb').read().split('\n')[0]
-seen, ping, sync, flood_expiry = now, now, now, now
+PONG, PINGWAIT, POLLWAIT = int(), PING, PING << 10
 active_clients = collections.deque([],CHANLIMIT*CHANLIMIT)
+flood, seen, ping, sync, flood_expiry = FLOOD, now, now, now, now
 
 if URCDB:
   try: db = shelve.open(URCDB)
@@ -169,7 +167,7 @@ else:
 
 while 1:
 
-  poll(WAIT)
+  poll(POLLWAIT)
   now = time.time()
 
   while flood and now - flood_expiry >= FLOOD:
@@ -192,7 +190,7 @@ while 1:
     if now - seen >= TIMEOUT:
       if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n')
       sock_close(15,0)
-    if now - ping >= WAIT >> 10:
+    if now - ping >= PINGWAIT:
       if (PING and not PONG) or (not nick): sock_close(15,0)
       try_write(wr,'PING :'+user+'\n')
       ping = now
@@ -208,9 +206,7 @@ while 1:
         sock_close(15,0)
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
-
-    buffer = re_CHATZILLA('',buffer)
-    buffer = re_MIRC('NICK ',buffer)
+    buffer = re_CHATZILLA('',re_MIRC('NICK ',buffer))
 
     if re_CLIENT_NICK(buffer):
       if not nick:
@@ -220,6 +216,7 @@ while 1:
           try_write(wr,':'+serv+' 432 '+Nick+' :ERR_ERRONEUSNICKNAME\n')
           Nick, nick = str(), str()
           continue
+        msg = ' +' if PRESENCE else ' +i'
         try_write(wr,
           ':'+serv+' 001 '+Nick+' :'+serv+'\n'
           ':'+serv+' 002 '+Nick+' :'+Nick+'!'+user+'@'+serv+'\n'
@@ -227,15 +224,14 @@ while 1:
           ':'+serv+' 004 '+Nick+' '+serv+' 0.0 + :+\n'
           ':'+serv+' 005 '+Nick+' NETWORK='+serv+' CHANTYPES=#&!+ CASEMAPPING=ascii CHANLIMIT='+str(CHANLIMIT)+' NICKLEN='+str(NICKLEN)+' TOPICLEN='+str(TOPICLEN)+' CHANNELLEN='+str(CHANNELLEN)+' COLOUR='+str(COLOUR)+' UNICODE='+str(UNICODE)+' PRESENCE='+str(PRESENCE)+':\n'
           ':'+serv+' 254 '+Nick+' '+str(CHANLIMIT)+' :CHANNEL(S)\n'
-          ':'+Nick+'!'+user+'@'+serv+' MODE '+Nick
+          ':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+msg+'\n'
+          ':'+serv+' 375 '+Nick+' :- '+serv+' MOTD -\n'
         )
-        try_write(wr,' +\n') if PRESENCE else try_write(wr,' +i\n')
-        try_write(wr,':'+serv+' 375 '+Nick+' :- '+serv+' MOTD -\n')
         for msg in motd: try_write(wr,':'+serv+' 372 '+Nick+' :- '+msg+'\n')
         try_write(wr,':'+serv+' 376 '+Nick+' :RPL_ENDOFMOTD\n')
         del motd
         continue
-      src  = nick
+      src = nick
       Nick = buffer.split(' ',1)[1]
       nick = Nick.lower()
       if len(nick)>NICKLEN:
@@ -290,8 +286,10 @@ while 1:
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
-      try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
-      try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
+      try_write(wr,
+        ':'+serv+' 324 '+Nick+' '+dst+' +n\n'
+        ':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n'
+      )
 
     elif re_CLIENT_MODE_NICK(buffer):
       if PRESENCE: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+\n')
@@ -344,11 +342,12 @@ while 1:
           if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
           if channel_struct[dst]['topic']:
             try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
-        try_write(wr,':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n')
-        try_write(wr,':'+serv+' 353 '+Nick+' = '+dst+' :'+Nick+' ')
+        try_write(wr,
+          ':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
+          ':'+serv+' 353 '+Nick+' = '+dst+' :'+Nick+' '
+        )
         for src in channel_struct[dst]['names']: try_write(wr,src+' ')
-        try_write(wr,'\n')
-        try_write(wr,':'+serv+' 366 '+Nick+' '+dst+' :RPL_ENDOFNAMES\n')
+        try_write(wr,'\n:'+serv+' 366 '+Nick+' '+dst+' :RPL_ENDOFNAMES\n')
         if len(channel_struct[dst]['names'])==CHANLIMIT:
           try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
         channel_struct[dst]['names'].append(nick)
@@ -381,7 +380,7 @@ while 1:
     ### ERR_UKNOWNCOMMAND ###
     else: try_write(wr,':'+serv+' 421 '+str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')+'\n')
 
-  while server_revents(0):
+  while server_revents((randrange(0,256)<<10)*0.01) and not client_revents(0):
     buffer = try_read(sd,2+16+8+1024)[2+16+8:].split('\n',1)[0] if URCHUB else try_read(sd,1024).split('\n',1)[0]
     if not buffer: continue
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
