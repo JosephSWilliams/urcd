@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from random import randrange
+from random import choice
 import unicodedata
 import collections
 import subprocess
@@ -8,6 +8,7 @@ import select
 import socket
 import signal
 import shelve
+import fcntl
 import time
 import pwd
 import sys
@@ -61,6 +62,7 @@ now = time.time()
 user = str(os.getpid())
 channel_struct = dict() ### operations assume nick is in channel_struct[dst]['names'] if dst in channels ###
 channels = collections.deque([],CHANLIMIT)
+bytes = [(chr(i),i) for i in xrange(0,256)]
 motd = open('env/motd','rb').read().split('\n')
 serv = open('env/serv','rb').read().split('\n')[0]
 PONG, PINGWAIT, POLLWAIT = int(), PING, PING << 10
@@ -100,13 +102,13 @@ signal.signal(signal.SIGINT,sock_close)
 signal.signal(signal.SIGTERM,sock_close)
 signal.signal(signal.SIGCHLD,sock_close)
 
-if os.access('stdin',1):
+if os.access('stdin',os.X_OK):
   p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
   rd = p.stdout.fileno()
   del p
 else: rd = 0
 
-if os.access('stdout',1):
+if os.access('stdout',os.X_OK):
   p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE)
   wr = p.stdin.fileno()
   del p
@@ -140,16 +142,23 @@ server_revents=select.poll()
 server_revents.register(sd,select.POLLIN)
 server_revents=server_revents.poll
 
-def try_read(fd,buffer_len):
-  try: return os.read(fd,buffer_len)
+def try_read(fd,buflen):
+  try: return os.read(fd,buflen)
   except: sock_close(15,0)
 
+fcntl.fcntl(wr,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
+
 def try_write(fd,buffer):
-  try: return os.write(fd,buffer)
+  try:
+    while buffer:
+      buffer = buffer[os.write(fd,buffer):]
+      if buffer:
+        if time.time() - now >= TIMEOUT: sock_close(15,0)
+        time.sleep(1)
   except: sock_close(15,0)
 
 if URCHUB:
-  def randombytes(n): return ''.join(chr(randrange(0,256)) for i in xrange(0,n))
+  def randombytes(n): return ''.join(choice(bytes)[0] for i in xrange(0,n))
   def taia_now(): return { 'sec':4611686018427387914L+long(now),'nano':long(1000000000*(now%1)+500),'atto':0 }
   def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
   def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
@@ -206,7 +215,7 @@ while 1:
         sock_close(15,0)
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
-    buffer = re_CHATZILLA('',re_MIRC('NICK ',buffer))
+    buffer = re_CHATZILLA('',re_MIRC('NICK ',buffer)) ### workaround ChatZilla and mIRC ###
 
     if re_CLIENT_NICK(buffer):
       if not nick:
@@ -231,18 +240,18 @@ while 1:
         try_write(wr,':'+serv+' 376 '+Nick+' :RPL_ENDOFMOTD\n')
         del motd
         continue
-      src = nick
+      src = Nick ### some versions of AndChat do not support CASEMAPPING ###
       Nick = buffer.split(' ',1)[1]
       nick = Nick.lower()
       if len(nick)>NICKLEN:
         try_write(wr,':'+serv+' 432 '+Nick+' :ERR_ERRONEUSNICKNAME\n')
-        Nick, nick = src, src
+        Nick, nick = src, src.lower()
         continue
       for dst in channel_struct.keys():
         if dst in channels:
-          channel_struct[dst]['names'].remove(src)
+          channel_struct[dst]['names'].remove(src.lower())
           if nick in channel_struct[dst]['names']:
-            if src != nick: try_write(wr,':'+Nick+'!'+user+'@'+serv+' KICK '+dst+' '+Nick+' :NICK\n')
+            if src.lower() != nick: try_write(wr,':'+Nick+'!'+user+'@'+serv+' KICK '+dst+' '+Nick+' :NICK\n')
           else: channel_struct[dst]['names'].append(nick)
       try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+Nick+'\n')
 
@@ -268,10 +277,9 @@ while 1:
         if len(dst)>CHANNELLEN:
           try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
           continue
-      else:
-        if len(dst)>NICKLEN:
-          try_write(wr,':'+serv+' 401 '+Nick+' :ERR_NOSUCHNICK\n')
-          continue
+      elif len(dst)>NICKLEN:
+        try_write(wr,':'+serv+' 401 '+Nick+' :ERR_NOSUCHNICK\n')
+        continue
       if cmd == 'TOPIC':
         try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg[:TOPICLEN]+'\n')
         if dst in channel_struct.keys(): channel_struct[dst]['topic'] = msg[:TOPICLEN]
@@ -380,7 +388,7 @@ while 1:
     ### ERR_UKNOWNCOMMAND ###
     else: try_write(wr,':'+serv+' 421 '+str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')+'\n')
 
-  while server_revents((randrange(0,256)<<10)*0.01) and not client_revents(0):
+  while server_revents((choice(bytes)[1]<<10)*0.01) and not client_revents(0): ### may reduce some side channels ###
     buffer = try_read(sd,2+16+8+1024)[2+16+8:].split('\n',1)[0] if URCHUB else try_read(sd,1024).split('\n',1)[0]
     if not buffer: continue
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
