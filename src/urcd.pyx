@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from random import choice
+from errno import EAGAIN
 import unicodedata
 import collections
 import subprocess
@@ -149,13 +150,13 @@ def try_read(fd,buflen):
 fcntl.fcntl(wr,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
 
 def try_write(fd,buffer):
-  try:
-    while buffer:
-      buffer = buffer[os.write(fd,buffer):]
-      if buffer:
-        if time.time() - now >= TIMEOUT: sock_close(15,0)
-        time.sleep(1)
-  except: sock_close(15,0)
+  while buffer:
+    try: buffer = buffer[os.write(fd,buffer):]
+    except OSError as ex:
+      if ex.errno != EAGAIN: sock_close(15,0)
+    if buffer:
+      if time.time() - now >= TIMEOUT: sock_close(15,0)
+      time.sleep(1)
 
 if URCHUB:
   def randombytes(n): return ''.join(choice(bytes)[0] for i in xrange(0,n))
