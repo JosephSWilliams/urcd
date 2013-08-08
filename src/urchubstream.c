@@ -34,6 +34,10 @@ main(int argc, char **argv)
     exit(64);
   }
 
+  int devurandomfd = open("/dev/urandom",O_RDONLY);
+  if (devurandomfd<0) exit(255);
+  unsigned char byte[1];
+
   int rd = 0, wr = 1, sd = -1;
   if (getenv("TCPCLIENT")){ rd = 6; wr = 7; }
 
@@ -95,16 +99,18 @@ main(int argc, char **argv)
         i = read(rd,buffer+n,l-n);
         if (i<1) sock_close(9);
         n += i;
-      } if (sendto(sd,buffer,n,0,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(250000);
+      } if (sendto(sd,buffer,n,0,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(262144);
 
     }
 
-    while (poll(fds+1,1,0))
+    while ((poll(fds,2,0)) && (!fds[0].revents))
     {
       n = read(sd,buffer,2+16+8+1024);
       if (n<1) sock_close(10);
+      if (read(devurandomfd,byte,1)<1) sock_close(11);
+      poll(fds+1,1,byte[0]<<3);
       if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
-      if (write(wr,buffer,n)<0) sock_close(11);
+      if (write(wr,buffer,n)<0) sock_close(12);
     }
 
   }
