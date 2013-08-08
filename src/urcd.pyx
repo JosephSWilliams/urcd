@@ -392,7 +392,7 @@ while 1:
   while server_revents(0) and not client_revents(0): ### may reduce some side channels ###
     buffer = try_read(sd,2+16+8+1024)[2+16+8:].split('\n',1)[0] if URCHUB else try_read(sd,1024).split('\n',1)[0]
     if not buffer: continue
-    server_revents(choice(bytes)[1]<<3)
+    server_revents(choice(bytes)[1]<<4)
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:

@@ -108,7 +108,7 @@ main(int argc, char **argv)
       n = read(sd,buffer,2+16+8+1024);
       if (n<1) sock_close(10);
       if (read(devurandomfd,byte,1)<1) sock_close(11);
-      poll(fds+1,1,byte[0]<<3);
+      poll(fds+1,1,byte[0]<<4);
       if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
       if (write(wr,buffer,n)<0) sock_close(12);
     }
