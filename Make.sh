@@ -37,6 +37,9 @@ gcc `cat conf-cc` src/ucspi-server2client.c -o ucspi-server2client || exit 1
 
 gcc `cat conf-cc` src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 
+gcc src/sign_keypair.c -o sign_keypair -l nacl /usr/lib/randombytes.o || exit 1
+
+gcc -O2 -fPIC -DPIC src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.6 -l tai -l nacl /usr/lib/randombytes.o || exit 1
 
 gcc `cat conf-cc` src/check-taia.c -o check-taia -l tai -l nacl || exit 1
 

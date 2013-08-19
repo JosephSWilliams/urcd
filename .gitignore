@@ -23,3 +23,5 @@ ucspi-socks4aclient
 libtai-*
 nacl-*
 check-taia
+nacltaia.so
+sign_keypair

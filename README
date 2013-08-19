@@ -39,6 +39,13 @@ install:
   sleep 4
   svstat /service/urcd
 
+signatures:
+  ./sign_keypair
+  echo $seckey > env/URCSECKEY
+  echo urcsigndb/ > env/URCSIGNDB
+  mkdir -p urccsigndb/
+  echo $pubkey > urcsigndb/$nick
+
 adding curvecp:
   mkdir -p /services/urcd-curvecp
 

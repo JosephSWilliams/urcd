@@ -17,6 +17,7 @@ import re
 import os
 
 RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
+re_USER = re.compile('!\S+@',re.IGNORECASE).sub
 re_SPLIT = re.compile(' +:?',re.IGNORECASE).split
 re_CHATZILLA = re.compile(' $',re.IGNORECASE).sub
 re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
@@ -53,9 +54,11 @@ UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists(
 NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
 TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) if os.path.exists('env/TIMEOUT') else 128
 PRESENCE = int(open('env/PRESENCE','rb').read().split('\n')[0]) if os.path.exists('env/PRESENCE') else 0
+URCSIGNDB = open('env/URCSIGNDB','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNDB') else str()
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
+URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
 
 nick = str()
 Nick = str()
@@ -80,6 +83,12 @@ if URCDB:
   try: channel_struct = db['channel_struct']
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
+
+if URCSIGNDB:
+  from nacltaia import *
+  urcsigndb = dict()
+  for src in os.listdir(URCSIGNDB): urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read().split('\n')[0].decode('hex')
+elif URCSIGNSECKEY: from nacltaia import *
 
 for dst in channel_struct.keys():
   channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
@@ -166,7 +175,12 @@ if URCHUB:
   def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
   def sock_write(buffer):
     buflen = len(buffer)
-    try: sock.sendto(chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())+randombytes(8)+buffer,'hub')
+    if URCSIGNSECKEY:
+      buflen += 96
+      buffer = chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())[:12]+'\x01\x00\x00\x00'+randombytes(8)+buffer
+      buffer += crypto_sign(crypto_hash_sha256(buffer),URCSIGNSECKEY[:64])
+    else: buffer = chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())+randombytes(8)+buffer
+    try: sock.sendto(buffer,'hub')
     except: pass
 else:
   def sock_write(buffer):
@@ -390,10 +404,20 @@ while 1:
     ### ERR_UKNOWNCOMMAND ###
     else: try_write(wr,':'+serv+' 421 '+str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')+'\n')
 
-  while server_revents(0) and not client_revents(0): ### may reduce some side channels ###
-    buffer = try_read(sd,2+16+8+1024)[2+16+8:].split('\n',1)[0] if URCHUB else try_read(sd,1024).split('\n',1)[0]
-    if not buffer: continue
-    server_revents(choice(bytes)[1]<<4)
+  while server_revents(0) and not client_revents(0):
+    if URCHUB:
+      buffer = try_read(sd,2+12+4+8+1024)
+      if URCSIGNDB and buffer[2+12:][:4] == '\x01\x00\x00\x00':
+        buflen = len(buffer)
+        try:
+          if crypto_hash_sha256(buffer[:buflen-96]) == crypto_sign_open(buffer[buflen-96:],urcsigndb[buffer[2+12+4+8+1:].split('!',1)[0].lower()][:32]): buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
+          else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+        except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+      else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+    else: buffer = re_USER('!URCD@',try_read(sd,1024).split('\n',1)[0],1)
+
+    server_revents(choice(bytes)[1]<<4) ### may reduce some side channels ###
+
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:
