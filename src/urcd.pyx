@@ -59,6 +59,9 @@ CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exi
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
 
+### (deprecated) see http://anonet2.biz/URC#urc-integ ###
+re_URC_INTEG = re.compile(' \d{10,10} [a-fA-F0-9]{10,10} urc-integ$',re.IGNORECASE).sub
+
 nick = str()
 Nick = str()
 now = time.time()
@@ -155,11 +158,14 @@ server_revents=select.poll()
 server_revents.register(sd,select.POLLIN)
 server_revents=server_revents.poll
 
+fcntl.fcntl(rd,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
+fcntl.fcntl(wr,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
+
 def try_read(fd,buflen):
   try: return os.read(fd,buflen)
-  except: sock_close(15,0)
-
-fcntl.fcntl(wr,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
+  except OSError as ex:
+    if ex.errno != EAGAIN: sock_close(15,0)
+  return str()
 
 def try_write(fd,buffer):
   while buffer:
@@ -231,10 +237,11 @@ while 1:
     buffer, seen, ping = str(), now, now
 
     while 1: ### python really sucks at this ###
-      byte = try_read(rd,1)
-      if byte == '':
+      if now - seen >= TIMEOUT:
         if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :EOF\n')
         sock_close(15,0)
+      byte = try_read(rd,1)
+      if byte == '': continue
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
     buffer = re_CHATZILLA('',re_MIRC('NICK ',buffer)) ### workaround ChatZilla and mIRC ###
@@ -429,7 +436,7 @@ while 1:
     if not UNICODE:
       buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
       buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
-    buffer += '\n'
+    buffer = re_URC_INTEG('',buffer)+'\n' ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
 
     if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
