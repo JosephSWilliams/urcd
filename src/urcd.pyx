@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from random import choice
 from errno import EAGAIN
 import unicodedata
 import collections
@@ -124,6 +123,10 @@ if os.access('stdout',os.X_OK):
   del p
 else: wr = 1
 
+### nacl-20110221's randombytes() not compatible with chroot ###
+devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
+def randombytes(n): return try_read(devurandomfd,n)
+
 uid, gid = pwd.getpwnam('urcd')[2:4]
 os.chdir(os.path.dirname(URCHUB)) if URCHUB else os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
@@ -168,9 +171,12 @@ def try_write(fd,buffer):
       time.sleep(1)
 
 if URCHUB:
-  def randombytes(n): return ''.join(choice(bytes)[0] for i in xrange(0,n))
   ### version of taia_now is randomized by +/- 4 seconds ###
-  def taia_now(): return { 'sec':4611686018427387914L+long(now+choice([-1,-2,-3,-4,1,2,3,4])),'nano':long(1000000000*(now%1)+500),'atto':0 }
+  def taia_now(): return { 
+      'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
+      'nano':long(1000000000*(now%1)+500),
+      'atto':0
+  }
   def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
   def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
   def sock_write(buffer):
@@ -410,13 +416,13 @@ while 1:
       if URCSIGNDB and buffer[2+12:][:4] == '\x01\x00\x00\x00':
         buflen = len(buffer)
         try:
-          if crypto_hash_sha256(buffer[:buflen-96]) == crypto_sign_open(buffer[buflen-96:],urcsigndb[buffer[2+12+4+8+1:].split('!',1)[0].lower()][:32]): buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
+          if crypto_sign_open(buffer[buflen-96:],urcsigndb[buffer[2+12+4+8+1:].split('!',1)[0].lower()][:32]) == crypto_hash_sha256(buffer[:buflen-96]): buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
           else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
         except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
       else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
     else: buffer = re_USER('!URCD@',try_read(sd,1024).split('\n',1)[0],1)
 
-    server_revents(choice(bytes)[1]<<4) ### may reduce some side channels ###
+    server_revents(ord(randombytes(1))<<4) ### may reduce some side channels ###
 
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)

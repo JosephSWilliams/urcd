@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from random import randrange
 import unicodedata
 import collections
 import subprocess
@@ -40,6 +39,7 @@ EXCEPT = dict()
 seen = time.time()
 ping = time.time()
 user = str(os.getpid())
+bytes = [(chr(i),i) for i in xrange(0,256)]
 nick = open('nick','rb').read().split('\n')[0]
 
 channels = collections.deque([],CHANLIMIT)
@@ -71,6 +71,10 @@ if os.access('stdout',1):
   pipefd = ( p.stdout.fileno(), p.stdin.fileno() )
   del p
 else: pipefd = os.pipe()
+
+### nacl-20110221's randombytes() not compatible with chroot ###
+devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
+def randombytes(n): return try_read(devurandomfd,n)
 
 uid, gid = pwd.getpwnam('urcd')[2:4]
 os.chdir(os.path.dirname(URCHUB)) if URCHUB else os.chdir(sys.argv[1])
@@ -113,13 +117,18 @@ def try_write(fd,buffer):
   except: sock_close(15,0)
 
 if URCHUB:
-  def randombytes(n): return ''.join(chr(randrange(0,256)) for i in xrange(0,n))
-  def taia_now(): return { 'sec':4611686018427387914L+long(now),'nano':long(1000000000*(now%1)+500),'atto':0 }
+  ### version of taia_now is randomized by +/- 4 seconds ###
+  def taia_now(): return { 
+      'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
+      'nano':long(1000000000*(now%1)+500),
+      'atto':0
+  }
   def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
   def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
   def sock_write(buffer):
     buflen = len(buffer)
-    try: sock.sendto(chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())+randombytes(8)+buffer,'hub')
+    buffer = chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())+randombytes(8)+buffer
+    try: sock.sendto(buffer,'hub')
     except: pass
 else:
   def sock_write(buffer):
