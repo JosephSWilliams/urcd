@@ -241,7 +241,9 @@ while 1:
         if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :EOF\n')
         sock_close(15,0)
       byte = try_read(rd,1)
-      if byte == '': continue
+      if byte == '':
+        if client_revent(0): sock_close(15,0)
+        time.sleep(1)
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
     buffer = re_CHATZILLA('',re_MIRC('NICK ',buffer)) ### workaround ChatZilla and mIRC ###
