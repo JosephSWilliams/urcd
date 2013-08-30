@@ -433,12 +433,13 @@ while 1:
 
     server_revents(ord(randombytes(1))<<4) ### may reduce some side channels ###
 
-    buffer = re_URC_INTEG('',buffer)+'\n' ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
+    buffer = re_URC_INTEG('',buffer) ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:
       buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
       buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
+    buffer += '\n'
 
     if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
