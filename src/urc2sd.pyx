@@ -259,12 +259,12 @@ while 1:
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
 
+    buffer = re_URC_INTEG('',buffer)+'\n' ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:
       buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
       buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
-    buffer = re_URC_INTEG('',buffer)+'\n' ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
 
     if re_SERVER_PRIVMSG_NOTICE_TOPIC(buffer):
       dst = re_SPLIT(buffer,3)[2].lower()

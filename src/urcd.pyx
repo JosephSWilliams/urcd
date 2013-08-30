@@ -42,6 +42,9 @@ re_SERVER_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :[#&!+]['+R
 re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
 re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
+### (deprecated) see http://anonet2.biz/URC#urc-integ ###
+re_URC_INTEG = re.compile(' \d{10,10} [a-fA-F0-9]{10,10} urc-integ$',re.IGNORECASE).sub
+
 ### strange values will likely yield strange results ###
 PING = int(open('env/PING','rb').read().split('\n')[0]) if os.path.exists('env/PING') else 16
 URCDB = open('env/URCDB','rb').read().split('\n')[0] if os.path.exists('env/URCDB') else str()
@@ -58,9 +61,6 @@ TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exist
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
-
-### (deprecated) see http://anonet2.biz/URC#urc-integ ###
-re_URC_INTEG = re.compile(' \d{10,10} [a-fA-F0-9]{10,10} urc-integ$',re.IGNORECASE).sub
 
 nick = str()
 Nick = str()
@@ -431,12 +431,12 @@ while 1:
 
     server_revents(ord(randombytes(1))<<4) ### may reduce some side channels ###
 
+    buffer = re_URC_INTEG('',buffer)+'\n' ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:
       buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
       buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
-    buffer = re_URC_INTEG('',buffer)+'\n' ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
 
     if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
