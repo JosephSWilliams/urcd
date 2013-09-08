@@ -1,4 +1,4 @@
-#define USAGE "Usage: urcstream /path/to/sockets/\n"
+#define USAGE "Usage: urchubstream /path/to/sockets/\n"
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
@@ -7,7 +7,6 @@
 #include <sys/un.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <dirent.h>
 #include <stdio.h>
 #include <poll.h>
 #include <pwd.h>
@@ -35,14 +34,15 @@ main(int argc, char **argv)
     exit(64);
   }
 
-  int rd = 0, wr = 1;
+  int devurandomfd = open("/dev/urandom",O_RDONLY);
+  if (devurandomfd<0) exit(255);
+  unsigned char byte[1];
+
+  int i, n, l;
+  unsigned char buffer[2+16+8+1024] = {0};
+  int rd = 0, wr = 1, sd = -1;
   if (getenv("TCPCLIENT")){ rd = 6; wr = 7; }
 
-  char buffer[1024] = {0};
-  char user[UNIX_PATH_MAX] = {0};
-  if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
-
-  int n;
   float LIMIT;
   n = open("env/LIMIT",0);
   if (n>0)
@@ -52,11 +52,13 @@ main(int argc, char **argv)
   } else LIMIT = 1.0;
   close(n);
 
+  char user[UNIX_PATH_MAX] = {0};
+  if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
+
   if (chdir(argv[1])) exit(64);
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
-  int sockfd;
   struct sockaddr_un sock;
   bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
@@ -67,26 +69,24 @@ main(int argc, char **argv)
     exit(signum);
   } signal(SIGINT,sock_close); signal(SIGHUP,sock_close); signal(SIGTERM,sock_close); 
 
-  sockfd = socket(AF_UNIX,SOCK_DGRAM,0);
-  if (socket(AF_UNIX,SOCK_DGRAM,0)<0) exit(2);
+  if ((sd=socket(AF_UNIX,SOCK_DGRAM,0))<0) exit(2);
   n = 1;
-  if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
+  if (setsockopt(sd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   int userlen = strlen(user);
   if (userlen > UNIX_PATH_MAX) exit(4);
   memcpy(&sock.sun_path,user,userlen+1);
   unlink(sock.sun_path);
-  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(5);
-  if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) sock_close(6);
+  if (bind(sd,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(5);
+  if (fcntl(sd,F_SETFL,O_NONBLOCK)<0) sock_close(6);
 
   struct pollfd fds[2];
   fds[0].fd = rd; fds[0].events = POLLIN | POLLPRI;
-  fds[1].fd = sockfd; fds[1].events = POLLIN;
+  fds[1].fd = sd; fds[1].events = POLLIN;
 
-  DIR *root;
-  int pathlen;
-  struct dirent *path;
-  struct sockaddr_un paths;
-  paths.sun_family = AF_UNIX;
+  struct sockaddr_un hub;
+  bzero(&hub,sizeof(hub));
+  hub.sun_family = AF_UNIX;
+  memcpy(&hub.sun_path,"hub\0",4);
 
   while (1)
   {
@@ -96,37 +96,31 @@ main(int argc, char **argv)
     if (fds[0].revents)
     {
 
+      if (read(rd,buffer,2)<2) sock_close(7);
+
+      n = 2;
+      l = 2+16+8+buffer[0]*256+buffer[1];
+      if (l>2+16+8+1024) sock_close(8);
+
+      while (n<l)
+      {
+        i = read(rd,buffer+n,l-n);
+        if (i<1) sock_close(9);
+        n += i;
+      } if (sendto(sd,buffer,n,0,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(262144);
+
       usleep((int)(LIMIT*1000000));
-
-      for (n=0;n<1024;++n)
-      {
-        if (read(rd,buffer+n,1)<1) sock_close(7);
-        if (buffer[n] == '\n') break;
-      } if (buffer[n] != '\n') goto urcwrite;
-      ++n;
-
-      root = opendir("/");
-      if (!root) sock_close(8);
-
-      while ((path = readdir(root)))
-      {
-        if (path->d_name[0] == '.') continue;
-        pathlen = strlen(path->d_name);
-        if (pathlen > UNIX_PATH_MAX) continue;
-        if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
-        bzero(paths.sun_path,UNIX_PATH_MAX);
-        memcpy(&paths.sun_path,path->d_name,pathlen);
-        sendto(sockfd,buffer,n,0,(struct sockaddr *)&paths,sizeof(paths));
-      } closedir(root);
 
     }
 
-    urcwrite: while (poll(fds+1,1,0))
+    while ((poll(fds,2,0)) && (!fds[0].revents))
     {
-      n = read(sockfd,buffer,1024);
-      if (n<1) sock_close(9);
-      if (buffer[n-1] != '\n') continue;
-      if (write(wr,buffer,n)<0) sock_close(10);
+      n = read(sd,buffer,2+16+8+1024);
+      if (n<1) sock_close(10);
+      if (read(devurandomfd,byte,1)<1) sock_close(11);
+      poll(fds+1,1,byte[0]<<4);
+      if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
+      if (write(wr,buffer,n)<0) sock_close(12);
     }
 
   }
