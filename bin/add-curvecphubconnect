@@ -1,6 +1,6 @@
 #!/bin/sh
 [ -z $5 ] && \
-  echo $0' <addr> <port> </path/to/socket/> <serv> <pubkey>' 1>&2 && \
+  echo $0' <addr> <port> </path/to/hub/socket/> <serv> <pubkey>' 1>&2 && \
   exit 64
 
 mkdir -p /services/urcd-curvecphubconnect-"$1:$2" || exit 1

@@ -1,6 +1,6 @@
 #!/bin/sh
 [ -z $3 ] && \
-  echo $0' <addr> <port> </path/to/socket/>' 1>&2 && \
+  echo $0' <addr> <port> </path/to/hub/socket/>' 1>&2 && \
   exit 64
 
 mkdir -p /services/urcd-curvecphublisten-"$1:$2" || exit 1
