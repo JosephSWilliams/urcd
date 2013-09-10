@@ -422,7 +422,7 @@ while 1:
   while server_revents(0) and not client_revents(0):
     if URCHUB:
       buffer = try_read(sd,2+12+4+8+1024)
-      if URCSIGNDB and buffer[2+12:][:4] == '\x01\x00\x00\x00':
+      if URCSIGNDB and buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
         buflen = len(buffer)
         try:
           if crypto_sign_open(buffer[buflen-96:],urcsigndb[buffer[2+12+4+8+1:].split('!',1)[0].lower()][:32]) == crypto_hash_sha256(buffer[:buflen-96]): buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)

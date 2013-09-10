@@ -76,8 +76,8 @@ interface:
   to urcd
 
   place an executable program in the cwd
-  of urcd named 'stdout'. the program reads 
-  stdin from urcd. anything your program 
+  of urcd named 'stdout'. the program reads
+  stdin from urcd. anything your program
   writes to stdout will be written to the
   irc client
 
@@ -85,17 +85,38 @@ interface:
   hacking.
 
 no censorship:
-  urc network is a censorship resistant network.
-  i recommend nacltaia-otr, or if you prefer other
-  OTR softwares, to ignore spam or trolls.
+  URC networks are censorship resistant. i
+  recommend URCSIGN and/or nacltaia-otr to
+  ignore spam and trolls (alternative OTR may
+  also be used).
 
   irssi ("ban/except"):
     /ignore *!*@* ALL
     /ignore -except friend!*@* ALL
+    /ignore -except *!VERIFIED@* ALL
 
   xchat ("ban/except"):
     /ignore *!*@* ALL
     /ignore friend!*@* ALL UNIGNORE
+    /ignore *!VERIFIED@* ALL UNIGNORE
+
+URCSIGN:
+  ./sign_keypair
+
+  # save your seckey/pubkey and secure them
+  $editor env/URCSIGNPUBKEY
+  $editor env/URCSIGNSECKEY
+  chmod 600 env/URCSIGNSECKEY
+
+  # save your friends' pubkeys and secure them
+  mkdir -p urcsigndb/
+  chmod 600 urcsigndb/
+  echo $pubkey > urcsigndb/$nick
+  echo urcsigndb/ > env/URCSIGNDB
+
+  # urcd will replace the user field with VERIFIED for valid
+  # signatures and replace all other user fields with URCD.
+  # see "no censorship" above.
 
 server2server:
   ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
