@@ -1,0 +1,35 @@
+#!/bin/sh
+[ -z $3 ] && \
+  echo $0' <addr> <port> </path/to/socket/>' 1>&2 && \
+  exit 64
+
+mkdir -p /services/urcd-curvecphublisten-"$1:$2" || exit 1
+
+test -L /services/urcd-curvecphublisten-"$1:$2"/serv || \
+  ln -s `pwd`/env/serv /services/urcd-curvecphublisten-"$1:$2"/serv || \
+  exit 1
+
+curvecpmakekey /services/urcd-curvecphublisten-"$1:$2"/curvecp || exit 1
+
+find /services/urcd-curvecphublisten-"$1:$2"/curvecp -type d -exec chmod 700 {} \;
+find /services/urcd-curvecphublisten-"$1:$2"/curvecp -type f -exec chmod 600 {} \;
+chown urcd /services/urcd-curvecphublisten-"$1:$2"/curvecp -R
+
+printf \
+"#!/bin/sh -e
+exec curvecpserver \`cat serv\` curvecp $1 $2 01110101011100100110001101100100 curvecpmessage ./urchubstream $3\n" > \
+/services/urcd-curvecphublisten-"$1:$2"/run || exit
+
+chmod +x /services/urcd-curvecphublisten-"$1:$2"/run || exit 1
+
+test -L /services/urcd-curvecphublisten-"$1:$2"/urchubstream || \
+  ln -s `pwd`/urchubstream /services/urcd-curvecphublisten-"$1:$2"/urchubstream || \
+  exit 1
+
+test -L /service/urcd-curvecphublisten-"$1:$2" || \
+  ln -s /services/urcd-curvecphublisten-"$1:$2" \
+    /service/urcd-curvecphublisten-"$1:$2" || \
+    exit 1
+
+printf \
+"PUBKEY: `curvecpprintkey /services/urcd-curvecphublisten-"$1:$2"/curvecp`\n"
