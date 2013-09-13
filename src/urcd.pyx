@@ -60,6 +60,7 @@ URCSIGNDB = open('env/URCSIGNDB','rb').read().split('\n')[0] if os.path.exists('
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
+URCSIGNSECKEYDIR = open('env/URCSIGNSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNSECKEYDIR') else str()
 URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
 
 nick = str()
@@ -86,11 +87,13 @@ if URCDB:
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
+if URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR: from nacltaia import *
 if URCSIGNDB:
-  from nacltaia import *
   urcsigndb = dict()
-  for src in os.listdir(URCSIGNDB): urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read().split('\n')[0].decode('hex')
-elif URCSIGNSECKEY: from nacltaia import *
+  for src in os.listdir(URCSIGNDB): urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(128).decode('hex')
+urcsignseckeydb = dict()
+if URCSIGNSECKEYDIR:
+  for dst in os.listdir(URCSIGNSECKEYDIR): urcsignseckeydb[dst.lower()] = open(URCSIGNSECKEYDIR+'/'+dst,'rb').read(128).decode('hex')
 
 for dst in channel_struct.keys():
   channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
@@ -185,17 +188,22 @@ if URCHUB:
   }
   def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
   def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
-  def sock_write(buffer):
+  def sock_write(*argv): ### (buffer, dst, ...) ###
+    buffer = argv[0]
     buflen = len(buffer)
-    if URCSIGNSECKEY:
+    if len(argv) > 1 and argv[1].lower() in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[argv[1]]
+    elif URCSIGNSECKEY: signseckey = URCSIGNSECKEY
+    else: signseckey = str()
+    if signseckey:
       buflen += 96
       buffer = chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())[:12]+'\x01\x00\x00\x00'+randombytes(8)+buffer
-      buffer += crypto_sign(crypto_hash_sha256(buffer),URCSIGNSECKEY[:64])
+      buffer += crypto_sign(crypto_hash_sha256(buffer),signseckey)
     else: buffer = chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())+randombytes(8)+buffer
     try: sock.sendto(buffer,'hub')
     except: pass
 else:
-  def sock_write(buffer):
+  def sock_write(*argv): ### (buffer, dst, ...) ###
+    buffer = argv[0]
     paths = os.listdir(root)
     paths.remove(user) ### die on ENOENT ###
     for path in paths:
@@ -225,7 +233,7 @@ while 1:
 
   if not client_revents(0):
     if now - seen >= TIMEOUT:
-      if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n')
+      if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n',dst)
       sock_close(15,0)
     if now - ping >= PINGWAIT:
       if (PING and not PONG) or (not nick): sock_close(15,0)
@@ -238,7 +246,7 @@ while 1:
 
     while 1: ### python really sucks at this ###
       if now - seen >= TIMEOUT:
-        if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :EOF\n')
+        if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :EOF\n',dst)
         sock_close(15,0)
       byte = try_read(rd,1)
       if byte == '':
@@ -321,7 +329,7 @@ while 1:
           channel_struct[dst]['names'].remove(nick)
         else: try_write(wr,':'+serv+' 442 '+Nick+' '+dst+' :ERR_NOTONCHANNEL\n')
         if not PRESENCE: continue
-      sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
+      sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',dst)
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
@@ -361,7 +369,7 @@ while 1:
         try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
         continue
       try_write(wr,':'+serv+' 341 '+Nick+' '+dst+' '+msg+'\n')
-      sock_write(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n')
+      sock_write(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n',dst)
 
     elif re_CLIENT_JOIN(buffer):
       for dst in re_SPLIT(buffer,2)[1].lower().split(','):
@@ -390,13 +398,13 @@ while 1:
         if len(channel_struct[dst]['names'])==CHANLIMIT:
           try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
         channel_struct[dst]['names'].append(nick)
-        if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n')
+        if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n',dst)
 
     elif re_CLIENT_PART(buffer):
       for dst in re_SPLIT(buffer,2)[1].lower().split(','):
         if dst in channels:
           try_write(wr,':'+Nick+'!'+user+'@'+serv+' PART '+dst+' :\n')
-          if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' PART '+dst+' :\n')
+          if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' PART '+dst+' :\n',dst)
           channels.remove(dst)
           channel_struct[dst]['names'].remove(nick)
         else: try_write(wr,':'+serv+' 442 '+Nick+' '+dst+' :ERR_NOTONCHANNEL\n')
@@ -411,7 +419,7 @@ while 1:
       try_write(wr,':'+serv+' 323 '+Nick+' :RPL_LISTEND\n')
 
     elif re_CLIENT_QUIT(buffer):
-      if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :'+re_SPLIT(buffer,1)[1]+'\n')
+      if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :'+re_SPLIT(buffer,1)[1]+'\n',dst)
       sock_close(15,0)
 
     ### implement new re_CLIENT_CMD's here ###
