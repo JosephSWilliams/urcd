@@ -90,7 +90,7 @@ if URCDB:
 if URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR: from nacltaia import *
 if URCSIGNDB:
   urcsigndb = dict()
-  for src in os.listdir(URCSIGNDB): urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(128).decode('hex')
+  for src in os.listdir(URCSIGNDB): urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(64).decode('hex')
 urcsignseckeydb = dict()
 if URCSIGNSECKEYDIR:
   for dst in os.listdir(URCSIGNSECKEYDIR): urcsignseckeydb[dst.lower()] = open(URCSIGNSECKEYDIR+'/'+dst,'rb').read(128).decode('hex')
