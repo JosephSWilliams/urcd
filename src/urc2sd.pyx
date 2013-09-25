@@ -20,7 +20,7 @@ re_CLIENT_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT( :)?',re.IG
 re_CLIENT_PING = re.compile('^PING :?.+$',re.IGNORECASE).search
 re_CLIENT_JOIN = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_KICK = re.compile('^:.+ KICK [#&!+]['+RE+']+ ['+RE+']+',re.IGNORECASE).search
-re_CLIENT_CHANMODE = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ MODE [#&!+]['+RE+']+ [-+][be] ['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ?',re.IGNORECASE).search
+re_CLIENT_CHANMODE = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ MODE [#&!+]['+RE+']+ [-+][be] \S+ ?',re.IGNORECASE).search
 re_CLIENT_BAN_EXCEPT = re.compile('^:['+RE+'!@~.]+ ((367)|(348)) ['+RE+']+ [#&!+]['+RE+']+ \S+ ',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
@@ -121,7 +121,7 @@ def try_write(fd,buffer):
 
 if URCHUB:
   ### version of taia_now is randomized by +/- 4 seconds ###
-  def taia_now(): return { 
+  def taia_now(): return {
       'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
       'nano':long(1000000000*(now%1)+500),
       'atto':0
@@ -223,7 +223,7 @@ while 1:
     elif re_CLIENT_CHANMODE(buffer):
       try:
         src, cmd, dst = re_SPLIT(buffer,5)[2:5]
-        dst = re.compile(re.escape(dst).replace('\\*','.*'),re.IGNORECASE).search
+        dst = re.compile('^'+re.escape(dst).replace('\\*','.*')+'$',re.IGNORECASE).search
         src = src.lower()
         if cmd[1] == 'b':
           BAN[src].append(dst) if cmd[0] == '+' and not dst in BAN[src] else BAN[src].remove(dst)
@@ -234,7 +234,7 @@ while 1:
     elif re_CLIENT_BAN_EXCEPT(buffer):
       try:
         cmd, src, dst, msg = re_SPLIT(buffer,5)[1:5]
-        msg = re.compile(re.escape(msg).replace('\\*','.*'),re.IGNORECASE).search
+        msg = re.compile('^'+re.escape(msg).replace('\\*','.*')+'$',re.IGNORECASE).search
         dst = dst.lower()
         if cmd == '367':
           if not msg in BAN[dst]: BAN[dst].append(msg)
