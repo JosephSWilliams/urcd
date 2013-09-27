@@ -442,7 +442,7 @@ while 1:
       if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
         buflen = len(buffer)
         try:
-          src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),2)
+          src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),3)[:3]
           src = src.split('!',1)[0]
         except: src, cmd, dst = buffer[2+12+4+8+1:].split('!',1)[0].lower(), str(), str()
 
