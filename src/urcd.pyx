@@ -61,6 +61,7 @@ TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exist
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 URCSIGNSECKEYDIR = open('env/URCSIGNSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNSECKEYDIR') else str()
+URCSIGNPUBKEYDIR = open('env/URCSIGNPUBKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNPUBKEYDIR') else str()
 URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
 
 nick = str()
@@ -87,13 +88,19 @@ if URCDB:
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
-if URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR: from nacltaia import *
+if URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR: from nacltaia import *
+if URCSIGNPUBKEYDIR:
+  urcsignpubkeydb = dict()
+  for dst in os.listdir(URCSIGNPUBKEYDIR):
+    dst = dst.lower()
+    urcsignpubkeydb[dst] = dict()
+    for src in os.listdir(URCSIGNPUBKEYDIR+'/'+dst): urcsignpubkeydb[dst][src.lower()] = open(URCSIGNPUBKEYDIR+'/'+dst+'/'+src,'rb').read(128).decode('hex')
+if URCSIGNSECKEYDIR:
+  urcsignseckeydb = dict()
+  for dst in os.listdir(URCSIGNSECKEYDIR): urcsignseckeydb[dst.lower()] = open(URCSIGNSECKEYDIR+'/'+dst,'rb').read(128).decode('hex')
 if URCSIGNDB:
   urcsigndb = dict()
   for src in os.listdir(URCSIGNDB): urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(64).decode('hex')
-urcsignseckeydb = dict()
-if URCSIGNSECKEYDIR:
-  for dst in os.listdir(URCSIGNSECKEYDIR): urcsignseckeydb[dst.lower()] = open(URCSIGNSECKEYDIR+'/'+dst,'rb').read(128).decode('hex')
 
 for dst in channel_struct.keys():
   channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
@@ -191,7 +198,8 @@ if URCHUB:
   def sock_write(*argv): ### (buffer, dst, ...) ###
     buffer = argv[0]
     buflen = len(buffer)
-    if len(argv) > 1 and argv[1].lower() in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[argv[1]]
+    dst = argv[0].lower() if len(argv) > 1 else str()
+    if dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
     elif URCSIGNSECKEY: signseckey = URCSIGNSECKEY
     else: signseckey = str()
     if signseckey:
@@ -396,7 +404,7 @@ while 1:
         for src in channel_struct[dst]['names']: try_write(wr,src+' ')
         try_write(wr,'\n:'+serv+' 366 '+Nick+' '+dst+' :RPL_ENDOFNAMES\n')
         if len(channel_struct[dst]['names'])==CHANLIMIT:
-          try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
+          try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
         channel_struct[dst]['names'].append(nick)
         if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n',dst)
 
@@ -430,12 +438,31 @@ while 1:
   while server_revents(0) and not client_revents(0):
     if URCHUB:
       buffer = try_read(sd,2+12+4+8+1024)
-      if URCSIGNDB and buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
+
+      if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
         buflen = len(buffer)
         try:
-          if crypto_sign_open(buffer[buflen-96:],urcsigndb[buffer[2+12+4+8+1:].split('!',1)[0].lower()][:32]) == crypto_hash_sha256(buffer[:buflen-96]): buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
-          else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-        except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+          src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),2)
+          src = src.split('!',1)[0]
+        except: src, cmd, dst = buffer[2+12+4+8+1:].split('!',1)[0].lower(), str(), str()
+
+        if URCSIGNPUBKEYDIR \
+        and dst in urcsignpubkeydb.keys() \
+        and src in urcsignpubkeydb[dst].keys():
+          try:
+            if crypto_sign_open(buffer[buflen-96:],urcsignpubkeydb[dst][src]) == crypto_hash_sha256(buffer[:buflen-96]):
+              buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
+            else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+          except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+
+        elif URCSIGNDB:
+          try:
+            if crypto_sign_open(buffer[buflen-96:],urcsigndb[src]) == crypto_hash_sha256(buffer[:buflen-96]):
+              buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
+            else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+          except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+
+        else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
       else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
     else: buffer = re_USER('!URCD@',try_read(sd,1024).split('\n',1)[0],1)
 
@@ -479,9 +506,9 @@ while 1:
             try_write(wr,re_SPLIT(buffer,1)[0]+' JOIN :'+dst+'\n')
             if len(channel_struct[dst]['names'])==CHANLIMIT:
               if nick != channel_struct[dst]['names'][0]:
-                try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
+                try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
               else:
-                try_write(wr,':'+channel_struct[dst]['names'][1]+'!'+channel_struct[dst]['names'][1]+'@'+serv+' PART '+dst+'\n')
+                try_write(wr,':'+channel_struct[dst]['names'][1]+'!URCD@'+serv+' PART '+dst+'\n')
                 channel_struct[dst]['names'].append(nick)
           channel_struct[dst]['names'].append(src)
       elif cmd == 'part': continue
@@ -509,9 +536,9 @@ while 1:
           try_write(wr,buffer)
           if len(channel_struct[dst]['names'])==CHANLIMIT:
             if nick != channel_struct[dst]['names'][0]:
-              try_write(wr,':'+channel_struct[dst]['names'][0]+'!'+channel_struct[dst]['names'][0]+'@'+serv+' PART '+dst+'\n')
+              try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
             else:
-              try_write(wr,':'+channel_struct[dst]['names'][1]+'!'+channel_struct[dst]['names'][1]+'@'+serv+' PART '+dst+'\n')
+              try_write(wr,':'+channel_struct[dst]['names'][1]+'!URCD@'+serv+' PART '+dst+'\n')
               channel_struct[dst]['names'].append(nick)
         channel_struct[dst]['names'].append(src)
 
