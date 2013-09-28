@@ -94,7 +94,7 @@ if URCSIGNPUBKEYDIR:
   for dst in os.listdir(URCSIGNPUBKEYDIR):
     dst = dst.lower()
     urcsignpubkeydb[dst] = dict()
-    for src in os.listdir(URCSIGNPUBKEYDIR+'/'+dst): urcsignpubkeydb[dst][src.lower()] = open(URCSIGNPUBKEYDIR+'/'+dst+'/'+src,'rb').read(128).decode('hex')
+    for src in os.listdir(URCSIGNPUBKEYDIR+'/'+dst): urcsignpubkeydb[dst][src.lower()] = open(URCSIGNPUBKEYDIR+'/'+dst+'/'+src,'rb').read(64).decode('hex')
 if URCSIGNSECKEYDIR:
   urcsignseckeydb = dict()
   for dst in os.listdir(URCSIGNSECKEYDIR): urcsignseckeydb[dst.lower()] = open(URCSIGNSECKEYDIR+'/'+dst,'rb').read(128).decode('hex')
