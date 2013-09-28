@@ -187,11 +187,10 @@ def try_write(fd,buffer):
       time.sleep(1)
 
 if URCHUB:
-  ### version of taia_now is randomized by +/- 4 seconds ###
-  def taia_now(): return { 
-      'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
-      'nano':long(1000000000*(now%1)+500),
-      'atto':0
+  def taia_now(): return { ### version of taia_now is randomized by +/- 4 seconds ###
+    'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
+    'nano':long(1000000000*(now%1)+500),
+    'atto':0 ### URCHUB uses taia96n, atto MUST remain NULL for CMD bytes ###
   }
   def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
   def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
@@ -199,7 +198,7 @@ if URCHUB:
     buffer = argv[0]
     buflen = len(buffer)
     dst = argv[0].lower() if len(argv) > 1 else str()
-    if dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
+    if URCSIGNSECKEYDIR and dst and dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
     elif URCSIGNSECKEY: signseckey = URCSIGNSECKEY
     else: signseckey = str()
     if signseckey:
@@ -403,7 +402,7 @@ while 1:
         )
         for src in channel_struct[dst]['names']: try_write(wr,src+' ')
         try_write(wr,'\n:'+serv+' 366 '+Nick+' '+dst+' :RPL_ENDOFNAMES\n')
-        if len(channel_struct[dst]['names'])==CHANLIMIT:
+        if len(channel_struct[dst]['names'])>=CHANLIMIT:
           try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
         channel_struct[dst]['names'].append(nick)
         if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n',dst)
@@ -504,7 +503,7 @@ while 1:
         if src != nick and not src in channel_struct[dst]['names']:
           if dst in channels:
             try_write(wr,re_SPLIT(buffer,1)[0]+' JOIN :'+dst+'\n')
-            if len(channel_struct[dst]['names'])==CHANLIMIT:
+            if len(channel_struct[dst]['names'])>=CHANLIMIT:
               if nick != channel_struct[dst]['names'][0]:
                 try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
               else:
@@ -534,7 +533,7 @@ while 1:
       if src != nick and not src in channel_struct[dst]['names']:
         if dst in channels:
           try_write(wr,buffer)
-          if len(channel_struct[dst]['names'])==CHANLIMIT:
+          if len(channel_struct[dst]['names'])>=CHANLIMIT:
             if nick != channel_struct[dst]['names'][0]:
               try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
             else:
@@ -544,8 +543,7 @@ while 1:
 
     elif re_SERVER_QUIT(buffer):
       src = buffer.split(':',2)[1].split('!',1)[0].lower()
-      if src == nick: continue
-      if len(src)>NICKLEN: continue
+      if src == nick or len(src)>NICKLEN: continue
       cmd = '\x01'
       for dst in channel_struct.keys():
         if src in channel_struct[dst]['names']:
