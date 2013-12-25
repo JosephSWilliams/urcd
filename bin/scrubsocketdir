@@ -4,5 +4,6 @@ if [ -z "$1" ] || ! [ -e "$1" ]; then
   exit 64
 fi
 for i in `ls "$1"`; do
+  [ "$i" == "hub" ] && continue
   [ -e "/proc/$i/" ] || setuidgid urcd rm "$1/$i"
 done
