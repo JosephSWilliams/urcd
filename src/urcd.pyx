@@ -257,7 +257,7 @@ while 1:
         sock_close(15,0)
       byte = try_read(rd,1)
       if byte == '':
-        if client_revent(0): sock_close(15,0)
+        if client_revents(0): sock_close(15,0)
         time.sleep(1)
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
