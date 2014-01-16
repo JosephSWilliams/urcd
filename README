@@ -4,11 +4,10 @@ urcd:
 
 depends:
   nacl, libtai, ucspi-tcp, python(>=2.6),
-  daemontools, sh, gcc
+  python-dev(>=2.6), daemontools, sh, gcc
 
 recommends:
-  python-dev(>=2.6), cython(>=0.18.0),
-  nacl(curvecp support), nacltaia-otr
+  cython(>=0.18.0), nacltaia-otr
 
 install:
   # untested enomem workaround for cython installs (thanks keiko)
@@ -38,6 +37,8 @@ install:
 
   sleep 4
   svstat /service/urcd
+
+  ### urcstream is deprecated, use the hub2hub section below ###
 
 adding curvecp:
   mkdir -p /services/urcd-curvecp
