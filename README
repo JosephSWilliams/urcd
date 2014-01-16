@@ -119,7 +119,7 @@ URCSIGN:
   # signatures and replace all other user fields with URCD.
   # see "no censorship" above.
 
-server2server:
+server2server (deprecated: use hub2hub):
   ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
 
   # your peers can link their server using:
@@ -131,7 +131,7 @@ server2server:
   # transit nodes may use ./add-tcplisten and clients can
   # stream with ./add-tcpconnect
 
-server2server (tor):
+server2server (tor)(deprecated: use hub2hub):
   ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
 
   # your peers can link their server using:
@@ -143,7 +143,7 @@ server2server (tor):
   # transit nodes may use ./add-tcplisten and clients can
   # stream with ./add-torconnect
 
-server2server (curvecp):
+server2server (curvecp)(deprecated: use hub2hub):
   ./bin/add-curvecprecv your.urcd.ano 1234 /service/urcd/socket/
 
   # your peers can link their server using:
