@@ -226,7 +226,7 @@ while 1:
   poll(POLLWAIT)
 
   for i in xrange(0,int(time.time() - now)):
-    if active_clients: active_clients.popleft()
+    if active_clients: active_clients.append('')
 
   now = time.time()
 
