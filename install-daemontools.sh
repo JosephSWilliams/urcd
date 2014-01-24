@@ -23,6 +23,7 @@ if which apt-get; then
  sed -i 's/^exit 0/\/command\/svscanboot \&\n\nexit 0/' /etc/rc.local
  ### i don't think we need a reboot to bootstrap daemontools ###
  /command/svscanboot 2>/dev/null & disown
+ chmod +x /etc/rc.local
 fi
 
 ### we want this directory ###
