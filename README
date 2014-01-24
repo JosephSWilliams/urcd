@@ -13,16 +13,19 @@ install:
   # untested enomem workaround for cython installs (thanks keiko)
   # echo '--param gcc-min-expand=0 --param gcc-min-heapsize=8192' > conf-cc
 
+  # install dependencies, if you haven't already
+  ./install-daemontools.sh
+  ./install-ucspi-tcp.sh
   ./install-libtai.sh
   ./install-nacl.sh
 
   useradd urcd
 
   # python2.6
-  ./Make.sh
+  sed 's/\.7/.6/g' Make.sh | sh -v
 
   # python2.7
-  sed 's/\.6/.7/g' Make.sh | sh
+  ./Make.sh
 
   $editor env/addr
   $editor env/port

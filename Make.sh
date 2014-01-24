@@ -8,13 +8,13 @@ fi
 touch conf-cc
 unset HEADERS
 
-if   [ -e '/usr/include/python2.6/Python.h'       ] &&
-     [ -e '/usr/include/python2.6/structmember.h' ] ;then
-       HEADERS='/usr/include/python2.6'
+if   [ -e '/usr/include/python2.7/Python.h'       ] &&
+     [ -e '/usr/include/python2.7/structmember.h' ] ;then
+       HEADERS='/usr/include/python2.7'
 
-elif [ -e '/usr/local/include/python2.6/Python.h'       ] &&
-     [ -e '/usr/local/include/python2.6/structmember.h' ] ;then
-       HEADERS='/usr/local/include/python2.6'
+elif [ -e '/usr/local/include/python2.7/Python.h'       ] &&
+     [ -e '/usr/local/include/python2.7/structmember.h' ] ;then
+       HEADERS='/usr/local/include/python2.7'
 fi
 
 gcc `cat conf-cc` src/urcsend.c -o urcsend || exit 1
@@ -39,7 +39,7 @@ gcc `cat conf-cc` src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 
 gcc src/sign_keypair.c -o sign_keypair -l nacl /usr/lib/randombytes.o || exit 1
 
-gcc -O2 -fPIC -DPIC src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.6 -l tai -l nacl /usr/lib/randombytes.o || exit 1
+gcc -O2 -fPIC -DPIC src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.7 -l tai -l nacl /usr/lib/randombytes.o || exit 1
 
 gcc `cat conf-cc` src/check-taia.c -o check-taia -l tai -l nacl || exit 1
 
@@ -76,22 +76,22 @@ mkdir -p build || exit 1
 
 cython --embed src/urcd.pyx -o build/urcd.c         || exit 1
 gcc `cat conf-cc` -O2 -c build/urcd.c -I $HEADERS -o build/urcd.o || exit 1
-gcc `cat conf-cc` -O1 -o urcd build/urcd.o -l python2.6           || exit 1
+gcc `cat conf-cc` -O1 -o urcd build/urcd.o -l python2.7           || exit 1
 
 cython --embed src/urc2sd.pyx -o build/urc2sd.c         || exit 1
 gcc `cat conf-cc` -O2 -c build/urc2sd.c -I $HEADERS -o build/urc2sd.o || exit 1
-gcc `cat conf-cc` -O1 -o urc2sd build/urc2sd.o -l python2.6           || exit 1
+gcc `cat conf-cc` -O1 -o urc2sd build/urc2sd.o -l python2.7           || exit 1
 
 #cython --embed src/urcrecv.pyx -o build/urcrecv.c         || exit 1
 #gcc `cat conf-cc` -O2 -c build/urcrecv.c -I $HEADERS -o build/urcrecv.o || exit 1
-#gcc `cat conf-cc` -O1 -o urcrecv build/urcrecv.o -l python2.6           || exit 1
+#gcc `cat conf-cc` -O1 -o urcrecv build/urcrecv.o -l python2.7           || exit 1
 
 #cython --embed src/urcsend.pyx -o build/urcsend.c         || exit 1
 #gcc `cat conf-cc` -O2 -c build/urcsend.c -I $HEADERS -o build/urcsend.o || exit 1
-#gcc `cat conf-cc` -O1 -o urcsend build/urcsend.o -l python2.6           || exit 1
+#gcc `cat conf-cc` -O1 -o urcsend build/urcsend.o -l python2.7           || exit 1
 
 #cython --embed src/urcstream.pyx -o build/urcstream.c         || exit 1
 #gcc `cat conf-cc` -O2 -c build/urcstream.c -I $HEADERS -o build/urcstream.o || exit 1
-#gcc `cat conf-cc` -O1 -o urcstream build/urcstream.o -l python2.6           || exit 1
+#gcc `cat conf-cc` -O1 -o urcstream build/urcstream.o -l python2.7           || exit 1
 
 rm -rf build || exit 1

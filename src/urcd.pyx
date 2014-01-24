@@ -60,6 +60,7 @@ URCSIGNDB = open('env/URCSIGNDB','rb').read().split('\n')[0] if os.path.exists('
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
+URCSECRETBOXDIR = open('env/URCSECRETBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSECRETBOXDIR') else str()
 URCSIGNSECKEYDIR = open('env/URCSIGNSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNSECKEYDIR') else str()
 URCSIGNPUBKEYDIR = open('env/URCSIGNPUBKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNPUBKEYDIR') else str()
 URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
@@ -88,7 +89,10 @@ if URCDB:
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
-if URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR: from nacltaia import *
+if URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR: from nacltaia import *
+if URCSECRETBOXDIR:
+  urcsecretboxdb = dict()
+  for dst in os.listdir(URCSECRETBOXDIR): urcsecretboxdb[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst,'rb').read(64).decode('hex')
 if URCSIGNPUBKEYDIR:
   urcsignpubkeydb = dict()
   for dst in os.listdir(URCSIGNPUBKEYDIR):
@@ -220,6 +224,10 @@ else:
 while 1:
 
   poll(POLLWAIT)
+
+  for i in xrange(0,int(time.time() - now)):
+    if active_clients: active_clients.popleft()
+
   now = time.time()
 
   while flood and now - flood_expiry >= FLOOD:
