@@ -43,7 +43,7 @@ re_SERVER_QUIT = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ QUIT :.*$',re.IG
 re_SERVER_KICK = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 
 ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
-re_URC_INTEG = re.compile(' \d{10,10} [a-fA-F0-9]{10,10} urc-integ$',re.IGNORECASE).sub
+#re_URC_INTEG = re.compile(' \d{10,10} [a-fA-F0-9]{10,10} urc-integ$',re.IGNORECASE).sub
 
 ### strange values will likely yield strange results ###
 PING = int(open('env/PING','rb').read().split('\n')[0]) if os.path.exists('env/PING') else 16
@@ -75,7 +75,7 @@ bytes = [(chr(i),i) for i in xrange(0,256)]
 motd = open('env/motd','rb').read().split('\n')
 serv = open('env/serv','rb').read().split('\n')[0]
 PONG, PINGWAIT, POLLWAIT = int(), PING, PING << 10
-active_clients = collections.deque([],CHANLIMIT*CHANLIMIT)
+active_clients = collections.deque(['']*CHANLIMIT*CHANLIMIT,CHANLIMIT*CHANLIMIT)
 flood, seen, ping, sync, flood_expiry = FLOOD, now, now, now, now
 
 if URCDB:
@@ -475,7 +475,7 @@ while 1:
 
     server_revents(ord(randombytes(1))<<4) ### may reduce some side channels ###
 
-    buffer = re_URC_INTEG('',buffer) ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
+    #buffer = re_URC_INTEG('',buffer) ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:
