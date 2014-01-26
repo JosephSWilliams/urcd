@@ -57,15 +57,15 @@ main(int argc, char **argv)
       if (i<1) exit(2);
       n += i;
     }
-
-    if (noreplay) {
+/*
+    if (noreplay) {  !!! (security) this needs to be fixed !!!
       if (time(0L) - noreplay >= 512L) noreplay = 0L;
       if (buffer[12]) {
         if (write(1,"\4",1)<1) exit(3);
         goto readbuffer;
       }
     }
-
+*/
     taia_now(ts);
     taia_pack(ts,ts);
 
