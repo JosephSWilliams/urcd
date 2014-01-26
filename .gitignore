@@ -26,5 +26,6 @@ nacl-*
 check-taia
 nacltaia.so
 sign_keypair
+keypair
 conf-cc
 ucspi-server2client

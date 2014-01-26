@@ -372,10 +372,9 @@ while 1:
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
-      try_write(wr,
-        ':'+serv+' 324 '+Nick+' '+dst+' +n\n'
-        ':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n'
-      )
+      if URCSECRETBOXDIR and dst.lower() in urcsecretboxdb.keys(): try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kns\n')
+      else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
+      try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
 
     elif re_CLIENT_MODE_NICK(buffer):
       if PRESENCE: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+\n')
@@ -486,14 +485,12 @@ while 1:
               buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
             else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
           except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-
         elif URCSIGNDB:
           try:
             if crypto_sign_open(buffer[buflen-96:],urcsigndb[src]) == crypto_hash_sha256(buffer[:buflen-96]):
               buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
             else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
           except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-
         else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
       ### URCSECRETBOX ###
@@ -504,6 +501,37 @@ while 1:
           if msg: break
         if not msg: continue
         buffer = re_USER('!URCD@',msg.split('\n',1)[0],1)
+
+      ### URCSIGNSECRETBOX ###
+      elif buffer[2+12:2+12+4] == '\x03\x00\x00\x00':
+        if not URCSECRETBOXDIR: continue
+        for seckey in urcsecretboxdb.values():
+          msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],seckey)
+          if msg: break
+        if not msg: continue
+
+        buffer = buffer[:2+12+4+8]+msg
+        buflen = len(buffer)
+        try:
+          src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),3)[:3]
+          src = src.split('!',1)[0]
+        except: src, cmd, dst = buffer[2+12+4+8+1:].split('!',1)[0].lower(), str(), str()
+
+        if URCSIGNPUBKEYDIR \
+        and dst in urcsignpubkeydb.keys() \
+        and src in urcsignpubkeydb[dst].keys():
+          try:
+            if crypto_sign_open(buffer[buflen-96:],urcsignpubkeydb[dst][src]) == crypto_hash_sha256(buffer[:buflen-96]):
+              buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
+            else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+          except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+        elif URCSIGNDB:
+          try:
+            if crypto_sign_open(buffer[buflen-96:],urcsigndb[src]) == crypto_hash_sha256(buffer[:buflen-96]):
+              buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
+            else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+          except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+        else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
       else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
     else: buffer = re_USER('!URCD@',try_read(sd,1024).split('\n',1)[0],1)

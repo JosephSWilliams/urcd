@@ -107,10 +107,16 @@ no censorship:
 URCSIGN:
   ./sign_keypair
 
-  # save your seckey/pubkey and secure them
+  # (global) save your seckey/pubkey and secure them
   $editor env/URCSIGNPUBKEY
   $editor env/URCSIGNSECKEY
   chmod 600 env/URCSIGNSECKEY
+
+  # use a specific seckey for a destination, or override global
+  mkdir -p urcsignseckeydir
+  echo urcsignseckeydir > env/URCSIGNSECKEYDIR
+  echo $seckey > urcsignseckeydir/\#channel
+  chmod 600 urcsignseckeydir/
 
   # save your friends' pubkeys and secure them
   mkdir -p urcsigndb/
@@ -118,9 +124,23 @@ URCSIGN:
   echo $pubkey > urcsigndb/$nick
   echo urcsigndb/ > env/URCSIGNDB
 
+  # use a specific pubkey for a destination, or override global
+  mkdir -p urcsignpubkeydir
+  echo urcsignpubkeydir > env/URCSIGNPUBKEYDIR
+  echo $pubkey > urcsignpubkeydir/\#channel/nick
+  chmod 600 urcsignpubkeydir/
+
   # urcd will replace the user field with VERIFIED for valid
   # signatures and replace all other user fields with URCD.
   # see "no censorship" above.
+
+URCSECRETBOX:
+  # urcd can provide secret and encrypted channels
+  # using a 64 byte hexadecimal key
+
+  echo urcsecretboxdir > env/URCSECRETBOXDIR
+  echo $pubkey > urcsecretboxdir/\#channel
+  chmod 600 urcsecretboxdir/
 
 server2server (deprecated: use hub2hub):
   ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
