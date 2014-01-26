@@ -230,7 +230,7 @@ if URCHUB:
       buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x01\x00\x00\x00'+randombytes(8)+buffer
       buffer += crypto_sign(crypto_hash_sha256(buffer),signseckey)
 
-    ### URC ###
+    ### URCHUB ###
     else: buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x00\x00\x00\x00'+randombytes(8)+buffer
 
     try: sock.sendto(buffer,'hub')
@@ -263,7 +263,7 @@ while 1:
       names = list(channel_struct[dst]['names'])
       for src in names:
         if src != nick and not src in active_clients:
-          if dst in channels: try_write(wr,':'+src+'!'+src+'@'+serv+' QUIT :IDLE\n')
+          if dst in channels: try_write(wr,':'+src+'!URCD@'+serv+' QUIT :IDLE\n')
           for dst in channel_struct.keys():
             if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
       del names

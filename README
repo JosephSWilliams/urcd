@@ -181,7 +181,7 @@ server2server (curvecp)(deprecated: use hub2hub):
 hub2hub:
   ./bin/add-urchub
 
-  # using urcstream with urcd/urc2sd
+  # using urcstream with urcd/urc2sd (deprecated)
   ./bin/add-urcstream2hub /service/urcd/socket/ /service/urcd-hub0/socket/
 
   # using urchub with urcd/urc2sd
