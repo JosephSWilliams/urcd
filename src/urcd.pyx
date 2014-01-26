@@ -197,20 +197,45 @@ if URCHUB:
   }
   def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
   def taia96n_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)
+
   def sock_write(*argv): ### (buffer, dst, ...) ###
     buffer = argv[0]
     buflen = len(buffer)
-    dst = argv[0].lower() if len(argv) > 1 else str()
+    dst = argv[1].lower() if len(argv) > 1 else str()
+
     if URCSIGNSECKEYDIR and dst and dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
     elif URCSIGNSECKEY: signseckey = URCSIGNSECKEY
     else: signseckey = str()
-    if signseckey:
+
+    if URCSECRETBOXDIR and dst and dst in urcsecretboxdb.keys(): seckey = urcsecretboxdb[dst]
+    else: seckey = str()
+
+    ### URCSIGNSECRETBOX ###
+    if seckey and signseckey:
+      buflen += 96 + 16
+      nonce = taia96n_pack(taia96n_now())+'\x03\x00\x00\x00'+randombytes(8)
+      buffer = chr(buflen>>8)+chr(buflen%256)+nonce+buffer
+      buffer += crypto_sign(crypto_hash_sha256(buffer),signseckey)
+      buffer = buffer[:2+12+4+8]+crypto_secretbox(buffer[2+12+4+8:],nonce,seckey)
+
+    ### URCSECRETBOX ###
+    elif seckey:
+      buflen += 16
+      nonce = taia96n_pack(taia96n_now())+'\x02\x00\x00\x00'+randombytes(8)
+      buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer,nonce,seckey)
+
+    ### URCSIGN ###
+    elif signseckey:
       buflen += 96
       buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x01\x00\x00\x00'+randombytes(8)+buffer
       buffer += crypto_sign(crypto_hash_sha256(buffer),signseckey)
+
+    ### URC ###
     else: buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x00\x00\x00\x00'+randombytes(8)+buffer
+
     try: sock.sendto(buffer,'hub')
     except: pass
+
 else:
   def sock_write(*argv): ### (buffer, dst, ...) ###
     buffer = argv[0]
