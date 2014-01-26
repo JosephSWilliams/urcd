@@ -53,7 +53,7 @@ else
   if [ $? != 1 ] ; then gcc `cat conf-cc` src/urccache-static.c -o urccache -l nacl || exit 1 ; fi
 fi
 
-if ! $(which cython 2>&1 >/dev/null); then
+if ! which cython 2>/dev/null ; then
   cp src/urcd.pyx urcd || exit 1
   chmod +x urcd        || exit 1
 
