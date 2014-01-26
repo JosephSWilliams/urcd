@@ -470,6 +470,7 @@ while 1:
     if URCHUB:
       buffer = try_read(sd,2+12+4+8+1024)
 
+      ### URCSIGN ###
       if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
         buflen = len(buffer)
         try:
@@ -494,6 +495,16 @@ while 1:
           except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
         else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+
+      ### URCSECRETBOX ###
+      elif buffer[2+12:2+12+4] == '\x02\x00\x00\x00':
+        if not URCSECRETBOXDIR: continue
+        for seckey in urcsecretboxdb.values():
+          msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],seckey)
+          if msg: break
+        if not msg: continue
+        buffer = re_USER('!URCD@',msg.split('\n',1)[0],1)
+
       else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
     else: buffer = re_USER('!URCD@',try_read(sd,1024).split('\n',1)[0],1)
 
