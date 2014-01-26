@@ -191,13 +191,12 @@ def try_write(fd,buffer):
       time.sleep(1)
 
 if URCHUB:
-  def taia_now(): return { ### version of taia_now is randomized by +/- 4 seconds ###
+  def taia96n_now(): return { ### version of taia96n_now is randomized by +/- 4 seconds ###
     'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
-    'nano':long(1000000000*(now%1)+500),
-    'atto':0 ### URCHUB uses taia96n, atto MUST remain NULL for CMD bytes ###
+    'nano':long(1000000000*(now%1)+500)
   }
   def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
-  def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
+  def taia96n_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)
   def sock_write(*argv): ### (buffer, dst, ...) ###
     buffer = argv[0]
     buflen = len(buffer)
@@ -207,9 +206,9 @@ if URCHUB:
     else: signseckey = str()
     if signseckey:
       buflen += 96
-      buffer = chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())[:12]+'\x01\x00\x00\x00'+randombytes(8)+buffer
+      buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x01\x00\x00\x00'+randombytes(8)+buffer
       buffer += crypto_sign(crypto_hash_sha256(buffer),signseckey)
-    else: buffer = chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())+randombytes(8)+buffer
+    else: buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x00\x00\x00\x00'+randombytes(8)+buffer
     try: sock.sendto(buffer,'hub')
     except: pass
 else:
