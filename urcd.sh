@@ -11,7 +11,7 @@ chown urcd "$path"
 echo "$path" > env/URCHUB
 
 if ! pidof urchub 1>/dev/null ; then
- ./urchub ./urccache "`pwd`"/socket/ &
+ ./urchub ./urccache "$path" &
 fi
 
 if ! pidof urchubstream 1>/dev/null ; then
