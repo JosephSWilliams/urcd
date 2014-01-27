@@ -9,9 +9,26 @@ depends:
 recommends:
   cython(>=0.18.0), nacltaia-otr
 
-install:
-  # untested enomem workaround for cython installs (thanks keiko)
-  # echo '--param gcc-min-expand=0 --param gcc-min-heapsize=8192' > conf-cc
+quick install (not recommended):
+
+  # install dependencies, if you haven't already
+  ./install-ucspi-tcp.sh
+  ./install-libtai.sh
+  ./install-nacl.sh
+
+  useradd urcd
+
+  $editor env/*
+
+  # if python2.6
+  sed 's/\.7/.6/g' Make.sh | sh -v
+
+  # elif python2.7
+  ./Make.sh
+
+  ./urcd.sh $ntwrk
+
+install (recommended):
 
   # install dependencies, if you haven't already
   ./install-daemontools.sh
@@ -21,16 +38,13 @@ install:
 
   useradd urcd
 
-  # python2.6
+  # if python2.6
   sed 's/\.7/.6/g' Make.sh | sh -v
 
-  # python2.7
+  # elif python2.7
   ./Make.sh
 
-  $editor env/addr
-  $editor env/port
-  $editor env/serv
-  $editor env/motd
+  $editor env/*
 
   ln -s `pwd` /service/urcd
 
@@ -41,7 +55,8 @@ install:
   sleep 4
   svstat /service/urcd
 
-  ### urcstream is deprecated, use the hub2hub section below ###
+  ### see the hub2hub section below it is ###
+  ### recommended to connect to 3 urchubs ###
 
 adding curvecp:
   mkdir -p /services/urcd-curvecp
