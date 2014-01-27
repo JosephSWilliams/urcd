@@ -89,22 +89,39 @@ if URCDB:
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
-if URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR: from nacltaia import *
+if URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR:
+  from nacltaia import *
+
+  ### NaCl's crypto_sign / crypto_sign_open API sucks ###
+  def _crypto_sign(m,sk):
+    s = crypto_sign(m,sk)
+    return s[:32]+s[-32:]
+
+  def _crypto_sign_open(m,s,pk):
+    return 1 if m == crypto_sign_open(s[:32]+m+s[32:],pk) else 0
+
 if URCSECRETBOXDIR:
   urcsecretboxdb = dict()
-  for dst in os.listdir(URCSECRETBOXDIR): urcsecretboxdb[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst,'rb').read(64).decode('hex')
+  for dst in os.listdir(URCSECRETBOXDIR):
+    urcsecretboxdb[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst,'rb').read(64).decode('hex')
+
 if URCSIGNPUBKEYDIR:
   urcsignpubkeydb = dict()
   for dst in os.listdir(URCSIGNPUBKEYDIR):
     dst = dst.lower()
     urcsignpubkeydb[dst] = dict()
-    for src in os.listdir(URCSIGNPUBKEYDIR+'/'+dst): urcsignpubkeydb[dst][src.lower()] = open(URCSIGNPUBKEYDIR+'/'+dst+'/'+src,'rb').read(64).decode('hex')
+    for src in os.listdir(URCSIGNPUBKEYDIR+'/'+dst):
+      urcsignpubkeydb[dst][src.lower()] = open(URCSIGNPUBKEYDIR+'/'+dst+'/'+src,'rb').read(64).decode('hex')
+
 if URCSIGNSECKEYDIR:
   urcsignseckeydb = dict()
-  for dst in os.listdir(URCSIGNSECKEYDIR): urcsignseckeydb[dst.lower()] = open(URCSIGNSECKEYDIR+'/'+dst,'rb').read(128).decode('hex')
+  for dst in os.listdir(URCSIGNSECKEYDIR):
+    urcsignseckeydb[dst.lower()] = open(URCSIGNSECKEYDIR+'/'+dst,'rb').read(128).decode('hex')
+
 if URCSIGNDB:
   urcsigndb = dict()
-  for src in os.listdir(URCSIGNDB): urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(64).decode('hex')
+  for src in os.listdir(URCSIGNDB):
+    urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(64).decode('hex')
 
 for dst in channel_struct.keys():
   channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
@@ -117,7 +134,8 @@ def sock_close(sn,sf):
   if sn:
     if URCDB:
       for dst in channels:
-        if dst in channel_struct.keys() and nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
+        if dst in channel_struct.keys() and nick in channel_struct[dst]['names']:
+          channel_struct[dst]['names'].remove(nick)
       db['channel_struct'] = channel_struct
       db['active_clients'] = active_clients
       db.close()
@@ -212,10 +230,10 @@ if URCHUB:
 
     ### URCSIGNSECRETBOX ###
     if seckey and signseckey:
-      buflen += 96 + 16
+      buflen += 64 + 16
       nonce = taia96n_pack(taia96n_now())+'\x03\x00\x00\x00'+randombytes(8)
       buffer = chr(buflen>>8)+chr(buflen%256)+nonce+buffer
-      buffer += crypto_sign(crypto_hash_sha256(buffer),signseckey)
+      buffer += _crypto_sign(buffer,signseckey)
       buffer = buffer[:2+12+4+8]+crypto_secretbox(buffer[2+12+4+8:],nonce,seckey)
 
     ### URCSECRETBOX ###
@@ -226,9 +244,9 @@ if URCHUB:
 
     ### URCSIGN ###
     elif signseckey:
-      buflen += 96
+      buflen += 64
       buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x01\x00\x00\x00'+randombytes(8)+buffer
-      buffer += crypto_sign(crypto_hash_sha256(buffer),signseckey)
+      buffer += _crypto_sign(buffer,signseckey)
 
     ### URCHUB ###
     else: buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x00\x00\x00\x00'+randombytes(8)+buffer
@@ -329,7 +347,8 @@ while 1:
         if dst in channels:
           channel_struct[dst]['names'].remove(src.lower())
           if nick in channel_struct[dst]['names']:
-            if src.lower() != nick: try_write(wr,':'+Nick+'!'+user+'@'+serv+' KICK '+dst+' '+Nick+' :NICK\n')
+            if src.lower() != nick:
+              try_write(wr,':'+Nick+'!'+user+'@'+serv+' KICK '+dst+' '+Nick+' :NICK\n')
           else: channel_struct[dst]['names'].append(nick)
       try_write(wr,':'+src+'!'+user+'@'+serv+' NICK '+Nick+'\n')
 
@@ -372,7 +391,8 @@ while 1:
 
     elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
       dst = re_SPLIT(buffer,2)[1]
-      if URCSECRETBOXDIR and dst.lower() in urcsecretboxdb.keys(): try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kns\n')
+      if URCSECRETBOXDIR and dst.lower() in urcsecretboxdb.keys():
+        try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kns\n')
       else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
       try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
 
@@ -481,13 +501,13 @@ while 1:
         and dst in urcsignpubkeydb.keys() \
         and src in urcsignpubkeydb[dst].keys():
           try:
-            if crypto_sign_open(buffer[buflen-96:],urcsignpubkeydb[dst][src]) == crypto_hash_sha256(buffer[:buflen-96]):
+            if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsignpubkeydb[dst][src]):
               buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
             else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
           except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
         elif URCSIGNDB:
           try:
-            if crypto_sign_open(buffer[buflen-96:],urcsigndb[src]) == crypto_hash_sha256(buffer[:buflen-96]):
+            if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsigndb[src]):
               buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
             else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
           except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
@@ -521,13 +541,13 @@ while 1:
         and dst in urcsignpubkeydb.keys() \
         and src in urcsignpubkeydb[dst].keys():
           try:
-            if crypto_sign_open(buffer[buflen-96:],urcsignpubkeydb[dst][src]) == crypto_hash_sha256(buffer[:buflen-96]):
+            if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsignpubkeydb[dst][src]):
               buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
             else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
           except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
         elif URCSIGNDB:
           try:
-            if crypto_sign_open(buffer[buflen-96:],urcsigndb[src]) == crypto_hash_sha256(buffer[:buflen-96]):
+            if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsigndb[src]):
               buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
             else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
           except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
