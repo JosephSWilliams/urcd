@@ -98,7 +98,7 @@ if URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNP
     return s[:32]+s[-32:]
 
   def _crypto_sign_open(m,s,pk):
-    return 1 if m == crypto_sign_open(s[:32]+m+s[32:],pk) else 0
+    return 1 if crypto_sign_open(s[:32]+m+s[32:],pk) != 0 else 0
 
 if URCSECRETBOXDIR:
   urcsecretboxdb = dict()
