@@ -16,7 +16,7 @@ fi
 
 if ! pidof urchubstream 1>/dev/null ; then
  addr=(db/urchub/tor/*)
- addr=`printf "%s\n" "${addr[RANDOM % ${#addr[@]}]}"`
+ addr="${addr[RANDOM % ${#addr[@]}]}"
  port=`cat $addr/port`
  addr=`basename $addr`
  tcpclient -H -R 127.0.0.1 9050 ./ucspi-socks4aclient $addr $port ./urchubstream "$path"
