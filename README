@@ -153,8 +153,9 @@ URCSECRETBOX:
   # urcd can provide secret and encrypted channels
   # using a 64 byte hexadecimal key
 
+  mkdir -p urcsecretboxdir/
   echo urcsecretboxdir > env/URCSECRETBOXDIR
-  echo $pubkey > urcsecretboxdir/\#channel
+  echo $seckey > urcsecretboxdir/\#channel
   chmod 600 urcsecretboxdir/
 
 server2server (deprecated: use hub2hub):
