@@ -9,6 +9,10 @@ depends:
 recommends:
   cython(>=0.18.0), nacltaia-otr
 
+todo:
+  (security) implement RP_FILTER for encrypted channels and PM
+  (security) implement encrypted PM protocol
+
 quick install (not recommended):
 
   # install dependencies, if you haven't already
