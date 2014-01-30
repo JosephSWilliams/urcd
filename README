@@ -24,6 +24,9 @@ quick install (not recommended):
 
   $editor env/*
 
+  # OpenBSD
+  echo '-ftrampolines' > conf-cc
+
   # if python2.6
   sed 's/\.7/.6/g' Make.sh | sh -v
 
@@ -41,6 +44,9 @@ install (recommended):
   ./install-nacl.sh
 
   useradd urcd
+
+  # OpenBSD
+  echo '-ftrampolines' > conf-cc
 
   # if python2.6
   sed 's/\.7/.6/g' Make.sh | sh -v
