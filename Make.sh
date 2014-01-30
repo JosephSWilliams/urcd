@@ -19,11 +19,10 @@ fi
 
 # OpenBSD \o/
 export LIBRARY_PATH="/usr/local/lib:$LIBRARY_PATH"
-export LIBRARY_PATH="/usr/local/include:$LIBRARY_PATH"
+
+randombytes=/usr/lib/randombytes.o
 if [ -e /usr/local/lib/randombytes.o ]; then
  randombytes=/usr/local/lib/randombytes.o
-else
- randombytes=/usr/lib/randombytes.o
 fi
 
 gcc `cat conf-cc` src/urcsend.c -o urcsend || exit 1

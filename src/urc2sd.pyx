@@ -27,7 +27,7 @@ re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~'+RE+'.]+@['+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 
 ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
-re_URC_INTEG = re.compile(' \d{10,10} [a-fA-F0-9]{10,10} urc-integ$',re.IGNORECASE).sub
+#re_URC_INTEG = re.compile(' \d{10,10} [a-fA-F0-9]{10,10} urc-integ$',re.IGNORECASE).sub
 
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 URCHUB = open('env/URCHUB','rb').read().split('\n')[0] if os.path.exists('env/URCHUB') else str()
@@ -80,7 +80,7 @@ devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
 def randombytes(n): return try_read(devurandomfd,n)
 
 uid, gid = pwd.getpwnam('urcd')[2:4]
-os.chdir(os.path.dirname(URCHUB)) if URCHUB else os.chdir(sys.argv[1])
+os.chdir(URCHUB) if URCHUB else os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
 os.setgid(gid)
 os.setuid(uid)
@@ -119,27 +119,20 @@ def try_write(fd,buffer):
   try: return os.write(fd,buffer)
   except: sock_close(15,0)
 
-if URCHUB:
-  ### version of taia_now is randomized by +/- 4 seconds ###
-  def taia_now(): return {
-      'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
-      'nano':long(1000000000*(now%1)+500),
-      'atto':0
-  }
-  def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
-  def taia_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)+chr(s['atto']>>24&255)+chr(s['atto']>>16&255)+chr(s['atto']>>8&255)+chr(s['atto']&255)
-  def sock_write(buffer):
-    buflen = len(buffer)
-    buffer = chr(buflen>>8)+chr(buflen%256)+taia_pack(taia_now())+randombytes(8)+buffer
-    try: sock.sendto(buffer,'hub')
-    except: pass
-else:
-  def sock_write(buffer):
-    paths = os.listdir(root)
-    paths.remove(user) ### die on ENOENT ###
-    for path in paths:
-      try: sock.sendto(buffer,path)
-      except: pass
+def taia96n_now(): return { ### version of taia96n_now is randomized by +/- 4 seconds ###
+  'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
+  'nano':long(1000000000*(now%1)+500)
+}
+
+def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
+
+def taia96n_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)
+
+def sock_write(buffer):
+  buflen = len(buffer)
+  buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+randombytes(8)+buffer
+  try: sock.sendto(buffer,'hub')
+  except: pass
 
 try_write(1,'USER '+nick+' '+nick+' '+nick+' :'+nick+'\nNICK '+nick+'\n')
 
@@ -259,7 +252,7 @@ while 1:
       if byte == '\n': break
       if byte != '\r' and len(buffer)<768: buffer += byte
 
-    buffer = re_URC_INTEG('',buffer) ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
+    #buffer = re_URC_INTEG('',buffer) ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
     buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
     if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
     if not UNICODE:
