@@ -17,7 +17,14 @@ elif [ -e '/usr/local/include/python2.7/Python.h'       ] &&
        HEADERS='/usr/local/include/python2.7'
 fi
 
+# OpenBSD \o/
 export LIBRARY_PATH="/usr/local/lib:$LIBRARY_PATH"
+export LIBRARY_PATH="/usr/local/include:$LIBRARY_PATH"
+if [ -e /usr/local/lib/randombytes.o ]; then
+ randombytes=/usr/local/lib/randombytes.o
+else
+ randombytes=/usr/lib/randombytes.o
+fi
 
 gcc `cat conf-cc` src/urcsend.c -o urcsend || exit 1
 
@@ -39,18 +46,18 @@ gcc `cat conf-cc` src/ucspi-server2client.c -o ucspi-server2client || exit 1
 
 gcc `cat conf-cc` src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 
-gcc `cat conf-cc` src/keypair.c -o keypair -l nacl /usr/lib/randombytes.o || exit 1
+gcc `cat conf-cc` src/keypair.c -o keypair -l nacl $randombytes || exit 1
 
-gcc `cat conf-cc` src/sign_keypair.c -o sign_keypair -l nacl /usr/lib/randombytes.o || exit 1
+gcc `cat conf-cc` src/sign_keypair.c -o sign_keypair -l nacl $randombytes || exit 1
 
-gcc -O2 -fPIC -DPIC src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.7 -l tai -l nacl /usr/lib/randombytes.o || exit 1
+gcc -O2 -fPIC -DPIC src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.7 -l tai -l nacl $randombytes || exit 1
 
 gcc `cat conf-cc` src/check-taia.c -o check-taia -l tai -l nacl || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
   gcc `cat conf-cc` src/urccache-failover.c -o urccache -l nacl || exit 1
 else
-  gcc `cat conf-cc` src/urccache.c -o urccache -l tai -l nacl /usr/lib/randombytes.o || exit 1
+  gcc `cat conf-cc` src/urccache.c -o urccache -l tai -l nacl $randombytes || exit 1
   printf '' | ./urccache `pwd`/src/
   if [ $? != 1 ] ; then gcc `cat conf-cc` src/urccache-failover.c -o urccache -l nacl || exit 1 ; fi
 fi
