@@ -1,10 +1,22 @@
 #!/bin/sh
 # Workaround script for creating shared objects on 64-bit
 # architectures with NaCl. Much thanks to Ivo Smits for
-# doing a lot of the work.
+# doing a lot of the work. Thanks to SeekingFor, some
+# strange anonymous type person, for OpenBSD support.
 
-rm nacl-20110221 -rf
-wget -O- http://hyperelliptic.org/nacl/nacl-20110221.tar.bz2 | bunzip2 | tar -xf -
+if which wget 2>/dev/null 1>&2; then
+  retr=wget
+elif which curl 2>/dev/null 1>&2; then
+  retr="curl -O"
+elif which ftp 2>/dev/null 1>&2; then
+  retr=ftp
+else
+  echo "could not find any appropiate way to download sources, no wget, curl or ftp in PATH";
+  exit 1;
+fi
+rm -rf nacl-20110221
+[ -f nacl-20110221.tar.bz2 ] || $retr http://hyperelliptic.org/nacl/nacl-20110221.tar.bz2
+bunzip2 < nacl-20110221.tar.bz2 | tar -xf -
 
 # Use my patched copy of curvecpserver.c
 # sets env $CURVECPCLIENTPUBKEY from a curvecpclient
@@ -29,8 +41,11 @@ echo 'gcc' >> okcompilers/c
 
 # patch the library for making shared objects on 64 bit
 # architectures by compiling with PIC.
-sed -i "s/$/ -fPIC/" okcompilers/c
-
+if ! sed -i "s/$/ -fPIC/" okcompilers/c 2>/dev/null; then
+  sed "s/$/ -fPIC/" okcompilers/c > okcompilers/c{new}
+  mv okcompilers/c{new} okcompilers/c
+fi
+echo "Starting to compile and benchmark NaCl so it will use the best available implementations for your specific hardware. This might take some time."
 ./do
 
 gcc okcompilers/abiname.c -o abiname
@@ -39,6 +54,6 @@ BUILDDIR="build/$(hostname | sed 's/\..*//' | tr -cd '[a-z][A-Z][0-9]')"
 
 # install nacl/build in meaningful directories
 mkdir -p /usr/include/nacl
-cp "${BUILDDIR}/bin/"* /usr/bin/
-cp "${BUILDDIR}/lib/${ABINAME}/"* /usr/lib/
-cp "${BUILDDIR}/include/${ABINAME}/"* /usr/include/nacl/
+cp -i "${BUILDDIR}/bin/"* /usr/bin/
+cp -i "${BUILDDIR}/lib/${ABINAME}/"* /usr/lib/
+cp -i "${BUILDDIR}/include/${ABINAME}/"* /usr/include/nacl/
