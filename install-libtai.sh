@@ -2,6 +2,12 @@
 # Workaround script for creating shared objects on 64-bit
 # architectures with libtai.
 
+# OpenBSD: check for nroff (groff)
+if ! which nroff 1>/dev/null; then
+ echo 'fatal error: need to install nroff (groff)'
+ exit 1
+fi
+
 if which wget 2>/dev/null 1>&2; then
   retr=wget
 elif which curl 2>/dev/null 1>&2; then
