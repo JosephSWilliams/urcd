@@ -1,4 +1,6 @@
 #include <nacl/crypto_sign.h>
+#include <stdio.h>
+
 int main(){
 unsigned char pk [32];
 unsigned char sk [64];

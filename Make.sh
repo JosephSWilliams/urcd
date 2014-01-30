@@ -17,6 +17,8 @@ elif [ -e '/usr/local/include/python2.7/Python.h'       ] &&
        HEADERS='/usr/local/include/python2.7'
 fi
 
+export LIBRARY_PATH="/usr/local/lib:$LIBRARY_PATH"
+
 gcc `cat conf-cc` src/urcsend.c -o urcsend || exit 1
 
 gcc `cat conf-cc` src/urcrecv.c -o urcrecv || exit 1
@@ -46,11 +48,11 @@ gcc -O2 -fPIC -DPIC src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2
 gcc `cat conf-cc` src/check-taia.c -o check-taia -l tai -l nacl || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
-  gcc `cat conf-cc` src/urccache-static.c -o urccache -l nacl || exit 1
+  gcc `cat conf-cc` src/urccache-failover.c -o urccache -l nacl || exit 1
 else
   gcc `cat conf-cc` src/urccache.c -o urccache -l tai -l nacl /usr/lib/randombytes.o || exit 1
   printf '' | ./urccache `pwd`/src/
-  if [ $? != 1 ] ; then gcc `cat conf-cc` src/urccache-static.c -o urccache -l nacl || exit 1 ; fi
+  if [ $? != 1 ] ; then gcc `cat conf-cc` src/urccache-failover.c -o urccache -l nacl || exit 1 ; fi
 fi
 
 if ! which cython 2>/dev/null ; then

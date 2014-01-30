@@ -22,15 +22,16 @@ main(int argc, char **argv)
     exit(64);
   }
 
+  unsigned char cache[256][16384]={0};
   unsigned char salt[32];
   randombytes(salt,32);
+
 
   if (chdir(argv[1])) exit(64);
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
   unsigned char buffer[2+12+4+8+65536+32];
-  unsigned char cache[256][16384]={0};
   unsigned char hash[32];
   unsigned char ts[16];
   unsigned char ret[1];
