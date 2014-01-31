@@ -221,11 +221,17 @@ urc2sd:
 
   ln -s `pwd`/urc2sd /services/urc2sd/urc2sd
   ln -s `pwd`/ucspi-client2server /services/urc2sd/ucspi-client2server
+
+  # default
   ln -s `pwd`/run.urc2sd /services/urc2sd/run
+
+  # tor
+  ln -s `pwd`/run.urc2sd-tor /services/urc2sd/run
+  ln -s `pwd`/ucspi-socks4aclient /services/urc2sd/ucspi-socks4aclient
 
   printf $addr > /services/urc2sd/addr
   printf $port > /services/urc2sd/port
-  printf '/path/to/socket/' > /services/urc2sd/path
+  printf '/services/urcd-hub0/socket/' > /services/urc2sd/path
   printf 'urcd' > /services/urc2sd/nick
   printf '#channel' > /services/urc2sd/channels
 
