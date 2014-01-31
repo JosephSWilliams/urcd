@@ -130,7 +130,7 @@ def taia96n_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16
 
 def sock_write(buffer):
   buflen = len(buffer)
-  buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+randombytes(8)+buffer
+  buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x00\x00\x00\x00'+randombytes(8)+buffer
   try: sock.sendto(buffer,'hub')
   except: pass
 
@@ -240,7 +240,7 @@ while 1:
     continue
 
   if server_revents(0):
-    buffer = try_read(sd,2+16+8+1024)[2+16+8:].split('\n',1)[0] if URCHUB else try_read(sd,1024).split('\n',1)[0]
+    buffer = try_read(sd,2+16+8+1024)[2+16+8:].split('\n',1)[0]
     if buffer: try_write(pipefd[1],buffer+'\n')
 
   if pipe_revents(0):
