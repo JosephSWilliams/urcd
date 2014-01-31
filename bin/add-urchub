@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-n=`ls /services/ | grep urcd-hub | wc -l`
+n=`ls /services/ | grep urcd-hub | wc -l | sed 's/ //g'`
 mkdir -p /services/urcd-hub$n
 mkdir -p /services/urcd-hub$n/socket/
 

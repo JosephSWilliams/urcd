@@ -240,7 +240,7 @@ while 1:
     continue
 
   if server_revents(0):
-    buffer = try_read(sd,2+16+8+1024)[2+16+8:].split('\n',1)[0]
+    buffer = try_read(sd,2+12+4+8+1024)[2+12+4+8:].split('\n',1)[0]
     if buffer: try_write(pipefd[1],buffer+'\n')
 
   if pipe_revents(0):
