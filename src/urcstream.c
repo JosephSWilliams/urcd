@@ -73,9 +73,9 @@ main(int argc, char **argv)
   if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   int userlen = strlen(user);
   if (userlen > UNIX_PATH_MAX) exit(4);
-  memcpy(&sock.sun_path,user,userlen+1);
+  memcpy(&sock.sun_path,user,userlen);
   unlink(sock.sun_path);
-  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(5);
+  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock))<0) exit(5);
   if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) sock_close(6);
 
   struct pollfd fds[2];
