@@ -79,10 +79,10 @@ active_clients = collections.deque(['']*CHANLIMIT*CHANLIMIT,CHANLIMIT*CHANLIMIT)
 flood, seen, ping, sync, flood_expiry = FLOOD, now, now, now, now
 
 if URCDB:
-  try: db = shelve.open(URCDB)
+  try: db = shelve.open(URCDB,flag='c',writeback=True)
   except:
     os.remove(URCDB)
-    db = shelve.open(URCDB)
+    db = shelve.open(URCDB,flag='c',writeback=True)
   try: active_clients = collections.deque(list(db['active_clients']),CHANLIMIT*CHANLIMIT)
   except: pass
   try: channel_struct = db['channel_struct']
