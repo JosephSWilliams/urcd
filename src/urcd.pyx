@@ -136,8 +136,7 @@ def sock_close(sn,sf):
       for dst in channels:
         if dst in channel_struct.keys() and nick in channel_struct[dst]['names']:
           channel_struct[dst]['names'].remove(nick)
-      db['channel_struct'] = channel_struct
-      db['active_clients'] = active_clients
+      db['channel_struct'], db['active_clients'] = channel_struct, active_clients
       db.close()
     sys.exit(0)
 
@@ -278,7 +277,9 @@ while 1:
           for dst in channel_struct.keys():
             if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
       del names
-    if URCDB: db.sync()
+    if URCDB:
+      db['channel_struct'], db['active_clients'] = channel_struct, active_clients
+      db.sync()
     sync = now
 
   if not client_revents(0):
