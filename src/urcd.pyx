@@ -357,7 +357,7 @@ while 1:
 
     elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
       if FLOOD:
-        flood += 1 + int(LIMIT)
+        flood += round(1.0 + LIMIT)
         if flood >= FLOOD:
           try_write(wr,':'+serv+' NOTICE '+Nick+' :RPL_SPAM\n')
           continue
