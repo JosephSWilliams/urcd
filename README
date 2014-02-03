@@ -10,8 +10,7 @@ recommends:
   cython(>=0.18.0), nacltaia-otr
 
 todo:
-  (security) implement RP_FILTER for encrypted channels and PM
-  (security) implement encrypted PM protocol
+  implement encrypted PM protocol
 
 quick install (not recommended):
 
@@ -238,3 +237,62 @@ urc2sd:
   touch /services/urc2sd/auto_cmd
 
   ln -s /services/urc2sd /service/urc2sd
+
+POLICY and ISUPPORT:
+  these values are filenames inside env/ and contain different types of data.
+
+  PING:
+    integer argument with a default of 16 seconds. this value dictates the ping
+    intervals to a client, and the amount of time a client has to perform
+    a connection. if PING is activated and the client doesn't respond within
+    the specified time before TIMEOUT, the client is dropped. a 0 value will
+    disable this feature.
+
+  URCDB:
+    default is empty. adding an absolute path will tell urcd where to store a
+    database. the database stores information from the network. this prevents
+    losing this information between connections.
+    e.g.: /topic, /names, and /list.
+
+  FLOOD:
+    integer argument with a default threshold of 8. every write to the network
+    by a client increments the flood counter. if the flood counter breaches the
+    threshold the client will lose ability to write to the network until the
+    counter returns below the threshold value. a 0 value will disable this
+    feature.
+
+  LIMIT:
+    float argument default is 1.0. this is the maximum rate in which a client
+    can write to the network.
+
+  COLOUR:
+    integer default is 0. changing this value to 1 will allow colour encoding
+    to pass to the client.
+
+  UNICODE:
+    integer default is 0. changing this value to 1 will allow unicode encoding
+    to pass to the client.
+
+  NICKLEN:
+    integer default is 32. this is the maximum byte length of acceptable nick's
+    on the network.
+
+  TIMEOUT:
+    integer default is 128. this value represents the allowed time a client
+    can remain silent before their connection is dropped.
+
+  PRESENCE:
+    integer default is 0. changing this value to 1 will announce JOIN, PART,
+    and QUIT messages from the client to the network.
+
+  TOPICLEN:
+    integer default is 512. this is the maximum byte length of acceptable
+    topics.
+
+  CHANLIMIT:
+    integer default is 64. this value represents the maximum amount of channels
+    and the maximum amount of users that can participate in channels.
+
+  CHANNELLEN:
+    integer default is 64. this value represents the maximum byte length of
+    channels on the network.
