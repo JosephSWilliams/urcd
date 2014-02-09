@@ -13,7 +13,8 @@ git add -f \
  README \
  install-*.sh \
  db \
- urcd.sh
+ urcd.sh \
+ DONATE
 
 TZ=UTC git commit --date="`date -u +'%s'`"
 test -x /usr/lib/git-core/git-update-server-info && /usr/lib/git-core/git-update-server-info
