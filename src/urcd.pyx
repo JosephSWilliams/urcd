@@ -65,6 +65,7 @@ URCSECRETBOXDIR = open('env/URCSECRETBOXDIR','rb').read().split('\n')[0] if os.p
 URCSIGNSECKEYDIR = open('env/URCSIGNSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNSECKEYDIR') else str()
 URCSIGNPUBKEYDIR = open('env/URCSIGNPUBKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNPUBKEYDIR') else str()
 URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
+URCCRYPTOBOXSECKEYDIR = open('env/URCCRYPTOBOXSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXSECKEYDIR') else str()
 URCCRYPTOBOXSECKEY = open('env/URCCRYPTOBOXSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCCRYPTOBOXSECKEY') else str()
 
 nick = str()
@@ -91,7 +92,7 @@ if URCDB:
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
-if URCCRYPTOBOXSECKEY or URCCRYPTOBOXDIR or URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR:
+if URCCRYPTOBOXSECKEY or URCCRYPTOBOXDIR or URCCRYPTOBOXSECKEYDIR or URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR:
   from nacltaia import *
 
   ### NaCl's crypto_sign / crypto_sign_open API sucks ###
@@ -110,10 +111,16 @@ if URCSECRETBOXDIR:
 urccryptoboxdb = dict()
 if URCCRYPTOBOXDIR:
   for dst in os.listdir(URCCRYPTOBOXDIR):
-    urccryptoboxdb[dst.lower()] = crypto_box_beforenm(
-      open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex'),
-      URCCRYPTOBOXSECKEY
-    )
+    if URCCRYPTOBOXSECKEYDIR and dst in os.listdir(URCCRYPTOBOXSECKEYDIR):
+      urccryptoboxdb[dst.lower()] = crypto_box_beforenm(
+        open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex'),
+        open(URCCRYPTOBOXSECKEYDIR+'/'+dst,'rb').read(64).decode('hex')
+      )
+    elif URCCRYPTOBOXSECKEY:
+      urccryptoboxdb[dst.lower()] = crypto_box_beforenm(
+        open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex'),
+        URCCRYPTOBOXSECKEY
+      )
 
 if URCSIGNPUBKEYDIR:
   urcsignpubkeydb = dict()

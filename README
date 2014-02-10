@@ -7,10 +7,9 @@ depends:
   python-dev(>=2.6), daemontools, sh, gcc
 
 recommends:
-  cython(>=0.18.0), nacltaia-otr
+  cython(>=0.18.0)
 
 todo:
-  implement multikey encrypted PM
   implement pfs for encrypted PM
 
 quick install (not recommended):
@@ -115,9 +114,8 @@ interface:
 
 no censorship:
   URC networks are censorship resistant. i
-  recommend URCSIGN and/or nacltaia-otr to
-  ignore spam and trolls (alternative OTR may
-  also be used).
+  recommend URCSIGN and/or URCCRYPTOBOX to
+  ignore spam and trolls
 
   irssi ("ban/except"):
     /ignore *!*@* ALL
@@ -168,6 +166,16 @@ URCCRYPTOBOX:
   echo urccryptoboxdir > env/URCCRYPTOBOXDIR
   echo $pubkey > urccryptoboxdir/$nick
   chmod 600 urccryptoboxdir/
+
+  # use a specific seckey for a destination, or override global
+  mkdir -p urccryptoboxseckeydir/
+  echo urccryptoboxseckeydir > env/URCCRYPTOBOXSECKEYDIR
+  echo $seckey > urccryptoboxseckeydir/$nick
+  chmod 600 urccryptoboxseckeydir/
+
+  # urcd will replace the user field with VERIFIED for valid
+  # authentication and replace all other user fields with URCD.
+  # see "no censorship" above.
 
 URCSECRETBOX:
   # urcd can provide secret and encrypted channels
