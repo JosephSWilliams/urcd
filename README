@@ -10,7 +10,8 @@ recommends:
   cython(>=0.18.0), nacltaia-otr
 
 todo:
-  implement encrypted PM protocol
+  implement multikey encrypted PM
+  implement pfs for encrypted PM
 
 quick install (not recommended):
 
@@ -158,10 +159,21 @@ URCSIGN:
   # signatures and replace all other user fields with URCD.
   # see "no censorship" above.
 
+URCCRYPTOBOX:
+  # urcd can provide secret and encrypted PM
+
+  ./keypair
+  echo $seckey > env/URCCRYPTOBOXSECKEY
+  mkdir -p urccryptoboxdir/
+  echo urccryptoboxdir > env/URCCRYPTOBOXDIR
+  echo $pubkey > urccryptoboxdir/$nick
+  chmod 600 urccryptoboxdir/
+
 URCSECRETBOX:
   # urcd can provide secret and encrypted channels
   # using a 64 byte hexadecimal key
 
+  ./keypair # you only need the seckey
   mkdir -p urcsecretboxdir/
   echo urcsecretboxdir > env/URCSECRETBOXDIR
   echo $seckey > urcsecretboxdir/\#channel

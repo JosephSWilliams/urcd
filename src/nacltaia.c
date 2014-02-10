@@ -108,6 +108,22 @@ PyObject *pycrypto_box_keypair(PyObject *self){
   PyTuple_SET_ITEM(pyret, 1, pysk);
   return pyret;}
 
+PyObject *pycrypto_box_beforenm(PyObject *self, PyObject *args, PyObject *kw){
+  PyObject *ret;
+  char *pk, *sk;
+  Py_ssize_t pksize=0, sksize=0;
+  static const char *kwlist[] = {"pk", "sk", 0};
+  unsigned char rk[crypto_box_SECRETKEYBYTES];
+
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "|s#s#:crypto_box_beforenm", (char **) kwlist, &pk, &pksize, &sk, &sksize)){
+    return (PyObject *)0;}
+
+  if (pksize != crypto_box_PUBLICKEYBYTES) return Py_BuildValue("i", 0);
+  if (sksize != crypto_box_SECRETKEYBYTES) return Py_BuildValue("i", 0);
+  if (crypto_box_beforenm(rk,(const unsigned char *) pk,(const unsigned char *) sk)<0) return Py_BuildValue("i", 0);
+  ret = PyBytes_FromStringAndSize((char *)rk,crypto_box_SECRETKEYBYTES);
+  return ret;}
+
 PyObject *pycrypto_box(PyObject *self, PyObject *args, PyObject *kw){
   char *m, *n, *pk, *sk;
   Py_ssize_t msize=0, nsize=0, pksize=0, sksize=0;
@@ -385,6 +401,7 @@ static PyMethodDef Module_methods[] = {
   {"taia_okseconds",       pytaia_okseconds,       METH_VARARGS|METH_KEYWORDS},
   {"crypto_box",           pycrypto_box,           METH_VARARGS|METH_KEYWORDS},
   {"crypto_box_open",      pycrypto_box_open,      METH_VARARGS|METH_KEYWORDS},
+  {"crypto_box_beforenm",  pycrypto_box_beforenm,  METH_VARARGS|METH_KEYWORDS},
   {"crypto_box_keypair",   pycrypto_box_keypair,   METH_NOARGS},
   {"crypto_sign",          pycrypto_sign,          METH_VARARGS|METH_KEYWORDS},
   {"crypto_sign_open",     pycrypto_sign_open,     METH_VARARGS|METH_KEYWORDS},
@@ -411,6 +428,9 @@ void initcrypto_box(){
 
 void initcrypto_box_open(){
   (void) Py_InitModule("crypto_box_open", Module_methods);}
+
+void initcrypto_box_beforenm(){
+  (void) Py_InitModule("crypto_box_beforenm", Module_methods);}
 
 void initcrypto_box_keypair(){
   (void) Py_InitModule("crypto_box_keypair", Module_methods);}

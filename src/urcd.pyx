@@ -60,10 +60,12 @@ URCSIGNDB = open('env/URCSIGNDB','rb').read().split('\n')[0] if os.path.exists('
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
+URCCRYPTOBOXDIR = open('env/URCCRYPTOBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXDIR') else str()
 URCSECRETBOXDIR = open('env/URCSECRETBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSECRETBOXDIR') else str()
 URCSIGNSECKEYDIR = open('env/URCSIGNSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNSECKEYDIR') else str()
 URCSIGNPUBKEYDIR = open('env/URCSIGNPUBKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNPUBKEYDIR') else str()
 URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
+URCCRYPTOBOXSECKEY = open('env/URCCRYPTOBOXSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCCRYPTOBOXSECKEY') else str()
 
 nick = str()
 Nick = str()
@@ -89,7 +91,7 @@ if URCDB:
   except: channel_struct = dict()
   while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
-if URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR:
+if URCCRYPTOBOXSECKEY or URCCRYPTOBOXDIR or URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR:
   from nacltaia import *
 
   ### NaCl's crypto_sign / crypto_sign_open API sucks ###
@@ -104,6 +106,14 @@ urcsecretboxdb = dict()
 if URCSECRETBOXDIR:
   for dst in os.listdir(URCSECRETBOXDIR):
     urcsecretboxdb[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst,'rb').read(64).decode('hex')
+
+urccryptoboxdb = dict()
+if URCCRYPTOBOXDIR:
+  for dst in os.listdir(URCCRYPTOBOXDIR):
+    urccryptoboxdb[dst.lower()] = crypto_box_beforenm(
+      open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex'),
+      URCCRYPTOBOXSECKEY
+    )
 
 if URCSIGNPUBKEYDIR:
   urcsignpubkeydb = dict()
@@ -229,8 +239,17 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
   if URCSECRETBOXDIR and dst and dst in urcsecretboxdb.keys(): seckey = urcsecretboxdb[dst]
   else: seckey = str()
 
+  if URCCRYPTOBOXDIR and dst and dst in urccryptoboxdb.keys(): crypto_box_seckey = urccryptoboxdb[dst]
+  else: crypto_box_seckey = str()
+
+  ### URCCRYPTOBOX ###
+  if crypto_box_seckey:
+    buflen += 16
+    nonce = taia96n_pack(taia96n_now())+'\x04\x00\x00\x00'+randombytes(8)
+    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer,nonce,crypto_box_seckey)
+
   ### URCSIGNSECRETBOX ###
-  if seckey and signseckey:
+  elif seckey and signseckey:
     buflen += 64 + 16
     nonce = taia96n_pack(taia96n_now())+'\x03\x00\x00\x00'+randombytes(8)
     buffer = chr(buflen>>8)+chr(buflen%256)+nonce+buffer
@@ -546,6 +565,16 @@ while 1:
           else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
         except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
       else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+
+    ### URCCRYPTOBOX ###
+    elif buffer[2+12:2+12+4] == '\x04\x00\x00\x00':
+      if not URCCRYPTOBOXDIR: continue
+      for src in urccryptoboxdb.keys():
+        msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urccryptoboxdb[src])
+        if msg: break
+      if not msg: continue
+      if src == msg[1:].split('!',1)[0].lower(): AUTH, buffer = 1, re_USER('!VERIFIED@',msg.split('\n',1)[0],1)
+      else: buffer = re_USER('!URCD@',msg.split('\n',1)[0],1)
 
     ### URCHUB ###
     else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
