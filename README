@@ -32,8 +32,6 @@ quick install (not recommended):
 
   # elif python2.7
   ./Make.sh
-
-  ./add-urchub
   ./urcd.sh $ntwrk
 
 install (recommended):

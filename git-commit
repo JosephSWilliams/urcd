@@ -13,7 +13,6 @@ git add -f \
  README \
  install-*.sh \
  db \
- urcd.sh \
  DONATE
 
 TZ=UTC git commit --date="`date -u +'%s'`"
