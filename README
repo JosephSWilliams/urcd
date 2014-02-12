@@ -11,6 +11,7 @@ recommends:
 
 todo:
   implement pfs for encrypted PM
+  implement padding for encrypted protocols
 
 quick install (not recommended):
 
@@ -32,6 +33,7 @@ quick install (not recommended):
   # elif python2.7
   ./Make.sh
 
+  ./add-urchub
   ./urcd.sh $ntwrk
 
 install (recommended):
@@ -53,13 +55,14 @@ install (recommended):
   # elif python2.7
   ./Make.sh
 
-  $editor env/*
+  # edit the network/hostmask
+  $editor env/serv
+
+  # edit the motd
+  $editor env/motd
 
   ln -s `pwd` /service/urcd
-
-  mkdir -p /service/urcd/socket/
-  chown urcd /service/urcd/socket/
-  echo -n '/service/urcd/socket/' > env/path
+  ./bin/add-urchub
 
   sleep 4
   svstat /service/urcd
@@ -224,13 +227,10 @@ server2server (curvecp)(deprecated: use hub2hub):
   # stream with ./add-curvecpconnect
 
 hub2hub:
-  ./bin/add-urchub
+  test -e /services/urcd-hub0/ || ./bin/add-urchub
 
   # using urcstream with urcd/urc2sd (deprecated)
   ./bin/add-urcstream2hub /service/urcd/socket/ /service/urcd-hub0/socket/
-
-  # using urchub with urcd/urc2sd
-  echo /services/urcd-hub0/socket/ > env/URCHUB
 
   ./bin/add-hublisten your.urcd.ano 1234 /service/urcd-hub0/socket/
   ./bin/add-hubconnect peer.urcd.ano 4321 /service/urcd-hub0/socket/
