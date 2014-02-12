@@ -269,7 +269,7 @@ POLICY and ISUPPORT:
     disable this feature.
 
   URCDB:
-    default is empty. adding an absolute path will tell urcd where to store a
+    default is empty. adding a /path/to/urc.db will tell urcd where to store a
     database. the database stores information from the network. this prevents
     losing this information between connections.
     e.g.: /topic, /names, and /list.
