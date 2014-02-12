@@ -32,7 +32,7 @@ quick install (not recommended):
 
   # elif python2.7
   ./Make.sh
-  ./urcd.sh $ntwrk
+  ./bin/urcd.sh $ntwrk
 
 install (recommended):
 
