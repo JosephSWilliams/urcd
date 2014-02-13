@@ -269,7 +269,8 @@ POLICY and ISUPPORT:
   URCDB:
     default is empty. adding a /path/to/urc.db will tell urcd where to store a
     database. the database stores information from the network. this prevents
-    losing this information between connections.
+    losing this information between connections. (security) set chmod 600 on
+    this file after it is created.
     e.g.: /topic, /names, and /list.
 
   FLOOD:
