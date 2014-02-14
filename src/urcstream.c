@@ -16,6 +16,10 @@
 #define UNIX_PATH_MAX 108
 #endif
 
+#ifdef __NetBSD__
+#include "dprintf.h"
+#endif
+
 int itoa(char *s, int n, int slen)
 {
   int fd[2], ret = 0;
