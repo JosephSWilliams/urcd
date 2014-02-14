@@ -11,7 +11,6 @@ recommends:
 
 todo:
   implement pfs for encrypted PM
-  implement padding for encrypted protocols
 
 quick install (not recommended):
 
