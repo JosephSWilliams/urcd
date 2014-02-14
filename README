@@ -315,3 +315,8 @@ POLICY and ISUPPORT:
   CHANNELLEN:
     integer default is 64. this value represents the maximum byte length of
     channels on the network.
+
+  PADDING:
+    integer default is 255. this value represents the block sizes of encrypted
+    packets. setting a 0 value will disable this feature, however it is not
+    recommended.

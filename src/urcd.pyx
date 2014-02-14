@@ -59,6 +59,7 @@ PRESENCE = int(open('env/PRESENCE','rb').read().split('\n')[0]) if os.path.exist
 URCSIGNDB = open('env/URCSIGNDB','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNDB') else str()
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
+PADDING = int(open('env/PADDING','rb').read().split('\n')[0]) & 255 if os.path.exists('env/PADDING') else 255
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 URCCRYPTOBOXDIR = open('env/URCCRYPTOBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXDIR') else str()
 URCSECRETBOXDIR = open('env/URCSECRETBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSECRETBOXDIR') else str()
@@ -237,6 +238,7 @@ def taia96n_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16
 def sock_write(*argv): ### (buffer, dst, ...) ###
   buffer = argv[0]
   buflen = len(buffer)
+  padlen = PADDING - buflen % PADDING if PADDING else 0
   dst = argv[1].lower() if len(argv) > 1 else str()
 
   if URCSIGNSECKEYDIR and dst and dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
@@ -251,23 +253,23 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
 
   ### URCCRYPTOBOX ###
   if crypto_box_seckey:
-    buflen += 16
+    buflen += 16 + padlen
     nonce = taia96n_pack(taia96n_now())+'\x04\x00\x00\x00'+randombytes(8)
-    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer,nonce,crypto_box_seckey)
+    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+randombytes(padlen),nonce,crypto_box_seckey)
 
   ### URCSIGNSECRETBOX ###
   elif seckey and signseckey:
-    buflen += 64 + 16
+    buflen += 64 + 16 + padlen
     nonce = taia96n_pack(taia96n_now())+'\x03\x00\x00\x00'+randombytes(8)
-    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+buffer
+    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+buffer+randombytes(padlen)
     buffer += _crypto_sign(buffer,signseckey)
     buffer = buffer[:2+12+4+8]+crypto_secretbox(buffer[2+12+4+8:],nonce,seckey)
 
   ### URCSECRETBOX ###
   elif seckey:
-    buflen += 16
+    buflen += 16 + padlen
     nonce = taia96n_pack(taia96n_now())+'\x02\x00\x00\x00'+randombytes(8)
-    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer,nonce,seckey)
+    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+randombytes(padlen),nonce,seckey)
 
   ### URCSIGN ###
   elif signseckey:
