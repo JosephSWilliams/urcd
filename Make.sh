@@ -17,8 +17,8 @@ elif [ -e '/usr/local/include/python2.7/Python.h'       ] &&
        HEADERS='/usr/local/include/python2.7'
 fi
 
-# OpenBSD \o/
-export LIBRARY_PATH="/usr/local/lib:$LIBRARY_PATH"
+# OpenBSD && NetBSD \o/
+export LIBRARY_PATH="/usr/pkg/lib:/usr/local/lib:$LIBRARY_PATH"
 
 randombytes=/usr/lib/randombytes.o
 if [ -e /usr/local/lib/randombytes.o ]; then

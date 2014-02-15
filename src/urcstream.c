@@ -16,18 +16,10 @@
 #define UNIX_PATH_MAX 108
 #endif
 
-#ifdef __NetBSD__
-#include "dprintf.h"
-#endif
-
 int itoa(char *s, int n, int slen)
 {
-  int fd[2], ret = 0;
-  if (pipe(fd)<0) return -1;
-  if ((dprintf(fd[1],"%d",n)<0) || (read(fd[0],s,slen)<0)) --ret;
-  close(fd[0]);
-  close(fd[1]);
-  return ret;
+  if (snprintf(s,slen,"%d",n)<0) return -1;
+  return 0;
 }
 
 main(int argc, char **argv)
@@ -80,7 +72,6 @@ main(int argc, char **argv)
   memcpy(&sock.sun_path,user,userlen);
   unlink(sock.sun_path);
   if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock))<0) exit(5);
-  if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) sock_close(6);
 
   struct pollfd fds[2];
   fds[0].fd = rd; fds[0].events = POLLIN | POLLPRI;
@@ -92,26 +83,23 @@ main(int argc, char **argv)
   struct sockaddr_un paths;
   paths.sun_family = AF_UNIX;
 
-  while (1)
-  {
+  while (1) {
 
     poll(fds,2,-1);
 
-    if (fds[0].revents)
-    {
+    if (fds[0].revents) {
 
       usleep((int)(LIMIT*1000000));
 
       for (n=0;n<1024;++n)
       {
-        if (read(rd,buffer+n,1)<1) sock_close(7);
+        if (read(rd,buffer+n,1)<1) sock_close(6);
         if (buffer[n] == '\n') break;
       } if (buffer[n] != '\n') goto urcwrite;
       ++n;
 
       root = opendir("/");
-      if (!root) sock_close(8);
-
+      if (!root) sock_close(7);
       while ((path = readdir(root)))
       {
         if (path->d_name[0] == '.') continue;
@@ -120,18 +108,17 @@ main(int argc, char **argv)
         if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
         bzero(paths.sun_path,UNIX_PATH_MAX);
         memcpy(&paths.sun_path,path->d_name,pathlen);
-        sendto(sockfd,buffer,n,0,(struct sockaddr *)&paths,sizeof(paths));
+        sendto(sockfd,buffer,n,MSG_DONTWAIT,(struct sockaddr *)&paths,sizeof(paths));
       } closedir(root);
-
     }
 
     urcwrite: while (poll(fds+1,1,0))
     {
       n = read(sockfd,buffer,1024);
-      if (n<1) sock_close(9);
+      if (!n) continue;
+      if (n<0) sock_close(8);
       if (buffer[n-1] != '\n') continue;
-      if (write(wr,buffer,n)<0) sock_close(10);
+      if (write(wr,buffer,n)<0) sock_close(9);
     }
-
   }
 }

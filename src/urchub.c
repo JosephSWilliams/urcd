@@ -73,11 +73,6 @@ main(int argc, char **argv)
   memcpy(&sock.sun_path,user,userlen);
   unlink(sock.sun_path);
   if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock))<0) exit(6);
-  if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) sock_close(7);
-
-  struct pollfd fds[1];
-  fds[0].fd = sockfd;
-  fds[0].events = POLLIN;
 
   int strlen_recvpath;
   struct sockaddr_un recvpath;
@@ -92,20 +87,17 @@ main(int argc, char **argv)
 
   while (1)
   {
-
-    poll(fds,1,-1);
-
     bzero(recvpath.sun_path,UNIX_PATH_MAX);
     n = recvfrom(sockfd,buffer,65536,0,(struct sockaddr *)&recvpath,&recvpath_len);
-    if (n<1) sock_close(8);
+    if (!n) continue;
+    if (n<0) sock_close(7);
     if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
-    if (write(cachein[1],buffer,n)<0) sock_close(9);
-    if (read(cacheout[0],ret,1)<1) sock_close(10);
+    if (write(cachein[1],buffer,n)<0) sock_close(8);
+    if (read(cacheout[0],ret,1)<1) sock_close(9);
     if (ret[0]) continue;
 
     root = opendir("/");
-    if (!root) sock_close(11);
-
+    if (!root) sock_close(10);
     strlen_recvpath = strlen(recvpath.sun_path);
     while ((sendpath = readdir(root)))
     {
@@ -116,9 +108,7 @@ main(int argc, char **argv)
       if ((sendpath_len == strlen_recvpath) && (!memcmp(sendpath->d_name,recvpath.sun_path,strlen_recvpath))) continue;
       bzero(sendpaths.sun_path,UNIX_PATH_MAX);
       memcpy(&sendpaths.sun_path,sendpath->d_name,sendpath_len);
-      sendto(sockfd,buffer,n,0,(struct sockaddr *)&sendpaths,sizeof(sendpaths));
+      sendto(sockfd,buffer,n,MSG_DONTWAIT,(struct sockaddr *)&sendpaths,sizeof(sendpaths));
     } closedir(root);
-
   }
-
 }

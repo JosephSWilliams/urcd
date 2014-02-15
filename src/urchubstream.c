@@ -15,18 +15,10 @@
 #define UNIX_PATH_MAX 108
 #endif
 
-#ifdef __NetBSD__
-#include "dprintf.h"
-#endif
-
 int itoa(char *s, int n, int slen)
 {
-  int fd[2], ret = 0;
-  if (pipe(fd)<0) return -1;
-  if ((dprintf(fd[1],"%d",n)<0) || (read(fd[0],s,slen)<0)) --ret;
-  close(fd[0]);
-  close(fd[1]);
-  return ret;
+  if (snprintf(s,slen,"%d",n)<0) return -1;
+  return 0;
 }
 
 main(int argc, char **argv)
@@ -81,7 +73,6 @@ main(int argc, char **argv)
   memcpy(&sock.sun_path,user,userlen);
   unlink(sock.sun_path);
   if (bind(sd,(struct sockaddr *)&sock,sizeof(sock))<0) exit(5);
-  if (fcntl(sd,F_SETFL,O_NONBLOCK)<0) sock_close(6);
 
   struct pollfd fds[2];
   fds[0].fd = rd; fds[0].events = POLLIN | POLLPRI;
@@ -92,16 +83,13 @@ main(int argc, char **argv)
   hub.sun_family = AF_UNIX;
   memcpy(&hub.sun_path,"hub\0",4);
 
-  while (1)
-  {
+  while (1) {
 
     poll(fds,2,-1);
 
     if (fds[0].revents)
     {
-
       if (read(rd,buffer,2)<2) sock_close(7);
-
       n = 2;
       l = 2+16+8+buffer[0]*256+buffer[1];
       if (l>2+16+8+1024) sock_close(8);
@@ -112,20 +100,18 @@ main(int argc, char **argv)
         if (i<1) sock_close(9);
         n += i;
       } usleep((int)(LIMIT*1000000));
-
-      if (sendto(sd,buffer,n,0,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(262144);
-
+      if (sendto(sd,buffer,n,MSG_DONTWAIT,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(262144);
     }
 
     while ((poll(fds,2,0)) && (!fds[0].revents))
     {
       n = read(sd,buffer,2+16+8+1024);
-      if (n<1) sock_close(10);
+      if (!n) continue;
+      if (n<0) sock_close(10);
       if (read(devurandomfd,byte,1)<1) sock_close(11);
       poll(fds+1,1,byte[0]<<4);
       if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
       if (write(wr,buffer,n)<0) sock_close(12);
     }
-
   }
 }

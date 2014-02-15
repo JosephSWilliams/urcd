@@ -16,18 +16,10 @@
 #define UNIX_PATH_MAX 108
 #endif
 
-#ifdef __NetBSD__
-#include "dprintf.h"
-#endif
-
 int itoa(char *s, int n, int slen)
 {
-  int fd[2], ret = 0;
-  if (pipe(fd)<0) return -1;
-  if ((dprintf(fd[1],"%d",n)<0) || (read(fd[0],s,slen)<0)) --ret;
-  close(fd[0]);
-  close(fd[1]);
-  return ret;
+  if (snprintf(s,slen,"%d",n)<0) return -1;
+  return 0;
 }
 
 main(int argc, char **argv)
@@ -65,11 +57,6 @@ main(int argc, char **argv)
   memcpy(&sock.sun_path,user,n);
   unlink(sock.sun_path);
   if (bind(3,(struct sockaddr *)&sock,sizeof(sock))<0) exit(5);
-  if (fcntl(3,F_SETFL,O_NONBLOCK)<0) sock_close(6);
-
-  struct pollfd fds[1];
-  fds[0].fd = 3;
-  fds[0].events = POLLIN;
 
   struct sockaddr_un path;
   path.sun_family = AF_UNIX;
@@ -77,12 +64,12 @@ main(int argc, char **argv)
 
   while (1)
   {
-    poll(fds,1,-1);
     bzero(path.sun_path,UNIX_PATH_MAX);
     n = recvfrom(3,buffer,1024,0,(struct sockaddr *)&path,&path_len);
-    if (n<1) sock_close(7);
+    if (!n) continue;
+    if (n<0) sock_close(6);
     if (!path_len) continue;
     if (buffer[n-1] != '\n') continue;
-    if (write(7,buffer,n)<0) sock_close(8);
+    if (write(7,buffer,n)<0) sock_close(7);
   }
 }
