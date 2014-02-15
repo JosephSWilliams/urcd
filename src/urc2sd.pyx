@@ -276,6 +276,6 @@ while 1:
           if cmd == 0: continue
         cmd = re_SPLIT(buffer,3)[1].upper()
         src = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
-        msg = buffer.split(':',2)[2]
+        msg = buffer.split(' :',1)[1]
         buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
         try_write(1,buffer)
