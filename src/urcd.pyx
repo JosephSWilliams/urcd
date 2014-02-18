@@ -580,7 +580,7 @@ while 1:
     msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urccryptoboxdb[src])
     if msg: break
    if not msg: continue
-   if src == msg[1:].split('!',1)[0].lower(): AUTH, buffer = 1, re_USER('!VERIFIED@',msg.split('\n',1)[0],1)
+   if src == msg[1:].split('!',1)[0].lower(): buffer = re_USER('!VERIFIED@',msg.split('\n',1)[0],1)
    else: buffer = re_USER('!URCD@',msg.split('\n',1)[0],1)
 
   ### URCHUB ###
