@@ -8,12 +8,9 @@ import os
 fd = int(os.getenv('CURVECPCLIENT',7))
 
 def sock_close(sn,sf):
-  try:
-    os.remove(str(os.getpid()))
-  except:
-    pass
-  if sn:
-    sys.exit(0)
+ try: os.remove(str(os.getpid()))
+ except: pass
+ if sn: sys.exit(0)
 
 signal.signal(1 ,sock_close)
 signal.signal(2 ,sock_close)
@@ -33,11 +30,9 @@ sock.bind(str(os.getpid()))
 
 while 1:
 
-  buffer, path = sock.recvfrom(1024)
-  if not path or buffer[len(buffer)-1:] != '\n': continue
+ buffer, path = sock.recvfrom(1024)
+ if not path or buffer[len(buffer)-1:] != '\n': continue
 
-  try:
-    if not os.write(fd,buffer):
-      sock_close(15,0)
-  except:
-    sock_close(15,0)
+ try:
+  if not os.write(fd,buffer): sock_close(15,0)
+ except: sock_close(15,0)

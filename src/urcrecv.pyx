@@ -20,20 +20,18 @@ sock.setblocking(0)
 
 while 1:
 
-  buffer = str()
+ buffer = str()
 
-  while 1:
-    byte = os.read(0,1)
-    if not byte: sys.exit(0)
-    elif byte == '\n':
-      buffer+=byte
-      break
-    elif len(buffer)<1024: buffer+=byte
+ while 1:
+  byte = os.read(0,1)
+  if not byte: sys.exit(0)
+  elif byte == '\n':
+   buffer+=byte
+   break
+  elif len(buffer)<1024: buffer+=byte
 
-  time.sleep(LIMIT)
+ time.sleep(LIMIT)
 
-  for path in os.listdir(root):
-    try:
-      sock.sendto(buffer,path)
-    except:
-      pass
+ for path in os.listdir(root):
+  try: sock.sendto(buffer,path)
+  except: pass
