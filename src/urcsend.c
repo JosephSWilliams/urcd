@@ -39,6 +39,7 @@ main(int argc, char **argv)
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
+  int sockfd;
   struct sockaddr_un sock;
   bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
@@ -49,14 +50,14 @@ main(int argc, char **argv)
     exit(signum);
   } signal(SIGINT,sock_close); signal(SIGHUP,sock_close); signal(SIGTERM,sock_close); 
 
-  if (socket(AF_UNIX,SOCK_DGRAM,0)!=3) exit(2);
+  if ((sockfd=socket(AF_UNIX,SOCK_DGRAM,0))<0) exit(2);
   int n = 1;
-  if (setsockopt(3,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
+  if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   n = strlen(user);
   if (n > UNIX_PATH_MAX) exit(4);
   memcpy(&sock.sun_path,user,n);
   unlink(sock.sun_path);
-  if (bind(3,(struct sockaddr *)&sock,sizeof(sock))<0) exit(5);
+  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock))<0) exit(5);
 
   struct sockaddr_un path;
   path.sun_family = AF_UNIX;
@@ -65,7 +66,7 @@ main(int argc, char **argv)
   while (1)
   {
     bzero(path.sun_path,UNIX_PATH_MAX);
-    n = recvfrom(3,buffer,1024,0,(struct sockaddr *)&path,&path_len);
+    n = recvfrom(sockfd,buffer,1024,0,(struct sockaddr *)&path,&path_len);
     if (!n) continue;
     if (n<0) sock_close(6);
     if (!path_len) continue;

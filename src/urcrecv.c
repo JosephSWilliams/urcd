@@ -41,14 +41,15 @@ main(int argc, char **argv)
   struct passwd *urcd = getpwnam("urcd");
   if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
+  int sockfd;
   struct sockaddr_un sock;
   bzero(&sock,sizeof(sock));
   sock.sun_family = AF_UNIX;
 
-  if (socket(AF_UNIX,SOCK_DGRAM,0)!=3) exit(1);
+  if ((sockfd=socket(AF_UNIX,SOCK_DGRAM,0))<0) exit(1);
   n = 1;
-  if (setsockopt(3,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(2);
-  if (fcntl(3,F_SETFL,O_NONBLOCK)<0) exit(3);
+  if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(2);
+  if (fcntl(sockfd,F_SETFL,O_NONBLOCK)<0) exit(3);
 
   struct pollfd fds[1];
   fds[0].fd = 0;
@@ -84,7 +85,7 @@ main(int argc, char **argv)
       if (pathlen > UNIX_PATH_MAX) continue;
       bzero(paths.sun_path,UNIX_PATH_MAX);
       memcpy(&paths.sun_path,path->d_name,pathlen);
-      sendto(3,buffer,n,0,(struct sockaddr *)&paths,sizeof(paths));
+      sendto(sockfd,buffer,n,0,(struct sockaddr *)&paths,sizeof(paths));
     } closedir(root);
 
   }
