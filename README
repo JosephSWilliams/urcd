@@ -117,6 +117,17 @@ no censorship:
   recommend URCSIGN and/or URCCRYPTOBOX to
   ignore spam and trolls
 
+  ####################################################
+  ###                 (security)                   ###
+  ### URCd will replace the user field with        ###
+  ### VERIFIED for users with valid authentication ###
+  ### or signature verification. All other user    ###
+  ### fields will be replaced with URCD. e.g.:     ###
+  ###                                              ###
+  ### nick!URCD@server                             ###
+  ### nick!VERIFIED@server                         ###
+  ####################################################
+
   irssi ("ban/except"):
     /ignore *!*@* ALL
     /ignore -except friend!*@* ALL
