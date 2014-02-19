@@ -507,7 +507,7 @@ while 1:
 
  while server_revents(0) and not client_revents(0):
 
-  AUTH, buffer = 0, try_read(sd,2+12+4+8+1024)
+  AUTH, buffer = "", try_read(sd,2+12+4+8+1024)
 
   ### URCSIGN ###
   if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
@@ -536,21 +536,21 @@ while 1:
   ### URCSECRETBOX ###
   elif buffer[2+12:2+12+4] == '\x02\x00\x00\x00':
    if not URCSECRETBOXDIR: continue
-   for seckey in urcsecretboxdb.values():
-    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],seckey)
+   for dst in urcsecretboxdb.keys():
+    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urcsecretboxdb[dst])
     if msg: break
    if not msg: continue
-   AUTH, buffer = 1, re_USER('!URCD@',msg.split('\n',1)[0],1)
+   AUTH, buffer = dst, re_USER('!URCD@',msg.split('\n',1)[0],1)
 
   ### URCSIGNSECRETBOX ###
   elif buffer[2+12:2+12+4] == '\x03\x00\x00\x00':
    if not URCSECRETBOXDIR: continue
-   for seckey in urcsecretboxdb.values():
-    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],seckey)
+   for dst in urcsecretboxdb.keys():
+    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urcsecretboxdb[dst])
     if msg: break
    if not msg: continue
 
-   AUTH, buffer = 1, buffer[:2+12+4+8]+msg
+   AUTH, buffer = dst, buffer[:2+12+4+8]+msg
    buflen = len(buffer)
    try:
     src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),3)[:3]
@@ -602,6 +602,7 @@ while 1:
    active_clients.append(src)
    cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
    if not AUTH and dst in urcsecretboxdb.keys(): continue
+   if AUTH and AUTH != dst: continue
    if dst[0] in ['#','&','!','+']:
     if len(dst)>CHANNELLEN: continue
     if not dst in channel_struct.keys():
@@ -642,6 +643,7 @@ while 1:
    dst = buffer.split(':')[2].split('\n',1)[0].lower()
    if len(dst)>CHANNELLEN: continue
    if not AUTH and dst in urcsecretboxdb.keys(): continue
+   if AUTH and AUTH != dst: continue
    if not dst in channel_struct.keys():
     if len(channel_struct.keys())>=CHANLIMIT:
      for dst in channel_struct.keys():
@@ -680,6 +682,7 @@ while 1:
    dst, src = re_SPLIT(buffer.lower(),4)[2:4]
    if len(src)>NICKLEN or len(dst)>CHANNELLEN: continue
    if not AUTH and dst in urcsecretboxdb.keys(): continue
+   if AUTH and AUTH != dst: continue
    while src in active_clients: active_clients.remove(src)
    if not dst in channel_struct.keys():
     if len(channel_struct.keys())>=CHANLIMIT:

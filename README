@@ -112,21 +112,17 @@ interface:
   for urc2sd follow the same process. happy
   hacking.
 
-no censorship:
+no censorship (security):
   URC networks are censorship resistant. i
   recommend URCSIGN and/or URCCRYPTOBOX to
-  ignore spam and trolls
+  ignore spam and trolls. URCd will replace
+  the user field with VERIFIED for users with
+  valid authentication or signature 
+  verification. All other user fields will
+  be replaced with URCD. e.g.:
 
-  ####################################################
-  ###                 (security)                   ###
-  ### URCd will replace the user field with        ###
-  ### VERIFIED for users with valid authentication ###
-  ### or signature verification. All other user    ###
-  ### fields will be replaced with URCD. e.g.:     ###
-  ###                                              ###
-  ### nick!URCD@server                             ###
-  ### nick!VERIFIED@server                         ###
-  ####################################################
+  nick!URCD@server
+  nick!VERIFIED@server
 
   irssi ("ban/except"):
     /ignore *!*@* ALL
