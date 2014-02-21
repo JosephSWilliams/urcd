@@ -35,6 +35,7 @@ INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('e
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) if os.path.exists('env/TIMEOUT') else 128
+PRESENCE = int(open('env/PRESENCE','rb').read().split('\n')[0]) if os.path.exists('env/PRESENCE') else 0
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 16
 
 BAN = dict()
@@ -172,18 +173,18 @@ while 1:
    if buffer[1:].split('!',1)[0] == nick: continue
    sock_write(buffer+'\n')
 
-  elif re_CLIENT_PART(buffer):
+  elif PRESENCE and re_CLIENT_PART(buffer):
    if len(buffer.split(' :'))<2: buffer += ' :'
    sock_write(buffer+'\n')
 
-  elif re_CLIENT_QUIT(buffer):
+  elif PRESENCE and re_CLIENT_QUIT(buffer):
    if len(buffer.split(' :'))<2: buffer += ' :'
    sock_write(buffer+'\n')
 
   elif re_CLIENT_PING(buffer): try_write(1,'PONG '+re_SPLIT(buffer,1)[1]+'\n')
 
   elif re_CLIENT_JOIN(buffer):
-   sock_write(buffer+'\n')
+   if PRESENCE: sock_write(buffer+'\n')
    dst = buffer.split(':')[2].lower()
    if not dst in channels:
     if len(channels) - 1 < CHANLIMIT:

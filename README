@@ -117,9 +117,9 @@ no censorship (security):
   recommend URCSIGN and/or URCCRYPTOBOX to
   ignore spam and trolls. URCd will replace
   the user field with VERIFIED for users with
-  valid authentication or signature 
-  verification. All other user fields will
-  be replaced with URCD. e.g.:
+  valid authentication or signature verification.
+  All other user fields will be replaced with
+  URCD. e.g.:
 
   nick!URCD@server
   nick!VERIFIED@server
