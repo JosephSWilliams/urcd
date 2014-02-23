@@ -78,7 +78,7 @@ channels = collections.deque([],CHANLIMIT)
 bytes = [(chr(i),i) for i in xrange(0,256)]
 motd = open('env/motd','rb').read().split('\n')
 serv = open('env/serv','rb').read().split('\n')[0]
-PONG, PINGWAIT, POLLWAIT = int(), PING, PING << 10
+PONG, PINGWAIT, POLLWAIT = int(), PING, PING << 10 if PING else 16384
 active_clients = collections.deque(['']*CHANLIMIT*CHANLIMIT,CHANLIMIT*CHANLIMIT)
 flood, seen, ping, sync, flood_expiry = FLOOD, now, now, now, now
 
@@ -291,7 +291,7 @@ while 1:
 
  now = time.time()
 
- while flood and now - flood_expiry >= FLOOD:
+ while FLOOD and now - flood_expiry >= FLOOD:
   flood_expiry += FLOOD
   flood -= 1
 
@@ -315,7 +315,7 @@ while 1:
    sock_close(15,0)
   if now - ping >= PINGWAIT:
    if (PING and not PONG) or (not nick): sock_close(15,0)
-   try_write(wr,'PING :'+user+'\n')
+   if PING: try_write(wr,'PING :'+user+'\n')
    ping = now
  else:
   time.sleep(LIMIT)
