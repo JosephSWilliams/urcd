@@ -184,7 +184,7 @@ while 1:
 
   elif re_CLIENT_JOIN(buffer):
    if PRESENCE: sock_write(buffer+'\n')
-   dst = buffer.split(':')[2].lower()
+   dst = buffer.split(' :')[1].lower()
    if not dst in channels:
     if len(channels) - 1 < CHANLIMIT:
      BAN[dst], EXCEPT[dst] = list(), list()
