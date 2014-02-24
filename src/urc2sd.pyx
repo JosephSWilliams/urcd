@@ -170,8 +170,7 @@ while 1:
    if byte != '\r' and len(buffer)<768: buffer += byte
 
   if re_CLIENT_PRIVMSG_NOTICE_TOPIC(buffer):
-   if buffer[1:].split('!',1)[0] == nick: continue
-   sock_write(buffer+'\n')
+   if buffer[1:].split('!',1)[0] != nick: sock_write(buffer+'\n')
 
   elif PRESENCE and re_CLIENT_PART(buffer):
    if len(buffer.split(' :'))<2: buffer += ' :'

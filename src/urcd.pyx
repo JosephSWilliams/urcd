@@ -388,8 +388,7 @@ while 1:
      try_write(wr,':'+serv+' NOTICE '+Nick+' :RPL_SPAM\n')
      continue
    cmd, dst, msg = re_SPLIT(buffer,2)
-   cmd = cmd.upper()
-   dst = dst.lower()
+   cmd, dst = cmd.upper(), dst.lower()
    if dst[0] in ['#','&','!','+']:
     if len(dst)>CHANNELLEN:
      try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
