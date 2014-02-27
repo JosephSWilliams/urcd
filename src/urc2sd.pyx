@@ -22,7 +22,7 @@ re_CLIENT_JOIN = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ JOIN :[#&!+]
 re_CLIENT_KICK = re.compile('^:.+ KICK [#&!+]['+RE+']+ ['+RE+']+',re.IGNORECASE).search
 re_CLIENT_CHANMODE = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ MODE [#&!+]['+RE+']+ [-+][be] \S+ ?',re.IGNORECASE).search
 re_CLIENT_BAN_EXCEPT = re.compile('^:['+RE+'!@~.]+ ((367)|(348)) ['+RE+']+ [#&!+]['+RE+']+ \S+ ',re.IGNORECASE).search
-re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
+re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 
@@ -253,7 +253,7 @@ while 1:
    if byte != '\r' and len(buffer)<768: buffer += byte
 
   #buffer = re_URC_INTEG('',buffer) ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
-  buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
+  action, buffer = (1, re_BUFFER_CTCP_DCC('',buffer) + '\x01') if '\x01ACTION ' in buffer.upper() else (0, re_BUFFER_CTCP_DCC('',buffer))
   if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
   if not UNICODE:
    buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
@@ -276,6 +276,7 @@ while 1:
      if cmd == 0: continue
     cmd = re_SPLIT(buffer,3)[1].upper()
     src = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
+    if action: src = '\x01ACTION ' + src
     msg = buffer.split(' :',1)[1]
     buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
     try_write(1,buffer)
