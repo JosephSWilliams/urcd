@@ -57,7 +57,7 @@ for cmd in open('auto_cmd','rb').read().split('\n'):
 def sock_close(sn,sf):
  try: os.remove(str(os.getpid()))
  except: pass
- if sn: sys.exit(0)
+ if sn: sys.exit(sn&255)
 
 signal.signal(signal.SIGHUP,sock_close)
 signal.signal(signal.SIGINT,sock_close)
@@ -114,11 +114,11 @@ server_revents=server_revents.poll
 
 def try_read(fd,buffer_len):
  try: return os.read(fd,buffer_len)
- except: sock_close(15,0)
+ except: sock_close(1,0)
 
 def try_write(fd,buffer):
  try: return os.write(fd,buffer)
- except: sock_close(15,0)
+ except: sock_close(2,0)
 
 def taia96n_now(): return { ### version of taia96n_now is randomized by +/- 4 seconds ###
  'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
@@ -156,7 +156,7 @@ while 1:
  now = time.time()
 
  if not client_revents(0):
-  if now - seen >= TIMEOUT: sock_close(15,0)
+  if now - seen >= TIMEOUT: sock_close(3,0)
   if now - ping >= TIMEOUT >> 4:
    try_write(1,'PING :LAG\n')
    ping = now
@@ -165,7 +165,7 @@ while 1:
   buffer, seen, ping = str(), now, now
   while 1:
    byte = try_read(rd,1)
-   if byte == '': sock_close(15,0)
+   if byte == '': sock_close(4,0)
    if byte == '\n': break
    if byte != '\r' and len(buffer)<768: buffer += byte
 
@@ -248,7 +248,7 @@ while 1:
   buffer = str()
   while 1:
    byte = try_read(pipefd[0],1)
-   if byte == '': sock_close(15,0)
+   if byte == '': sock_close(5,0)
    if byte == '\n': break
    if byte != '\r' and len(buffer)<768: buffer += byte
 
