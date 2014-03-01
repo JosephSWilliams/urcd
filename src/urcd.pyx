@@ -156,7 +156,7 @@ def sock_close(sn,sf):
      channel_struct[dst]['names'].remove(nick)
    db['channel_struct'], db['active_clients'] = channel_struct, active_clients
    db.close()
-  sys.exit(0)
+  sys.exit(sn&255)
 
 signal.signal(signal.SIGHUP,sock_close)
 signal.signal(signal.SIGINT,sock_close)
@@ -213,16 +213,16 @@ fcntl.fcntl(wr,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
 def try_read(fd,buflen):
  try: return os.read(fd,buflen)
  except OSError as ex:
-  if ex.errno != EAGAIN: sock_close(15,0)
+  if ex.errno != EAGAIN: sock_close(1,0)
  return str()
 
 def try_write(fd,buffer):
  while buffer:
   try: buffer = buffer[os.write(fd,buffer):]
   except OSError as ex:
-   if ex.errno != EAGAIN: sock_close(15,0)
+   if ex.errno != EAGAIN: sock_close(2,0)
   if buffer:
-   if time.time() - now >= TIMEOUT: sock_close(15,0)
+   if time.time() - now >= TIMEOUT: sock_close(3,0)
    time.sleep(1)
 
 
@@ -312,9 +312,9 @@ while 1:
  if not client_revents(0):
   if now - seen >= TIMEOUT:
    if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n',dst)
-   sock_close(15,0)
+   sock_close(4,0)
   if now - ping >= PINGWAIT:
-   if (PING and not PONG) or (not nick): sock_close(15,0)
+   if (PING and not PONG) or (not nick): sock_close(5,0)
    if PING: try_write(wr,'PING :'+user+'\n')
    ping = now
  else:
@@ -324,10 +324,10 @@ while 1:
   while 1: ### python really sucks at this ###
    if now - seen >= TIMEOUT:
     if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :EOF\n',dst)
-    sock_close(15,0)
+    sock_close(6,0)
    byte = try_read(rd,1)
    if byte == '':
-    if client_revents(0): sock_close(15,0)
+    if client_revents(0): sock_close(7,0)
     time.sleep(1)
    if byte == '\n': break
    if byte != '\r' and len(buffer)<768: buffer += byte
@@ -497,7 +497,7 @@ while 1:
 
   elif re_CLIENT_QUIT(buffer):
    if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :'+re_SPLIT(buffer,1)[1]+'\n',dst)
-   sock_close(15,0)
+   sock_close(8,0)
 
   ### implement new re_CLIENT_CMD's here ###
 
