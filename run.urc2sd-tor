@@ -1,2 +1,2 @@
 #!/bin/sh -e
-exec tcpclient 127.0.0.1 9050 ./ucspi-socks4aclient `cat addr` `cat port` ./ucspi-client2server ./urc2sd `cat path`
+exec tcpclient 127.0.0.1 9050 ./ucspi-socks4aclient `cat addr` `cat port` ./ucspi-client2server ./urc2sd `cat path` 2>&1

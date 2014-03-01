@@ -1,0 +1,4 @@
+#!/bin/sh -e
+mkdir -p main/
+chown urcd main/
+exec setuidgid urcd multilog t ./main

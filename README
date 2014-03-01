@@ -326,3 +326,10 @@ POLICY and ISUPPORT:
     integer default is 255. this value represents the block sizes of encrypted
     packets. setting a 0 value will disable this feature, however it is not
     recommended.
+
+logging URC services:
+  mkdir -p /path/to/urcd-service/log/
+  ln -s run.log /path/to/urcd-service/log/run
+  supervise /path/to/urcd-service/log 2>/dev/null & disown
+  sleep 4
+  svstat /path/to/urcd-service/log

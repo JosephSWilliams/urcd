@@ -1,2 +1,2 @@
 #!/bin/sh -e
-exec tcpserver -H -R -l `cat env/addr` `cat env/addr` `cat env/port` ./urcd `cat env/path`
+exec tcpserver -H -R -l `cat env/addr` `cat env/addr` `cat env/port` ./urcd `cat env/path` 2>&1

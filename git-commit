@@ -6,6 +6,7 @@ git add -f \
  Make.sh \
  bin \
  run \
+ run.log \
  run.urcd-curvecp \
  run.urc2sd \
  run.urc2sd-tor \
