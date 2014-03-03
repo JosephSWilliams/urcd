@@ -71,7 +71,7 @@ main(int argc, char **argv)
   if (userlen > UNIX_PATH_MAX) exit(4);
   memcpy(&sock.sun_path,user,userlen);
   unlink(sock.sun_path);
-  if (bind(sockfd,(struct sockaddr_un *)&sock,sizeof(sock))<0) exit(5);
+  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock))<0) exit(5);
 
   struct pollfd fds[2];
   fds[0].fd = rd; fds[0].events = POLLIN | POLLPRI;
@@ -108,7 +108,7 @@ main(int argc, char **argv)
         if ((pathlen == userlen) && (!memcmp(path->d_name,user,userlen))) continue;
         bzero(paths.sun_path,UNIX_PATH_MAX);
         memcpy(&paths.sun_path,path->d_name,pathlen);
-        sendto(sockfd,buffer,n,MSG_DONTWAIT,(struct sockaddr_un *)&paths,sizeof(paths));
+        sendto(sockfd,buffer,n,MSG_DONTWAIT,(struct sockaddr *)&paths,sizeof(paths));
       } closedir(root);
     }
 

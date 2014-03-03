@@ -72,7 +72,7 @@ main(int argc, char **argv)
   if (userlen > UNIX_PATH_MAX) exit(5);
   memcpy(&sock.sun_path,user,userlen);
   unlink(sock.sun_path);
-  if (bind(sockfd,(struct sockaddr_un *)&sock,sizeof(sock))<0) exit(6);
+  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock))<0) exit(6);
 
   int strlen_recvpath;
   struct sockaddr_un recvpath;
@@ -88,7 +88,7 @@ main(int argc, char **argv)
   while (1)
   {
     bzero(recvpath.sun_path,UNIX_PATH_MAX);
-    n = recvfrom(sockfd,buffer,65536,0,(struct sockaddr_un *)&recvpath,&recvpath_len);
+    n = recvfrom(sockfd,buffer,65536,0,(struct sockaddr *)&recvpath,&recvpath_len);
     if (!n) continue;
     if (n<0) sock_close(7);
     if (n!=2+16+8+buffer[0]*256+buffer[1]) continue;
@@ -108,7 +108,7 @@ main(int argc, char **argv)
       if ((sendpath_len == strlen_recvpath) && (!memcmp(sendpath->d_name,recvpath.sun_path,strlen_recvpath))) continue;
       bzero(sendpaths.sun_path,UNIX_PATH_MAX);
       memcpy(&sendpaths.sun_path,sendpath->d_name,sendpath_len);
-      sendto(sockfd,buffer,n,MSG_DONTWAIT,(struct sockaddr_un *)&sendpaths,sizeof(sendpaths));
+      sendto(sockfd,buffer,n,MSG_DONTWAIT,(struct sockaddr *)&sendpaths,sizeof(sendpaths));
     } closedir(root);
   }
 }

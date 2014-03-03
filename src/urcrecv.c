@@ -85,7 +85,7 @@ main(int argc, char **argv)
       if (pathlen > UNIX_PATH_MAX) continue;
       bzero(paths.sun_path,UNIX_PATH_MAX);
       memcpy(&paths.sun_path,path->d_name,pathlen);
-      sendto(sockfd,buffer,n,0,(struct sockaddr_un *)&paths,sizeof(paths));
+      sendto(sockfd,buffer,n,0,(struct sockaddr *)&paths,sizeof(paths));
     } closedir(root);
 
   }
