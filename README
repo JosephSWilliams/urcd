@@ -333,3 +333,4 @@ logging URC services:
   supervise /path/to/urcd-service/log 2>/dev/null & disown
   sleep 4
   svstat /path/to/urcd-service/log
+  svc -t /path/to/urcd-service/

@@ -57,7 +57,7 @@ main(int argc, char **argv)
   if (n > UNIX_PATH_MAX) exit(4);
   memcpy(&sock.sun_path,user,n);
   unlink(sock.sun_path);
-  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock))<0) exit(5);
+  if (bind(sockfd,(struct sockaddr_un *)&sock,sizeof(sock))<0) exit(5);
 
   struct sockaddr_un path;
   path.sun_family = AF_UNIX;
@@ -66,7 +66,7 @@ main(int argc, char **argv)
   while (1)
   {
     bzero(path.sun_path,UNIX_PATH_MAX);
-    n = recvfrom(sockfd,buffer,1024,0,(struct sockaddr *)&path,&path_len);
+    n = recvfrom(sockfd,buffer,1024,0,(struct sockaddr_un *)&path,&path_len);
     if (!n) continue;
     if (n<0) sock_close(6);
     if (!path_len) continue;

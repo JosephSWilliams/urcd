@@ -79,7 +79,7 @@ main(int argc, char **argv)
   if (userlen > UNIX_PATH_MAX) exit(7);
   memcpy(&sock.sun_path,user,userlen+1);
   unlink(sock.sun_path);
-  if (bind(sockfd,(struct sockaddr *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(8);
+  if (bind(sockfd,(struct sockaddr_un *)&sock,sizeof(sock.sun_family)+userlen)<0) exit(8);
 
   struct pollfd fds[2];
   fds[0].fd = urcstreamout[0]; fds[0].events = POLLIN | POLLPRI;
@@ -109,7 +109,7 @@ main(int argc, char **argv)
       taia_now(buffer+2);
       taia_pack(buffer+2,buffer+2);
       if (read(devurandom,buffer+2+16,8)<8) sock_close(10);
-      if (sendto(sockfd,buffer,2+16+8+n,MSG_DONTWAIT,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(250000);
+      if (sendto(sockfd,buffer,2+16+8+n,MSG_DONTWAIT,(struct sockaddr_un *)&hub,sizeof(hub))<0) usleep(250000);
     }
 
     urcwrite: while (poll(fds+1,1,0))
