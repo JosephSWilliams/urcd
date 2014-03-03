@@ -15,7 +15,11 @@
 #include <pwd.h>
 
 #ifndef UNIX_PATH_MAX
-#define UNIX_PATH_MAX 108
+ #ifdef __NetBSD__
+  #define UNIX_PATH_MAX 104
+ #else
+  #define UNIX_PATH_MAX 108
+ #endif
 #endif
 
 main(int argc, char **argv)
