@@ -186,7 +186,11 @@ URCCRYPTOBOX:
 
   URCCRYPTOBOXPFS:
     # urcd can provide secret perfect forward secrecy for encrypted PM
-    # for destinations already configured for URCCRYPTOBOX.
+    # for destinations already configured for URCCRYPTOBOX. urcd will
+    # send and error notice when unable to decrypt a session box. simply
+    # respond to your friend to exchange session keys. if you want to
+    # change session keys, simply /reconnect. urcd will not store any
+    # session cryptography.
 
     mkdir -p urccryptoboxpfs/
     chmod 600 urccryptoboxpfs/
