@@ -10,7 +10,7 @@ recommends:
   cython(>=0.18.0)
 
 todo:
-  implement pfs for encrypted PM
+  find something todo.
 
 quick install (not recommended):
 
