@@ -190,7 +190,7 @@ URCCRYPTOBOX:
     # send and error notice when unable to decrypt a session box. simply
     # respond to your friend to exchange session keys. if you want to
     # change session keys, simply /reconnect. urcd will not store any
-    # session cryptography.
+    # session cryptography. both parties need to have this enabled to work.
 
     echo urccryptoboxpfs/ > env/URCCRYPTOBOXPFS
     mkdir -p urccryptoboxpfs/
