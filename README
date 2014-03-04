@@ -192,6 +192,7 @@ URCCRYPTOBOX:
     # change session keys, simply /reconnect. urcd will not store any
     # session cryptography.
 
+    echo urccryptoboxpfs/ > env/URCCRYPTOBOXPFS
     mkdir -p urccryptoboxpfs/
     chmod 600 urccryptoboxpfs/
     touch urccryptoboxpfs/$nick
