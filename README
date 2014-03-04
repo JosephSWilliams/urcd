@@ -184,6 +184,14 @@ URCCRYPTOBOX:
   # authentication and replace all other user fields with URCD.
   # see "no censorship" above.
 
+  URCCRYPTOBOXPFS:
+    # urcd can provide secret perfect forward secrecy for encrypted PM
+    # for destinations already configured for URCCRYPTOBOX.
+
+    mkdir -p urccryptoboxpfs/
+    chmod 600 urccryptoboxpfs/
+    touch urccryptoboxpfs/$nick
+
 URCSECRETBOX:
   # urcd can provide secret and encrypted channels
   # using a 64 byte hexadecimal key

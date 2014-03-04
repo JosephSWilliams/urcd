@@ -62,6 +62,7 @@ CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exi
 PADDING = int(open('env/PADDING','rb').read().split('\n')[0]) & 255 if os.path.exists('env/PADDING') else 255
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 URCCRYPTOBOXDIR = open('env/URCCRYPTOBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXDIR') else str()
+URCCRYPTOBOXPFS = open('env/URCCRYPTOBOXPFS','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXPFS') else str()
 URCSECRETBOXDIR = open('env/URCSECRETBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSECRETBOXDIR') else str()
 URCSIGNSECKEYDIR = open('env/URCSIGNSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNSECKEYDIR') else str()
 URCSIGNPUBKEYDIR = open('env/URCSIGNPUBKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNPUBKEYDIR') else str()
@@ -93,7 +94,26 @@ if URCDB:
  except: channel_struct = dict()
  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
 
-if URCCRYPTOBOXSECKEY or URCCRYPTOBOXDIR or URCCRYPTOBOXSECKEYDIR or URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR:
+def try_read(fd,buflen):
+ try: return os.read(fd,buflen)
+ except OSError as ex:
+  if ex.errno != EAGAIN: sock_close(1,0)
+ return str()
+
+def try_write(fd,buffer):
+ while buffer:
+  try: buffer = buffer[os.write(fd,buffer):]
+  except OSError as ex:
+   if ex.errno != EAGAIN: sock_close(2,0)
+  if buffer:
+   if time.time() - now >= TIMEOUT: sock_close(3,0)
+   time.sleep(1)
+
+### nacl-20110221's randombytes() not compatible with chroot ###
+devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
+def randombytes(n): return try_read(devurandomfd,n)
+
+if URCCRYPTOBOXSECKEY or URCCRYPTOBOXDIR or URCCRYPTOBOXSECKEYDIR or URCCRYPTOBOXPFS or URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR:
  from nacltaia import *
 
  ### NaCl's crypto_sign / crypto_sign_open API sucks ###
@@ -109,9 +129,13 @@ if URCSECRETBOXDIR:
  for dst in os.listdir(URCSECRETBOXDIR):
   urcsecretboxdb[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst,'rb').read(64).decode('hex')
 
-urccryptoboxdb = dict()
+urccryptoboxdb, urccryptoboxpfsdb = dict(), dict()
 if URCCRYPTOBOXDIR:
  for dst in os.listdir(URCCRYPTOBOXDIR):
+  if dst in os.listdir(URCCRYPTOBOXPFS):
+   pk,sk=crypto_box_keypair()
+   urccryptoboxpfsdb[dst.lower()] = {"pubkey":pk,"seckey":sk,"tmpkey":randombytes(32)}
+   del pk, sk
   if URCCRYPTOBOXSECKEYDIR and dst in os.listdir(URCCRYPTOBOXSECKEYDIR):
    urccryptoboxdb[dst.lower()] = crypto_box_beforenm(
     open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex'),
@@ -175,10 +199,6 @@ if os.access('stdout',os.X_OK):
  del p
 else: wr = 1
 
-### nacl-20110221's randombytes() not compatible with chroot ###
-devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
-def randombytes(n): return try_read(devurandomfd,n)
-
 uid, gid = pwd.getpwnam('urcd')[2:4]
 os.chdir(URCHUB) if URCHUB else os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
@@ -210,22 +230,6 @@ server_revents=server_revents.poll
 fcntl.fcntl(rd,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
 fcntl.fcntl(wr,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
 
-def try_read(fd,buflen):
- try: return os.read(fd,buflen)
- except OSError as ex:
-  if ex.errno != EAGAIN: sock_close(1,0)
- return str()
-
-def try_write(fd,buffer):
- while buffer:
-  try: buffer = buffer[os.write(fd,buffer):]
-  except OSError as ex:
-   if ex.errno != EAGAIN: sock_close(2,0)
-  if buffer:
-   if time.time() - now >= TIMEOUT: sock_close(3,0)
-   time.sleep(1)
-
-
 def taia96n_now(): return { ### version of taia96n_now is randomized by +/- 4 seconds ###
  'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
  'nano':long(1000000000*(now%1)+500)
@@ -255,7 +259,14 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  if crypto_box_seckey:
   buflen += 16 + padlen
   nonce = taia96n_pack(taia96n_now())+'\x04\x00\x00\x00'+randombytes(8)
-  buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+randombytes(padlen),nonce,crypto_box_seckey)
+  if not dst in urccryptoboxpfsdb.keys():
+   buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+randombytes(padlen),nonce,crypto_box_seckey)
+  else:
+   buflen += 32 + 16
+   buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(urccryptoboxpfsdb[dst]["pubkey"]+
+    crypto_box(buffer+randombytes(padlen),nonce,urccryptoboxpfsdb[dst]["tmpkey"],urccryptoboxpfsdb[dst]["seckey"]),
+    nonce,crypto_box_seckey
+   )
 
  ### URCSIGNSECRETBOX ###
  elif seckey and signseckey:
@@ -579,6 +590,12 @@ while 1:
     msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urccryptoboxdb[src])
     if msg: break
    if not msg: continue
+   if src in urccryptoboxpfsdb.keys():
+     urccryptoboxpfsdb[src]["tmpkey"] = msg[:32]
+     msg = crypto_box_open(msg[32:],buffer[2:2+12+4+8],msg[:32],urccryptoboxpfsdb[src]["seckey"])
+     if not msg:
+       try_write(wr,':'+src+'!ERROR@'+serv+' NOTICE '+Nick+' :unable to decrypt message\n')
+       continue
    if src == msg[1:].split('!',1)[0].lower(): buffer = re_USER('!VERIFIED@',msg.split('\n',1)[0],1)
    else: buffer = re_USER('!URCD@',msg.split('\n',1)[0],1)
 
