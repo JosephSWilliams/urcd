@@ -13,6 +13,7 @@ import re
 import os
 
 RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
+re_USER = re.compile('!\S+@',re.IGNORECASE).sub
 re_SPLIT = re.compile(' +',re.IGNORECASE).split
 re_CLIENT_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 re_CLIENT_PART = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ PART [#&!+]['+RE+']+( :)?',re.IGNORECASE).search
@@ -36,7 +37,37 @@ COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('e
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) if os.path.exists('env/TIMEOUT') else 128
 PRESENCE = int(open('env/PRESENCE','rb').read().split('\n')[0]) if os.path.exists('env/PRESENCE') else 0
+URCSIGNDB = open('env/URCSIGNDB','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNDB') else str()
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 16
+URCSIGNPUBKEYDIR = open('env/URCSIGNPUBKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNPUBKEYDIR') else str()
+
+### nacl-20110221's randombytes() not compatible with chroot ###
+devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
+def randombytes(n): return try_read(devurandomfd,n)
+
+if URCSIGNDB or URCSIGNPUBKEYDIR:
+ from nacltaia import *
+
+ ### NaCl's crypto_sign / crypto_sign_open API sucks ###
+ def _crypto_sign(m,sk):
+  s = crypto_sign(m,sk)
+  return s[:32]+s[-32:]
+
+ def _crypto_sign_open(m,s,pk):
+  return 1 if crypto_sign_open(s[:32]+m+s[32:],pk) != 0 else 0
+
+if URCSIGNPUBKEYDIR:
+ urcsignpubkeydb = dict()
+ for dst in os.listdir(URCSIGNPUBKEYDIR):
+  dst = dst.lower()
+  urcsignpubkeydb[dst] = dict()
+  for src in os.listdir(URCSIGNPUBKEYDIR+'/'+dst):
+   urcsignpubkeydb[dst][src.lower()] = open(URCSIGNPUBKEYDIR+'/'+dst+'/'+src,'rb').read(64).decode('hex')
+
+if URCSIGNDB:
+ urcsigndb = dict()
+ for src in os.listdir(URCSIGNDB):
+  urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(64).decode('hex')
 
 BAN = dict()
 EXCEPT = dict()
@@ -240,7 +271,35 @@ while 1:
   continue
 
  if server_revents(0):
-  buffer = try_read(sd,2+12+4+8+1024)[2+12+4+8:].split('\n',1)[0]
+  buffer = try_read(sd,2+12+4+8+1024)
+
+  ### URCSIGN ###
+  if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
+   buflen = len(buffer)
+   try:
+    src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),3)[:3]
+    src = src.split('!',1)[0]
+   except: src, cmd, dst = buffer[2+12+4+8+1:].split('!',1)[0].lower(), str(), str()
+
+   if URCSIGNPUBKEYDIR \
+   and dst in urcsignpubkeydb.keys() \
+   and src in urcsignpubkeydb[dst].keys():
+    try:
+     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsignpubkeydb[dst][src]):
+      buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
+     else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+    except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+   elif URCSIGNDB:
+    try:
+     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsigndb[src]):
+      buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
+     else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+    except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+   else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+
+  ### URCHUB ###
+  else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+
   if buffer: try_write(pipefd[1],buffer+'\n')
 
  if pipe_revents(0):
@@ -259,6 +318,8 @@ while 1:
    buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
    buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
   buffer += '\n'
+
+  poll(ord(randombytes(1))<<4) ### may reduce some side channels ###
 
   if re_SERVER_PRIVMSG_NOTICE_TOPIC(buffer):
    dst = re_SPLIT(buffer,3)[2].lower()
