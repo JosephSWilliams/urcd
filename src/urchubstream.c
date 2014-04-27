@@ -103,7 +103,8 @@ main(int argc, char **argv)
         i = read(rd,buffer+n,l-n);
         if (i<1) sock_close(9);
         n += i;
-      } usleep((int)(LIMIT*1000000));
+      }
+      if (poll(fds,1,0)) usleep((int)(LIMIT*1000000));
       if (sendto(sd,buffer,n,MSG_DONTWAIT,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(262144);
     }
 
