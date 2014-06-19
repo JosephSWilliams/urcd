@@ -10,6 +10,9 @@ recommends:
   cython(>=0.18.0)
 
 todo:
+  allow compile from libsodium as an
+  alternative to real NaCl
+
   integrate server and nick authentication
   and verification.
 
