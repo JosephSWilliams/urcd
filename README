@@ -10,7 +10,10 @@ recommends:
   cython(>=0.18.0)
 
 todo:
-  find something todo.
+  integrate server and nick authentication
+  and verification.
+
+  add a global hostmask for urc2sd
 
 quick install (not recommended):
 
