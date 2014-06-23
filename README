@@ -3,15 +3,17 @@ urcd:
   af_unix relay chat daemon accessories...
 
 depends:
-  nacl, libtai, ucspi-tcp, python(>=2.6),
-  python-dev(>=2.6), daemontools, sh, gcc
+  NaCl or libsodium, libtai, ucspi-tcp,
+  python(>=2.6), python-dev(>=2.6),
+  daemontools, sh, gcc
 
 recommends:
+  NaCl instead of libsodium,
   cython(>=0.18.0)
 
 todo:
-  allow compile from libsodium as an
-  alternative to real NaCl
+  test changes to Make.sh to use libsodium
+  instead of NaCl.
 
   integrate server and nick authentication
   and verification.
