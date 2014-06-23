@@ -26,7 +26,8 @@ if gcc src/check-nacl.h -o /dev/null 2>/dev/null ; then
 elif gcc src/check-sodium.h -o /dev/null 2>/dev/null ; then
  src='libsodium_src'
  rm -rf $src
- cp -r src/ $src 
+ cp -r src/ $src
+ sed -i 's|#include <nacl/|#include <sodium/|g' $src/*
 else
   echo $0': fatal error: no suitable NaCl library exists' 1>&2
   exit 255
