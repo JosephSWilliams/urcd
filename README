@@ -12,9 +12,6 @@ recommends:
   cython(>=0.18.0)
 
 todo:
-  test changes to Make.sh to use libsodium
-  instead of NaCl.
-
   integrate server and nick authentication
   and verification.
 

@@ -23,9 +23,12 @@ export LIBRARY_PATH="/usr/pkg/lib:/usr/local/lib:$LIBRARY_PATH"
 # Support libsodium fanboys
 if gcc src/check-nacl.h -o /dev/null 2>/dev/null ; then
  src='src'
+ nacl='nacl'
 elif gcc src/check-sodium.h -o /dev/null 2>/dev/null ; then
  src='libsodium_src'
+ nacl='sodium'
  rm -rf $src
+ mkdir -p $src
  ### *BSD's sed doesn't have -i ###
  for i in `ls src/` ; do
   sed 's|#include <nacl/|#include <sodium/|g' src/$i > $src/$i
@@ -60,23 +63,21 @@ gcc `cat conf-cc` $src/ucspi-server2client.c -o ucspi-server2client || exit 1
 
 gcc `cat conf-cc` $src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 
-gcc `cat conf-cc` $src/keypair.c -o keypair -l nacl $randombytes || exit 1
+gcc `cat conf-cc` $src/keypair.c -o keypair -l $nacl $randombytes || exit 1
 
-gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l nacl $randombytes || exit 1
+gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l $nacl $randombytes || exit 1
 
-gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.7 -l tai -l nacl $randombytes || exit 1
+gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.7 -l tai -l $nacl $randombytes || exit 1
 
-gcc `cat conf-cc` $src/check-taia.c -o check-taia -l tai -l nacl || exit 1
+gcc `cat conf-cc` $src/check-taia.c -o check-taia -l tai -l $nacl || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
-  gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l nacl || exit 1
+  gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1
 else
-  gcc `cat conf-cc` $src/urccache.c -o urccache -l tai -l nacl $randombytes || exit 1
+  gcc `cat conf-cc` $src/urccache.c -o urccache -l tai -l $nacl $randombytes || exit 1
   printf '' | ./urccache `pwd`/$src/
-  if [ $? != 1 ] ; then gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l nacl || exit 1 ; fi
+  if [ $? != 1 ] ; then gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1 ; fi
 fi
-
-rm -rf libsodium_src
 
 if ! which cython 2>/dev/null ; then
   cp $src/urcd.pyx urcd || exit 1
@@ -97,7 +98,11 @@ if ! which cython 2>/dev/null ; then
   exit 0
 fi
 
-[ -z $HEADERS ] && exit 1
+if [ -z $HEADERS ]; then
+ rm -rf libsodium_src
+ echo $0': fatal error: no suitable python headers exists' 1>&2
+ exit 255
+fi
 
 mkdir -p build || exit 1
 
@@ -121,4 +126,4 @@ gcc `cat conf-cc` -O1 -o urc2sd build/urc2sd.o -l python2.7           || exit 1
 #gcc `cat conf-cc` -O2 -c build/urcstream.c -I $HEADERS -o build/urcstream.o || exit 1
 #gcc `cat conf-cc` -O1 -o urcstream build/urcstream.o -l python2.7           || exit 1
 
-rm -rf build || exit 1
+rm -rf build libsodium_src || exit 1
