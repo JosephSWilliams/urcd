@@ -20,6 +20,21 @@ fi
 # OpenBSD && NetBSD \o/
 export LIBRARY_PATH="/usr/pkg/lib:/usr/local/lib:$LIBRARY_PATH"
 
+# Support libsodium fanboys
+if gcc src/check-nacl.h -o /dev/null 2>/dev/null ; then :
+elif gcc src/check-sodium.h -o /dev/null 2>/dev/null ; then
+ LIBSODIUM_PATH="`find /usr -type d -name sodium | head -1`"
+ if [ -z LIBSODIUM_PATH ]; then
+  echo $0': fatal error: could not find libsodium path' 1>&2
+  exit 255
+ fi
+ test -e /usr/inlcude/nacl/ && \
+  ln -s $LIBSODIUM_PATH /usr/include/nacl
+else
+  echo $0': fatal error: no suitable NaCl library exists' 1>&2
+  exit 255
+fi
+
 randombytes=/usr/lib/randombytes.o
 if [ -e /usr/local/lib/randombytes.o ]; then
  randombytes=/usr/local/lib/randombytes.o
