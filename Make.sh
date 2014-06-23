@@ -23,7 +23,7 @@ export LIBRARY_PATH="/usr/pkg/lib:/usr/local/lib:$LIBRARY_PATH"
 # Support libsodium fanboys
 if gcc src/check-nacl.h -o /dev/null 2>/dev/null ; then :
 elif gcc src/check-sodium.h -o /dev/null 2>/dev/null ; then
- LIBSODIUM_PATH="`find /usr -type d -name sodium | head -1`"
+ LIBSODIUM_PATH="`find /usr -type d -name libsodium | head -1`"
  if [ -z LIBSODIUM_PATH ]; then
   echo $0': fatal error: could not find libsodium path' 1>&2
   exit 255
