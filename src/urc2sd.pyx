@@ -27,9 +27,6 @@ re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 
-### (deprecated) see http://anonet2.biz/URC#urc-integ ###
-#re_URC_INTEG = re.compile(' \d{10,10} [a-fA-F0-9]{10,10} urc-integ$',re.IGNORECASE).sub
-
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 URCHUB = open('env/URCHUB','rb').read().split('\n')[0] if os.path.exists('env/URCHUB') else str()
 INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('env/INVITE') else 0
@@ -311,7 +308,6 @@ while 1:
    if byte == '\n': break
    if byte != '\r' and len(buffer)<768: buffer += byte
 
-  #buffer = re_URC_INTEG('',buffer) ### (deprecated) see http://anonet2.biz/URC#urc-integ ###
   action, buffer = (1, re_BUFFER_CTCP_DCC('',buffer) + '\x01') if '\x01ACTION ' in buffer.upper() else (0, re_BUFFER_CTCP_DCC('',buffer))
   if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
   if not UNICODE:
