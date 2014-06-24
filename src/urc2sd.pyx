@@ -27,6 +27,7 @@ re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 
+HELP = int(open('env/HELP','rb').read().split('\n')[0]) if os.path.exists('env/HELP') else 1
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 URCHUB = open('env/URCHUB','rb').read().split('\n')[0] if os.path.exists('env/URCHUB') else str()
 INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('env/INVITE') else 0
@@ -175,6 +176,17 @@ def INIT():
  for dst in channels:
   time.sleep(LIMIT)
   try_write(1,'JOIN '+dst+'\n')
+  if HELP:
+   time.sleep(LIMIT)
+   try_write(1,'NOTICE '+dst+' :urc2sd help msg: \n')
+   time.sleep(LIMIT)
+   try_write(1,'NOTICE '+dst+' : This NOTICE can be disabled if env/HELP is set to 0.\n')
+   time.sleep(LIMIT)
+   try_write(1,'NOTICE '+dst+' : /INVITE adds temporary relay if env/INVITE is set to 1. Contact the urc2sd admin for permenance.\n')
+   time.sleep(LIMIT)
+   try_write(1,'NOTICE '+dst+' : ChanOp BAN/EXCEPT masks also filter relay traffic.\n')
+   time.sleep(LIMIT)
+   try_write(1,'NOTICE '+dst+' : Thanks for supporting URC, the anonymous decentralized alternative to IRC\n')
  channels = collections.deque([],CHANLIMIT)
  del auto_cmd
 
@@ -332,7 +344,7 @@ while 1:
        break
      if cmd == 0: continue
     cmd = re_SPLIT(buffer,3)[1].upper()
-    src = buffer[1:].split('!',1)[0] + '> ' if cmd != 'TOPIC' else str()
+    src = src.split('@',1)[0]+'@'+src.split('@',1)[1]+'> ' if cmd != 'TOPIC' else str()
     if action: src = '\x01ACTION ' + src
     msg = buffer.split(' :',1)[1]
     buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
