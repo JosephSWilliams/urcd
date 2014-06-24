@@ -186,7 +186,7 @@ def INIT():
    time.sleep(LIMIT)
    try_write(1,'NOTICE '+dst+' : ChanOp BAN/EXCEPT masks also filter relay traffic.\n')
    time.sleep(LIMIT)
-   try_write(1,'NOTICE '+dst+' : Thanks for supporting URC, the anonymous decentralized alternative to IRC\n')
+   try_write(1,'NOTICE '+dst+' : Thanks for supporting URC, the anonymous decentralized alternative to IRC.\n')
  channels = collections.deque([],CHANLIMIT)
  del auto_cmd
 
