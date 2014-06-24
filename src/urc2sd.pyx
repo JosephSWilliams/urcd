@@ -93,12 +93,12 @@ signal.signal(signal.SIGTERM,sock_close)
 signal.signal(signal.SIGCHLD,sock_close)
 
 rd = 0
-if os.access('stdin',1):
+if os.access('stdin',os.X_OK):
  p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
  rd = p.stdout.fileno()
  del p
 
-if os.access('stdout',1):
+if os.access('stdout',os.X_OK):
  p = subprocess.Popen(['./stdout'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
  pipefd = ( p.stdout.fileno(), p.stdin.fileno() )
  del p
