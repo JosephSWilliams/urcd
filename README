@@ -12,10 +12,11 @@ recommends:
   cython(>=0.18.0)
 
 todo:
-  integrate server and nick authentication
-  and verification.
+  consider integrating server and nick authentication
+  and verification into urcd.
 
-  add a global hostmask for urc2sd
+  add a global hostmask option for users sending messages into
+  urc from an ircnet for urc2sd.
 
 quick install (not recommended):
 
@@ -258,6 +259,14 @@ hub2hub:
   ./bin/add-hubconnect peer.urcd.ano 4321 /service/urcd-hub0/socket/
 
 urc2sd:
+  #urc2sd follows a similar convention as urcd by using a format
+  #that distinguishes signed messages from nonverified messages.
+  #i.e: signed messages appear as: "nick!sign@server> msg",
+  #while nonsigned messages appear as "nick!urcd@server> msg".
+  #urc2sd filters traffic coming from the urc network reliably
+  #this way by using the ban and except masks set by the chanops
+  #on the the ircnet's channels.
+
   mkdir -p /services/urc2sd
 
   ln -s `pwd`/urc2sd /services/urc2sd/urc2sd
