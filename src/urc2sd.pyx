@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from binascii import hexlify
+from nacltaia import *
 import unicodedata
 import collections
 import subprocess
@@ -44,7 +46,6 @@ devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
 def randombytes(n): return try_read(devurandomfd,n)
 
 if URCSIGNDB or URCSIGNPUBKEYDIR:
- from nacltaia import *
 
  ### NaCl's crypto_sign / crypto_sign_open API sucks ###
  def _crypto_sign(m,sk):
@@ -295,13 +296,13 @@ while 1:
    and src in urcsignpubkeydb[dst].keys():
     try:
      if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsignpubkeydb[dst][src]):
-      buffer = re_USER('!verified@',buffer[2+12+4+8:].split('\n',1)[0],1)
+      buffer = re_USER('!sign@',buffer[2+12+4+8:].split('\n',1)[0],1)
      else: buffer = re_USER('!urcd@',buffer[2+12+4+8:].split('\n',1)[0],1)
     except: buffer = re_USER('!urcd@',buffer[2+12+4+8:].split('\n',1)[0],1)
    elif URCSIGNDB:
     try:
      if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsigndb[src]):
-      buffer = re_USER('!verified@',buffer[2+12+4+8:].split('\n',1)[0],1)
+      buffer = re_USER('!sign@',buffer[2+12+4+8:].split('\n',1)[0],1)
      else: buffer = re_USER('!urcd@',buffer[2+12+4+8:].split('\n',1)[0],1)
     except: buffer = re_USER('!urcd@',buffer[2+12+4+8:].split('\n',1)[0],1)
    else: buffer = re_USER('!urcd@',buffer[2+12+4+8:].split('\n',1)[0],1)
@@ -344,7 +345,10 @@ while 1:
        break
      if cmd == 0: continue
     cmd = re_SPLIT(buffer,3)[1].upper()
-    src = src.split('@',1)[0]+'@'+src.split('@',1)[1][:32]+'> ' if cmd != 'TOPIC' else str()
+    src = src.split('@',1)[0]+'@'+hexlify(crypto_hash_sha256(src.split('@',1)[1])[:4])+'> '
+    if cmd == 'TOPIC':
+     try_write(1,'NOTICE '+dst+' :'+src+'/TOPIC\n')
+     src = str()
     if action: src = '\x01ACTION ' + src
     msg = buffer.split(' :',1)[1]
     buffer = cmd + ' ' + dst + ' :' + src + msg + '\n'
