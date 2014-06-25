@@ -348,6 +348,7 @@ while 1:
     src = src.split('@',1)[0]+'@'+hexlify(crypto_hash_sha256(src.split('@',1)[1])[:4])+'> '
     if cmd == 'TOPIC':
      try_write(1,'NOTICE '+dst+' :'+src+'/TOPIC\n')
+     time.sleep(LIMIT)
      src = str()
     if action: src = '\x01ACTION ' + src
     msg = buffer.split(' :',1)[1]
