@@ -15,7 +15,7 @@ import sys
 import re
 import os
 
-RE = 'a-zA-Z0-9^(\)\-_{\}[\]|'
+RE = 'a-zA-Z0-9^(\)\-_{\}[\]|\\\\'
 re_USER = re.compile('!\S+@',re.IGNORECASE).sub
 re_SPLIT = re.compile(' +:?',re.IGNORECASE).split
 re_CHATZILLA = re.compile(' $',re.IGNORECASE).sub
