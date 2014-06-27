@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+
+USAGE='''\
+urc2sd: help: This NOTICE can be disabled if env/HELP is set \
+to 0. /INVITE adds temporary relay if env/INVITE is set to 1. \
+Contact the urc2sd admin for permenance. ChanOp BAN/EXCEPT \
+masks also filter relay traffic. I.E.: *!sign@* represent \
+signed messages and *!urcd@* represents nonverified messages. \
+Thanks for supporting URC, the anonymous decentralized \
+alternative to IRC.\n'''
+
 from binascii import hexlify
 from nacltaia import *
 import unicodedata
@@ -179,15 +189,7 @@ def INIT():
   try_write(1,'JOIN '+dst+'\n')
   if HELP:
    time.sleep(LIMIT)
-   try_write(1,'NOTICE '+dst+' :urc2sd help msg: \n')
-   time.sleep(LIMIT)
-   try_write(1,'NOTICE '+dst+' : This NOTICE can be disabled if env/HELP is set to 0.\n')
-   time.sleep(LIMIT)
-   try_write(1,'NOTICE '+dst+' : /INVITE adds temporary relay if env/INVITE is set to 1. Contact the urc2sd admin for permenance.\n')
-   time.sleep(LIMIT)
-   try_write(1,'NOTICE '+dst+' : ChanOp BAN/EXCEPT masks also filter relay traffic.\n')
-   time.sleep(LIMIT)
-   try_write(1,'NOTICE '+dst+' : Thanks for supporting URC, the anonymous decentralized alternative to IRC.\n')
+   try_write(1,'NOTICE '+dst+' :'+USAGE)
  channels = collections.deque([],CHANLIMIT)
  del auto_cmd
 

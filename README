@@ -18,6 +18,8 @@ todo:
   add a global hostmask option for users sending messages into
   urc from an ircnet for urc2sd.
 
+  implement presence notifications for the ircd side in urc2sd.
+
 quick install (not recommended):
 
   # install dependencies, if you haven't already
