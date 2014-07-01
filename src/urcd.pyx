@@ -308,7 +308,9 @@ while 1:
    for dst in channel_struct.keys():
     if src in channel_struct[dst]['names']:
      if dst in channels: try_write(wr,':'+src+'!URCD@'+serv+' QUIT :IDLE\n')
-     channel_struct[dst]['names'].remove(src)
+     break
+   for dst in channel_struct.keys():
+    if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
    del active_clients[src]
  del names
 
