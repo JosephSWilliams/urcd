@@ -305,9 +305,9 @@ while 1:
  names = active_clients.keys()
  for src in names:
   if src != nick and now - active_clients[src] >= TIMEOUT:
-   for dst in channel_struct.keys():
+   for dst in channels:
     if src in channel_struct[dst]['names']:
-     if dst in channels: try_write(wr,':'+src+'!URCD@'+serv+' QUIT :IDLE\n')
+     try_write(wr,':'+src+'!URCD@'+serv+' QUIT :IDLE\n')
      break
    for dst in channel_struct.keys():
     if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
