@@ -51,7 +51,7 @@ URCHUB = open('env/URCHUB','rb').read().split('\n')[0] if os.path.exists('env/UR
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
-TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) if os.path.exists('env/TIMEOUT') else 128
+TIMEOUT = int(open('env/TIMEOUT','rb').read().split('\n')[0]) if os.path.exists('env/TIMEOUT') else 256
 PRESENCE = int(open('env/PRESENCE','rb').read().split('\n')[0]) if os.path.exists('env/PRESENCE') else 0
 URCSIGNDB = open('env/URCSIGNDB','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNDB') else str()
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
@@ -71,13 +71,13 @@ nick = str()
 Nick = str()
 now = time.time()
 user = str(os.getpid())
+active_clients = dict()
 channel_struct = dict() ### operations assume nick is in channel_struct[dst]['names'] if dst in channels ###
 channels = collections.deque([],CHANLIMIT)
 bytes = [(chr(i),i) for i in xrange(0,256)]
 motd = open('env/motd','rb').read().split('\n')
 serv = open('env/serv','rb').read().split('\n')[0]
 PONG, PINGWAIT, POLLWAIT = int(), PING, PING << 10 if PING else 16384
-active_clients = collections.deque(['']*CHANLIMIT*CHANLIMIT,CHANLIMIT*CHANLIMIT)
 flood, seen, ping, sync, flood_expiry = FLOOD, now, now, now, now
 
 if URCDB:
@@ -85,11 +85,13 @@ if URCDB:
  except:
   os.remove(URCDB)
   db = shelve.open(URCDB,flag='c',writeback=True)
- try: active_clients = collections.deque(list(db['active_clients']),CHANLIMIT*CHANLIMIT)
+ try: ### BC code for key and type checking can be removed later ###
+  if type(db['active_clients']) == dict: active_clients = db['active_clients']
  except: pass
  try: channel_struct = db['channel_struct']
  except: channel_struct = dict()
  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
+ while len(active_clients.keys()) > CHANLIMIT*CHANLIMIT: del active_clients[active_clients.keys()[0]]
 
 def try_read(fd,buflen):
  try: return os.read(fd,buflen)
@@ -165,7 +167,8 @@ if URCSIGNDB:
 for dst in channel_struct.keys():
  channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
  if channel_struct[dst]['topic']: channel_struct[dst]['topic'] = channel_struct[dst]['topic'][:TOPICLEN]
- for src in channel_struct[dst]['names']: active_clients.append(src)
+ for src in channel_struct[dst]['names']:
+  if not src in active_clients.keys(): active_clients[src] = now
 
 def sock_close(sn,sf):
  try: os.remove(str(os.getpid()))
@@ -292,29 +295,26 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  except: pass
 
 while 1:
-
  poll(POLLWAIT)
-
- for i in xrange(0,int(time.time() - now)): active_clients.append('')
-
  now = time.time()
 
  while FLOOD and now - flood_expiry >= FLOOD:
   flood_expiry += FLOOD
   flood -= 1
 
- if now - sync >= TIMEOUT:
-  for dst in channel_struct.keys():
-   names = list(channel_struct[dst]['names'])
-   for src in names:
-    if src != nick and not src in active_clients:
+ names = active_clients.keys()
+ for src in names:
+  if now - active_clients[src] >= TIMEOUT:
+   for dst in channel_struct.keys():
+    if src in channel_struct[dst]['names']:
      if dst in channels: try_write(wr,':'+src+'!URCD@'+serv+' QUIT :IDLE\n')
-     for dst in channel_struct.keys():
-      if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
-   del names
-  if URCDB:
-   db['channel_struct'], db['active_clients'] = channel_struct, active_clients
-   db.sync()
+     channel_struct[dst]['names'].remove(src)
+   del active_clients[src]
+ del names
+
+ if URCDB and now - sync >= TIMEOUT:
+  db['channel_struct'], db['active_clients'] = channel_struct, active_clients
+  db.sync()
   sync = now
 
  if not client_revents(0):
@@ -611,7 +611,7 @@ while 1:
   if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
    src = buffer.split(':',2)[1].split('!',1)[0].lower()
    if len(src)>NICKLEN: continue
-   active_clients.append(src)
+   active_clients[src] = now
    cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
    if not AUTH and dst in urcsecretboxdb.keys(): continue
    if AUTH and AUTH != dst: continue
@@ -651,7 +651,7 @@ while 1:
   elif re_SERVER_JOIN(buffer):
    src = buffer.split(':',2)[1].split('!',1)[0].lower()
    if len(src)>NICKLEN: continue
-   active_clients.append(src)
+   active_clients[src] = now
    dst = buffer.split(':')[2].split('\n',1)[0].lower()
    if len(dst)>CHANNELLEN: continue
    if not AUTH and dst in urcsecretboxdb.keys(): continue
@@ -688,14 +688,15 @@ while 1:
      if cmd == '\x01' and dst in channels:
       try_write(wr,buffer)
       cmd = '\x00'
-   while src in active_clients: active_clients.remove(src)
+   if src in active_clients.keys(): del active_clients[src]
 
   elif re_SERVER_KICK(buffer):
+   cmd = buffer.split(':',2)[1].split('!',1)[0].lower()
    dst, src = re_SPLIT(buffer.lower(),4)[2:4]
-   if len(src)>NICKLEN or len(dst)>CHANNELLEN: continue
+   if len(cmd)>NICKLEN or len(src)>NICKLEN or len(dst)>CHANNELLEN: continue
+   active_clients[cmd] = now
    if not AUTH and dst in urcsecretboxdb.keys(): continue
    if AUTH and AUTH != dst: continue
-   while src in active_clients: active_clients.remove(src)
    if not dst in channel_struct.keys():
     if len(channel_struct.keys())>=CHANLIMIT:
      for dst in channel_struct.keys():

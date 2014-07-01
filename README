@@ -335,8 +335,9 @@ POLICY and ISUPPORT:
     on the network.
 
   TIMEOUT:
-    integer default is 128. this value represents the allowed time a client
-    can remain silent before their connection is dropped.
+    integer default is 256. this value represents the allowed time a client
+    can remain silent before their connection is dropped. this value also
+    represents how often URCDB is synchronized if enabled.
 
   PRESENCE:
     integer default is 0. changing this value to 1 will announce JOIN, PART,
