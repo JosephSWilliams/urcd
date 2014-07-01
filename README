@@ -2,6 +2,9 @@ urcd:
   af_unix relay chat daemon and
   af_unix relay chat daemon accessories...
 
+  for more information regarding this software
+  and the URC protocols, `less doc/URC'.
+
 depends:
   NaCl or libsodium, libtai, ucspi-tcp,
   python(>=2.6), python-dev(>=2.6),

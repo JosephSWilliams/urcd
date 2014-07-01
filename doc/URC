@@ -1,0 +1,177 @@
+URC
+
+Description
+===========
+
+URC is a decentralized chat protocol aimed as a replacement for IRC.
+
+Advantages
+==========
+
+-   Anonymity - URC doesn’t care about IP or Ident, and doesn’t reveal
+    this information to other users on the network. the “server” or “ip”
+    section of a URCLINE is always a hostmask chosen by the user. When a
+    client sends a URC packet across the network, the sender’s physical
+    location is protected, by scattering the packet throughout the
+    network in a randomly chosen order, i.e. the receiver is also
+    protected.
+
+-   No Government or Censorship - In the URC network, you decide the
+    policies for yourself, rather than someone else choosing them for
+    you.
+
+-   NO Presence - URCd, by default, does not announce JOIN, PART, or
+    QUIT messages, therefore a user’s activities and timing is
+    protected.
+
+-   Plausible Deniability - URC packets that are not signed cannot prove
+    a specific user created a message.
+
+-   NO NickServ/Chanserv - NickServ and ChanServ are replaced by
+    signatures and encryption, that come optional to the user.
+
+-   NO CTCP/DCC - URCd automatically blocks both of these protocols
+    before they can access an IRC client, preventing many leaks and
+    exploits.
+
+-   NO Encoding - URCd automatically blocks colour and unicode unless
+    the administrator allows encoding. This is due to a number of
+    exploits in the past associated with parsing.
+
+-   AntiSurveillance - Encrypted URC packets do not reveal the source or
+    destination of a packet. Instead they rely on NaCl’s highspeed
+    Poly1305, or encrypted signatures for authentication and
+    verification. Thus, an attacker sniffing the network cannot target
+    specific conversations because they contain no identifying marks
+    compared against other encrypted traffic. Only user’s with the
+    correct keys can discover this information. By default, all
+    encrypted packets are padded to protect against other side channels.
+
+-   Security is priority - URC is written in a small amount of open
+    source C and Python code. URC daemons only function inside of a
+    chroot jail with only the privileges necessary to run. URC supports
+    the new record setting Networking and Cryptographic library (NaCl),
+    rather than older, bloated, and slower libraries of the past. URC
+    daemons also support CurveCP and TOR rather than SSL and TLS for
+    links and encrypted connections. Taia96n replaces the current buggy
+    timing algorithms, and is usable for the next few billion years.
+
+-   Simple API and Modularity - URCd allows the user to “hack” his or
+    her conversation with their local daemon with any programming
+    language, so long as the user can read and write with stdin and
+    stdout, and can parse URCLINE (simplified IRC lines).
+
+-   Scalability - URC can span multiple networks, such as TOR, i2p,
+    Anonet, and other networks.
+
+URCLINE
+=======
+
+A URCLINE is similar to a line of IRC. These lines are wrapped and
+distributed using the URCHUB protocol.
+
+PRIVMSG, NOTICE, TOPIC, INVITE will send a message to URC node(s). These
+lines SHOULD have a similar effect as IRC equivalents.
+
+    :nick!user@server PRIVMSG #channel :message\n
+    :nick!user@server NOTICE #channel :message\n
+    :nick!user@server TOPIC #channel :message\n
+    :nick!user@server INVITE nick :#channel\n
+
+JOIN, PART, QUIT, KICK can be used by listeners to learn presence.
+There’s no mandate for a URCd daemon to announce presence, as this can
+be learned through natural message traffic. Currently presence is only
+default in URC2sd to sync with URCd and to announce censorship from IRCd
+admins.
+
+    :nick!user@server PART #channel :message\n
+    :nick!user@server QUIT :message\n
+    :nick!user@server JOIN :#channel\n
+    :oper!user@server KICK #channel nick :message\n
+
+URCHUB
+======
+
+URCHUB is the default protocol for transporting URC packets across the
+network. The first field is a 16bit length (LEN) in network byte order.
+While 16bit LEN can represent 65535 bytes of data the MTU of URC is 1024
+bytes, or one kilobyte. The second field of URCHUB is taia96n, a 12 byte
+timestamp in network byte order that is accurate to nano seconds. The
+third field is a 32bit CMD and is currently used to distinguish types of
+packets. The last 24 bits of CMD SHOULD remain NULL until future usages
+are necessary. The fourth field are 64bits of random data that ensures
+uniqueness of a packet. The fifth field is the payload and it’s size
+MUST be reflected by the 16bit LEN field. Generally this field is a
+URCLINE, but can also contain binary or alternative data.
+
+| 16bit LEN | 96bit taia96n | \0\0\0\0 | 64bit random | URCLINE |
+
+By default CMD is NULL unless stated otherwise.
+
+URCHUB/URCSIGN
+==============
+
+| 16bit LEN | 96bit taia96n | \1\0\0\0 | 64bit random | URCLINE | 512bit
+SIGNATURE |
+
+SIGNATURE is the 64 signature bytes from the crypto_sign function in
+NaCl’s API. The entire message is used to derive SIGNATURE with CMD set
+to prevent signatures from being replayed in other protocols of URC.
+
+URCHUB/URCSECRETBOX
+===================
+
+| 16bit LEN | 96bit taia96n | \2\0\0\0 | 64bit random | CRYPTO_SECRETBOX
+|
+
+CRYPTO_SECRETBOX is a combination of poly1305 (MAC) and xsalsa20 (stream
+cipher) that is used to encrypt the URCLINE. The taia96n label, CMD, and
+random bytes are used as the NONCE, and the secret key is chosen prior
+to encryption.
+
+URCHUB/URCSIGNSECRETBOX
+=======================
+
+| 16bit LEN | 96bit taia96n | \3\0\0\0 | 64bit random | CRYPTO_SECRETBOX
+|
+
+A packet is signed the same manner described in URCSIGN before
+encryption, to prevent signature replays, and side channels.
+
+URCHUB/URCCRYPTOBOX
+===================
+
+| 16bit LEN | 96bit taia96n | \4\0\0\0 | 64bit random | CRYPTO_BOX |
+
+CRYPTO_BOX is a combination of curve25519 (DH), poly1305 (MAC), and
+xsalsa20 (stream cipher) that is used to encrypt the URCLINE. The
+taia96n label, CMD, and random bytes are used as the NONCE. The secret
+key is derived from a curve25519 diffie-hellman key exchange.
+
+URCHUB/URCCRYPTOBOX/PFS
+=======================
+
+| 16bit LEN | 96bit taia96n | \4\0\0\0 | 64bit random | | CRYPTO_BOX1 |
+CRYPTO_BOX0 |
+
+CRYPTO_BOX1 is derived using the same method as URCHUB/URCCRYPTOBOX and
+contains a 32 byte temporary public key from the sender followed by the
+encrypted URCLINE. NONCE bytes are the same in CRYPTO_BOX0 and
+CRYPTO_BOX1.
+
+Download and Install
+====================
+
+    torify git clone git://URC666rourhz45bn.onion/urcd.git /usr/local/src/urcd
+    cd /usr/local/src/urcd/
+    less README
+
+URCHUB connections can be negotiated with peers or on
+irc.anonet2.biz:6667. Alternatively a few public hubs are listed inside
+the repository.
+
+Contact
+=======
+
+If you have questions or comments regarding URC and this software, you
+can reach us in #URC in most nodes.
