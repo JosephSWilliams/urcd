@@ -1,8 +1,8 @@
 #!/bin/sh -v
 
 if [ -e '/usr/lib/libnacl.so' ]; then
-  echo $0': fatal error: move /usr/lib/libnacl.so temporarily' 1>&2
-  exit 255
+ echo $0': fatal error: move /usr/lib/libnacl.so temporarily' 1>&2
+ exit 255
 fi
 
 touch conf-cc
@@ -11,7 +11,6 @@ unset HEADERS
 if   [ -e '/usr/include/python2.7/Python.h'       ] &&
      [ -e '/usr/include/python2.7/structmember.h' ] ;then
        HEADERS='/usr/include/python2.7'
-
 elif [ -e '/usr/local/include/python2.7/Python.h'       ] &&
      [ -e '/usr/local/include/python2.7/structmember.h' ] ;then
        HEADERS='/usr/local/include/python2.7'
@@ -44,32 +43,20 @@ if [ -e /usr/local/lib/randombytes.o ]; then
 fi
 
 gcc `cat conf-cc` $src/urcsend.c -o urcsend || exit 1
-
 gcc `cat conf-cc` $src/urcrecv.c -o urcrecv || exit 1
-
 gcc `cat conf-cc` $src/urcstream.c -o urcstream || exit 1
-
+gcc `cat conf-cc` $src/urc-udpsend.c -o urc-udpsend || exit 1
 gcc `cat conf-cc` $src/ucspi-stream.c -o ucspi-stream || exit 1
-
 gcc `cat conf-cc` $src/urchub.c -o urchub || exit 1
-
 gcc `cat conf-cc` $src/urchubstream.c -o urchubstream || exit 1
-
 gcc `cat conf-cc` $src/urcstream2hub.c -o urcstream2hub -l tai || exit 1
-
-gcc `cat conf-cc` $src/ucspi-client2server.c -o ucspi-client2server || exit 1
-
-gcc `cat conf-cc` $src/ucspi-server2client.c -o ucspi-server2client || exit 1
-
-gcc `cat conf-cc` $src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
-
-gcc `cat conf-cc` $src/keypair.c -o keypair -l $nacl $randombytes || exit 1
-
-gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l $nacl $randombytes || exit 1
-
-gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.7 -l tai -l $nacl $randombytes || exit 1
-
 gcc `cat conf-cc` $src/check-taia.c -o check-taia -l tai -l $nacl || exit 1
+gcc `cat conf-cc` $src/ucspi-client2server.c -o ucspi-client2server || exit 1
+gcc `cat conf-cc` $src/ucspi-server2client.c -o ucspi-server2client || exit 1
+gcc `cat conf-cc` $src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
+gcc `cat conf-cc` $src/keypair.c -o keypair -l $nacl $randombytes || exit 1
+gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l $nacl $randombytes || exit 1
+gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.7 -l tai -l $nacl $randombytes || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
   gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1
@@ -80,22 +67,17 @@ else
 fi
 
 if ! which cython 2>/dev/null ; then
-  cp $src/urcd.pyx urcd || exit 1
-  chmod +x urcd        || exit 1
-
-  cp $src/urc2sd.pyx urc2sd || exit 1
-  chmod +x urc2sd          || exit 1
-
-  #cp $src/urcrecv.pyx urcrecv || exit 1
-  #chmod +x urcrecv           || exit 1
-
-  #cp $src/urcsend.pyx urcsend || exit 1
-  #chmod +x urcsend           || exit 1
-
-  #cp $src/urcstream.pyx urcstream || exit 1
-  #chmod +x urcstream             || exit 1
-
-  exit 0
+ cp $src/urcd.pyx urcd || exit 1
+ chmod +x urcd        || exit 1
+ cp $src/urc2sd.pyx urc2sd || exit 1
+ chmod +x urc2sd          || exit 1
+ #cp $src/urcrecv.pyx urcrecv || exit 1
+ #chmod +x urcrecv           || exit 1
+ #cp $src/urcsend.pyx urcsend || exit 1
+ #chmod +x urcsend           || exit 1
+ #cp $src/urcstream.pyx urcstream || exit 1
+ #chmod +x urcstream             || exit 1
+ exit 0
 fi
 
 if [ -z $HEADERS ]; then
