@@ -8,7 +8,6 @@
 #include <sys/un.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <dirent.h>
 #include <stdio.h>
 #include <poll.h>
 #include <pwd.h>

@@ -1,0 +1,23 @@
+#!/bin/sh
+[ -z $3 ] && \
+  echo $0' <addr> <port> </path/to/socket/>' 1>&2 && \
+  exit 64
+
+mkdir -p /services/urcd-udprecv-"$1:$2" || exit 1
+
+printf '#!/bin/sh -e\n' > \
+  /services/urcd-udprecv-"$1:$2"/run || exit 1
+
+printf "exec ./urc-udprecv $1 $2 $3\n" >> \
+  /services/urcd-udprecv-"$1:$2"/run || exit 1
+
+chmod +x /services/urcd-udprecv-"$1:$2"/run || exit 1
+
+test -L /services/urcd-udprecv-"$1:$2"/urc-udprecv || \
+  ln -s `pwd`/urc-udprecv /services/urcd-udprecv-"$1:$2"/urc-udprecv || \
+  exit 1
+
+test -L /service/urcd-udprecv-"$1:$2" || \
+  ln -s /services/urcd-udprecv-"$1:$2" \
+    /service/urcd-udprecv-"$1:$2" || \
+    exit 1

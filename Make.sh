@@ -46,6 +46,7 @@ gcc `cat conf-cc` $src/urcsend.c -o urcsend || exit 1
 gcc `cat conf-cc` $src/urcrecv.c -o urcrecv || exit 1
 gcc `cat conf-cc` $src/urcstream.c -o urcstream || exit 1
 gcc `cat conf-cc` $src/urc-udpsend.c -o urc-udpsend || exit 1
+gcc `cat conf-cc` $src/urc-udprecv.c -o urc-udprecv || exit 1
 gcc `cat conf-cc` $src/ucspi-stream.c -o ucspi-stream || exit 1
 gcc `cat conf-cc` $src/urchub.c -o urchub || exit 1
 gcc `cat conf-cc` $src/urchubstream.c -o urchubstream || exit 1
