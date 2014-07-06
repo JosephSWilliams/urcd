@@ -297,6 +297,10 @@ urc2sd:
 POLICY and ISUPPORT:
   these values are filenames inside env/ and contain different types of data.
 
+  IDLE:
+    integer argument with a default of 2048 seconds. this value dictates how long
+    remote clients can idle before their presence is dropped.
+
   PING:
     integer argument with a default of 16 seconds. this value dictates the ping
     intervals to a client, and the amount of time a client has to perform

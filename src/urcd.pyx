@@ -45,6 +45,7 @@ re_SERVER_KICK = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ KICK [#&!+]
 ### strange values will likely yield strange results ###
 PING = int(open('env/PING','rb').read().split('\n')[0]) if os.path.exists('env/PING') else 16
 URCDB = open('env/URCDB','rb').read().split('\n')[0] if os.path.exists('env/URCDB') else str()
+IDLE = int(open('env/IDLE','rb').read().split('\n')[0]) if os.path.exists('env/IDLE') else 2048
 FLOOD = int(open('env/FLOOD','rb').read().split('\n')[0]) if os.path.exists('env/FLOOD') else 8
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 URCHUB = open('env/URCHUB','rb').read().split('\n')[0] if os.path.exists('env/URCHUB') else str()
@@ -304,7 +305,7 @@ while 1:
 
  names = active_clients.keys()
  for src in names:
-  if src != nick and now - active_clients[src] >= TIMEOUT:
+  if src != nick and now - active_clients[src] >= IDLE:
    for dst in channels:
     if src in channel_struct[dst]['names']:
      try_write(wr,':'+src+'!URCD@'+serv+' QUIT :IDLE\n')
