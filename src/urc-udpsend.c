@@ -47,9 +47,22 @@ main(int argc, char **argv)
   exit(64);
  }
 
+ int devurandomfd = open("/dev/urandom",O_RDONLY);
+ if (devurandomfd<0) exit(255);
+ unsigned char byte[1];
+
  char buffer[1024] = {0};
  char user[UNIX_PATH_MAX] = {0};
  if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
+
+ float LIMIT;
+ int n = open("env/LIMIT",0);
+ if (n>0)
+ {
+   if (read(n,buffer,1024)>0) LIMIT = atof(buffer);
+   else LIMIT = 1.0;
+ } else LIMIT = 1.0;
+ close(n);
 
  if (chdir(argv[3])) exit(64);
  struct passwd *urcd = getpwnam("urcd");
@@ -67,8 +80,7 @@ main(int argc, char **argv)
  } signal(SIGINT,sock_close); signal(SIGHUP,sock_close); signal(SIGTERM,sock_close); 
 
  if ((sockfd=socket(AF_UNIX,SOCK_DGRAM,0))<0) exit(2);
- int n = 1;
- if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
+ if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n=1))<0) exit(3);
  n = strlen(user);
  if (n > UNIX_PATH_MAX) exit(4);
  memcpy(&sock.sun_path,user,n);
@@ -79,6 +91,10 @@ main(int argc, char **argv)
  path.sun_family = AF_UNIX;
  socklen_t path_len = sizeof(struct sockaddr_un);
 
+ struct pollfd fds[1];
+ fds[0].fd = sockfd;
+ fds[0].events = POLLIN | POLLPRI;
+
  while (1)
  {
   bzero(path.sun_path,UNIX_PATH_MAX);
@@ -87,6 +103,8 @@ main(int argc, char **argv)
   if (n<0) sock_close(6);
   if (!path_len) continue;
   if (buffer[n-1] != '\n') continue;
+  if (read(devurandomfd,byte,1)<1) sock_close(7);
+  poll(fds,1,byte[0]<<4);
   write(udpfd,buffer,n);
  }
 }
