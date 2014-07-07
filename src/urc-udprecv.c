@@ -80,7 +80,7 @@ main(int argc, char **argv)
   usleep((int)(LIMIT*1000000));
   if (
      ((n=read(udpfd,buffer,1024))<2+12+4+8)
-  || (n!=buffer[0]*256+buffer[1])
+  || (n!=2+12+4+8+buffer[0]*256+buffer[1])
      ) continue;
   if (sendto(sockfd,buffer,n,MSG_DONTWAIT,(struct sockaddr *)&hub,sizeof(hub))<0) usleep(262144);
  }
