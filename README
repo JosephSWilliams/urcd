@@ -15,8 +15,6 @@ recommends:
   cython(>=0.18.0)
 
 todo:
-  implement PASS interface for URCSIGN/URCCRYPTOBOX.
-
   implement JOIN passwords, and mode ks for crypto channels.
 
   consider integrating server and nick authentication and
@@ -221,6 +219,19 @@ URCSECRETBOX:
   echo urcsecretboxdir > env/URCSECRETBOXDIR
   echo $seckey > urcsecretboxdir/\#channel
   chmod 600 urcsecretboxdir/
+
+urcd PASS command:
+  remote clients can set or override URCSIGNSECKEY and/or
+  URCCRYPTOBOXSECKEY by sending NaCl secret keys to urcd in
+  hexadecimal format using the PASS command. there are three
+  acceptable formats:
+
+  1.) a 128 byte key will set URCSIGNSECKEY only.
+
+  2.) a 64 byte key will set URCCRYPTOBOXSECKEY only.
+
+  3.) a 192 byte key will set URCCRYPTOBOXSECKEY using the first
+      64 bytes, and set URCSIGNSECKEY using the last 128 bytes.
 
 server2server (deprecated: use hub2hub):
   ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/

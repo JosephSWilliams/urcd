@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+from binascii import unhexlify as unhex
 from errno import EAGAIN
+from nacltaia import *
 import unicodedata
 import collections
 import subprocess
@@ -20,6 +22,7 @@ re_USER = re.compile('!\S+@',re.IGNORECASE).sub
 re_SPLIT = re.compile(' +:?',re.IGNORECASE).split
 re_CHATZILLA = re.compile(' $',re.IGNORECASE).sub
 re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
+re_CLIENT_PASS = re.compile('^PASS :?\S+$',re.IGNORECASE).search
 re_CLIENT_PING_PONG = re.compile('^P[IO]NG :?.+$',re.IGNORECASE).search
 re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
@@ -113,23 +116,22 @@ def try_write(fd,buffer):
 devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
 def randombytes(n): return try_read(devurandomfd,n)
 
-if URCCRYPTOBOXSECKEY or URCCRYPTOBOXDIR or URCCRYPTOBOXSECKEYDIR or URCCRYPTOBOXPFS or URCSECRETBOXDIR or URCSIGNDB or URCSIGNSECKEY or URCSIGNSECKEYDIR or URCSIGNPUBKEYDIR:
- from nacltaia import *
+### NaCl's crypto_sign / crypto_sign_open API sucks ###
+def _crypto_sign(m,sk):
+ s = crypto_sign(m,sk)
+ return s[:32]+s[-32:]
 
- ### NaCl's crypto_sign / crypto_sign_open API sucks ###
- def _crypto_sign(m,sk):
-  s = crypto_sign(m,sk)
-  return s[:32]+s[-32:]
-
- def _crypto_sign_open(m,s,pk):
-  return 1 if crypto_sign_open(s[:32]+m+s[32:],pk) != 0 else 0
+def _crypto_sign_open(m,s,pk):
+ return 1 if crypto_sign_open(s[:32]+m+s[32:],pk) != 0 else 0
 
 urcsecretboxdb = dict()
 if URCSECRETBOXDIR:
  for dst in os.listdir(URCSECRETBOXDIR):
   urcsecretboxdb[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst,'rb').read(64).decode('hex')
 
-urccryptoboxdb, urccryptoboxpfsdb = dict(), dict()
+urccryptoboxdb = dict()
+urccryptoboxpfsdb = dict()
+urccryptoboxpassdb = dict()
 if URCCRYPTOBOXDIR:
  for dst in os.listdir(URCCRYPTOBOXDIR):
   if dst in os.listdir(URCCRYPTOBOXPFS):
@@ -146,6 +148,7 @@ if URCCRYPTOBOXDIR:
     open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex'),
     URCCRYPTOBOXSECKEY
    )
+  urccryptoboxpassdb[dst.lower()] = open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex')
 
 if URCSIGNPUBKEYDIR:
  urcsignpubkeydb = dict()
@@ -344,7 +347,18 @@ while 1:
    if byte != '\r' and len(buffer)<768: buffer += byte
   buffer = re_CHATZILLA('',re_MIRC('NICK ',buffer)) ### workaround ChatZilla and mIRC ###
 
-  if re_CLIENT_NICK(buffer):
+  if re_CLIENT_PASS(buffer):
+   cmd = re_SPLIT(buffer,2)[1]
+   try:
+    if len(cmd) == 128: URCSIGNSECKEY = unhex(cmd)
+    elif len(cmd) == 64 or len(cmd) == 192:
+     URCCRYPTOBOXSECKEY,URCSIGNSECKEY = unhex(cmd[:64]),unhex(cmd[64:])
+     for dst in urccryptoboxpassdb.keys():
+      urccryptoboxdb[dst] = crypto_box_beforenm(urccryptoboxpassdb[dst],URCCRYPTOBOXSECKEY)
+    else: try_write(wr,':'+serv+' 464 :ERR_PASSWDMISMATCH\n')
+   except: try_write(wr,':'+serv+' 464 :ERR_PASSWDMISMATCH\n')
+
+  elif re_CLIENT_NICK(buffer):
    if not nick:
     Nick = buffer.split(' ',1)[1]
     nick = Nick.lower()
