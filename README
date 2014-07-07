@@ -368,6 +368,10 @@ POLICY and ISUPPORT:
     packets. setting a 0 value will disable this feature, however it is not
     recommended.
 
+  BROADCAST:
+    integer default is 0. setting this value to 1 enables UDP broadcasts in
+    urc-udpsend and urc-udprecv.
+
 logging URC services:
   mkdir -p /path/to/urcd-service/log/
   ln -s run.log /path/to/urcd-service/log/run

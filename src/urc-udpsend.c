@@ -34,11 +34,24 @@ main(int argc, char **argv)
  bzero(&udp,sizeof(udp));
  udp.sin_family = AF_INET;
 
+ unsigned char buffer[1024] = {0};
+
+ int BROADCAST;
+ int n = open("env/BROADCAST",0);
+ if (n>0)
+ {
+   if (read(n,buffer,1024)>0) BROADCAST = atoi(buffer);
+   else BROADCAST = 0;
+ } else BROADCAST = 0;
+ close(n);
+
  if (
     (argc<4)
  || (!(udp.sin_port=htons(atoi(argv[2]))))
  || (!inet_pton(AF_INET,argv[1],&udp.sin_addr))
  || ((udpfd=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))<0)
+ || (setsockopt(udpfd,SOL_SOCKET,SO_REUSEADDR,(int[]){1},sizeof(int)))
+ || ((BROADCAST) && (setsockopt(udpfd,SOL_SOCKET,SO_BROADCAST,(int[]){1},sizeof(int))))
  || (connect(udpfd,(struct sockaddr *)&udp,sizeof(udp))<0)
     )
  {
@@ -50,18 +63,8 @@ main(int argc, char **argv)
  if (devurandomfd<0) exit(255);
  unsigned char byte[1];
 
- char buffer[1024] = {0};
  char user[UNIX_PATH_MAX] = {0};
  if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
-
- float LIMIT;
- int n = open("env/LIMIT",0);
- if (n>0)
- {
-   if (read(n,buffer,1024)>0) LIMIT = atof(buffer);
-   else LIMIT = 1.0;
- } else LIMIT = 1.0;
- close(n);
 
  if (chdir(argv[3])) exit(64);
  struct passwd *urcd = getpwnam("urcd");
