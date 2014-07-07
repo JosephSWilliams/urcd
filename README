@@ -15,8 +15,12 @@ recommends:
   cython(>=0.18.0)
 
 todo:
-  consider integrating server and nick authentication
-  and verification into urcd.
+  implement PASS interface for URCSIGN/URCCRYPTOBOX.
+
+  implement JOIN passwords, and mode ks for crypto channels.
+
+  consider integrating server and nick authentication and
+  verification into urcd.
 
   add a global hostmask option for users sending messages into
   urc from an ircnet for urc2sd.
