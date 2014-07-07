@@ -226,11 +226,11 @@ urcd PASS command:
   hexadecimal format using the PASS command. there are three
   acceptable formats:
 
-  1.) a 128 byte key will set URCSIGNSECKEY only.
+  0.) a 128 byte key will set URCSIGNSECKEY only.
 
-  2.) a 64 byte key will set URCCRYPTOBOXSECKEY only.
+  1.) a 64 byte key will set URCCRYPTOBOXSECKEY only.
 
-  3.) a 192 byte key will set URCCRYPTOBOXSECKEY using the first
+  2.) a 192 byte key will set URCCRYPTOBOXSECKEY using the first
       64 bytes, and set URCSIGNSECKEY using the last 128 bytes.
 
 server2server (deprecated: use hub2hub):
