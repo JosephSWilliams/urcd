@@ -147,7 +147,7 @@ no censorship (security):
     /ignore friend!*@* ALL UNIGNORE
     /ignore *!VERIFIED@* ALL UNIGNORE
 
-URCSIGN:
+URCSIGN (prototype, subject to change):
   ./sign_keypair
 
   # (global) save your seckey/pubkey and secure them
@@ -220,7 +220,7 @@ URCSECRETBOX:
   echo $seckey > urcsecretboxdir/\#channel
   chmod 600 urcsecretboxdir/
 
-urcd PASS command:
+urcd PASS command (prototype, subject to change):
   remote clients can set or override URCSIGNSECKEY and/or
   URCCRYPTOBOXSECKEY by sending NaCl secret keys to urcd in
   hexadecimal format using the PASS command. there are three
