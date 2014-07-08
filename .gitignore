@@ -31,3 +31,8 @@ keypair
 conf-cc
 ucspi-server2client
 urc-udpsend
+urc-udprecv
+libsodium
+ucspi-tcp-0.88.tar
+ucspi-tcp-0.88
+urc-udprecv
