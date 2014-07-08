@@ -444,7 +444,8 @@ while 1:
    elif cmd =='-k' and dst.lower() in urcsecretboxdb.keys():
     del urcsecretboxdb[dst.lower()]
    if dst.lower() in urcsecretboxdb.keys():
-    try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kns\n')
+    try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kn')
+    try_write(wr,'s\n') if URCDB else try_write(wr,'\n')
    else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
    try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
 
