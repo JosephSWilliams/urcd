@@ -26,9 +26,9 @@ re_CLIENT_PASS = re.compile('^PASS :?\S+$',re.IGNORECASE).search
 re_CLIENT_PING_PONG = re.compile('^P[IO]NG :?.+$',re.IGNORECASE).search
 re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
-re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE [#&!+]['+RE+']+( [-+a-zA-Z]+)?$',re.IGNORECASE).search
+re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE [#&!+]['+RE+']+( [-+a-zA-Z]+)?',re.IGNORECASE).search
 re_CLIENT_MODE_NICK = re.compile('^MODE ['+RE+']+$',re.IGNORECASE).search
-re_CLIENT_MODE_NICK_ARG = re.compile('^MODE ['+RE+']+ :?[-+][a-zA-Z]$',re.IGNORECASE).search
+re_CLIENT_MODE_NICK_ARG = re.compile('^MODE ['+RE+']+ :?[-+a-zA-Z]',re.IGNORECASE).search
 re_CLIENT_AWAY_OFF = re.compile('^AWAY ?$',re.IGNORECASE).search
 re_CLIENT_AWAY_ON = re.compile('^AWAY .+$',re.IGNORECASE).search
 re_CLIENT_WHO = re.compile('^WHO .+',re.IGNORECASE).search
@@ -434,8 +434,16 @@ while 1:
    sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',dst)
 
   elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
-   dst = re_SPLIT(buffer,2)[1]
-   if URCSECRETBOXDIR and dst.lower() in urcsecretboxdb.keys():
+   try:
+    dst, cmd, msg = re_SPLIT(buffer,4)[1:4]
+    try: msg = unhex(msg)
+    except: msg = str()
+   except: dst, cmd, msg = re_SPLIT(buffer,2)[1],str(),str()
+   if cmd == '+k' and len(msg)==32 and dst.lower() in channels and len(urcsecretboxdb.keys())<=CHANLIMIT:
+    urcsecretboxdb[dst.lower()], URCSECRETBOXDIR = msg, 1
+   elif cmd =='-k' and dst.lower() in urcsecretboxdb.keys():
+    del urcsecretboxdb[dst.lower()]
+   if dst.lower() in urcsecretboxdb.keys():
     try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kns\n')
    else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
    try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
@@ -474,7 +482,13 @@ while 1:
    sock_write(':'+Nick+'!'+Nick+'@'+serv+' INVITE '+dst+' :'+msg+'\n',dst)
 
   elif re_CLIENT_JOIN(buffer):
-   for dst in re_SPLIT(buffer,2)[1].lower().split(','):
+   try:
+    dst_list = re_SPLIT(buffer,3)[1].lower().split(',')
+    msg_list = re_SPLIT(buffer,3)[2].lower().split(',')
+   except: msg_list = list()
+   if len(dst_list)>len(msg_list):
+    for dst in dst_list[len(msg_list):]: msg_list.append(str())
+   for dst, msg in zip(dst_list,msg_list):
     if len(channels)>CHANLIMIT:
      try_write(wr,':'+serv+' 405 '+Nick+' :ERR_TOOMANYCHANNELS\n')
      continue
@@ -483,6 +497,10 @@ while 1:
      continue
     if dst in channels: continue
     channels.append(dst)
+    try:
+     msg = unhex(msg)
+     if len(msg)==32: urcsecretboxdb[dst.lower()], URCSECRETBOXDIR = msg, 1
+    except: pass
     if not dst in channel_struct.keys(): channel_struct[dst] = dict(
      names = collections.deque([],CHANLIMIT),
      topic = None,
@@ -501,6 +519,7 @@ while 1:
      try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
     channel_struct[dst]['names'].append(nick)
     if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n',dst)
+   del dst_list, msg_list
 
   elif re_CLIENT_PART(buffer):
    for dst in re_SPLIT(buffer,2)[1].lower().split(','):
@@ -515,7 +534,8 @@ while 1:
    try_write(wr,':'+serv+' 321 '+Nick+' CHANNELS :USERS NAMES\n')
    for dst in channel_struct.keys():
     if channel_struct[dst]['names']:
-     try_write(wr,':'+serv+' 322 '+Nick+' '+dst+' '+str(len(channel_struct[dst]['names']))+' :[+n] ')
+     try_write(wr,':'+serv+' 322 '+Nick+' '+dst+' '+str(len(channel_struct[dst]['names'])))
+     try_write(wr,' :[+kns] ') if dst in urcsecretboxdb.keys() else try_write(wr,' :[+n] ')
      if channel_struct[dst]['topic']: try_write(wr,channel_struct[dst]['topic'])
      try_write(wr,'\n')
    try_write(wr,':'+serv+' 323 '+Nick+' :RPL_LISTEND\n')
