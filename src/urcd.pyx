@@ -536,7 +536,10 @@ while 1:
    for dst in channel_struct.keys():
     if channel_struct[dst]['names']:
      try_write(wr,':'+serv+' 322 '+Nick+' '+dst+' '+str(len(channel_struct[dst]['names'])))
-     try_write(wr,' :[+kns] ') if dst in urcsecretboxdb.keys() else try_write(wr,' :[+n] ')
+     if dst in urcsecretboxdb.keys():
+      if URCDB: try_write(wr,' :[+kn] ')
+      else: try_write(wr,' :[+kns] ')
+     else: try_write(wr,' :[+n] ')
      if channel_struct[dst]['topic']: try_write(wr,channel_struct[dst]['topic'])
      try_write(wr,'\n')
    try_write(wr,':'+serv+' 323 '+Nick+' :RPL_LISTEND\n')
