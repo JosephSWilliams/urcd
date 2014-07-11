@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <strings.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <taia.h>
@@ -29,7 +30,7 @@ main(int argc, char **argv)
 
   if (chdir(argv[1])) exit(64);
   struct passwd *urcd = getpwnam("urcd");
-  if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
+  if ((!urcd) || ((chroot(argv[1])) || (setgroups(0,'\x00')) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
   unsigned char buffer[2+12+4+8+65536+32];
   unsigned char hash[32];

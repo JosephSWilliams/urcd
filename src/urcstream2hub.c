@@ -59,7 +59,7 @@ main(int argc, char **argv)
 
   if (chdir(argv[1])) exit(64);
   struct passwd *urcd = getpwnam("urcd");
-  if ((!urcd) || ((chroot(argv[1])) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
+  if ((!urcd) || ((chroot(argv[1])) || (setgroups(0,'\x00')) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
 
   char user[UNIX_PATH_MAX] = {0};
   if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(4);

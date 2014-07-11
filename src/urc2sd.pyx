@@ -123,6 +123,7 @@ def randombytes(n): return try_read(devurandomfd,n)
 uid, gid = pwd.getpwnam('urcd')[2:4]
 os.chdir(URCHUB) if URCHUB else os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
+os.setgroups(list())
 os.setgid(gid)
 os.setuid(uid)
 root = os.getcwd()
