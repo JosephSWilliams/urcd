@@ -50,9 +50,14 @@ main(int argc, char **argv)
     if (cache_pid<0) exit(2);
   } close(cachein[0]); close(cacheout[1]);
 
-  if (chdir(argv[2])) exit(64);
   struct passwd *urcd = getpwnam("urcd");
-  if ((!urcd) || ((chroot(argv[2])) || (setgroups(0,'\x00')) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
+
+  if ((!urcd)
+  || (chdir(argv[2]))
+  || (chroot(argv[2]))
+  || (setgroups(0,'\x00'))
+  || (setgid(urcd->pw_gid))
+  || (setuid(urcd->pw_uid))) exit(64);
 
   unsigned char buffer[2+16+8+65536];
   char user[] = "hub\0";
@@ -66,7 +71,10 @@ main(int argc, char **argv)
   {
     unlink(sock.sun_path);
     exit(signum);
-  } signal(SIGINT,sock_close); signal(SIGHUP,sock_close); signal(SIGTERM,sock_close); signal(SIGCHLD,sock_close); 
+  } signal(SIGINT,sock_close);
+    signal(SIGHUP,sock_close);
+    signal(SIGTERM,sock_close);
+    signal(SIGCHLD,sock_close);
 
   sockfd = socket(AF_UNIX,SOCK_DGRAM,0);
   if (sockfd<0) exit(3);

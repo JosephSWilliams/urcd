@@ -41,9 +41,14 @@ main(int argc, char **argv)
   } else LIMIT = 1.0;
   close(n);
 
-  if (chdir(argv[1])) exit(64);
   struct passwd *urcd = getpwnam("urcd");
-  if ((!urcd) || ((chroot(argv[1])) || (setgroups(0,'\x00')) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
+
+  if ((!urcd)
+  || (chdir(argv[1]))
+  || (chroot(argv[1]))
+  || (setgroups(0,'\x00'))
+  || (setgid(urcd->pw_gid))
+  || (setuid(urcd->pw_uid))) exit(64);
 
   int sockfd;
   struct sockaddr_un sock;

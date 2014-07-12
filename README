@@ -28,6 +28,8 @@ quick install (not recommended):
   # install dependencies, if you haven't already
   ./install-ucspi-tcp.sh
   ./install-libtai.sh
+
+  # recommended over ./install-libsodium.sh
   ./install-nacl.sh
 
   useradd urcd
@@ -50,6 +52,8 @@ install (recommended):
   ./install-daemontools.sh
   ./install-ucspi-tcp.sh
   ./install-libtai.sh
+
+  # recommended over ./install-libsodium.sh
   ./install-nacl.sh
 
   useradd urcd

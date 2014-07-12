@@ -55,9 +55,14 @@ main(int argc, char **argv)
   char user[UNIX_PATH_MAX] = {0};
   if (itoa(user,getpid(),UNIX_PATH_MAX)<0) exit(1);
 
-  if (chdir(argv[1])) exit(64);
   struct passwd *urcd = getpwnam("urcd");
-  if ((!urcd) || ((chroot(argv[1])) || (setgroups(0,'\x00')) || (setgid(urcd->pw_gid)) || (setuid(urcd->pw_uid)))) exit(64);
+
+  if ((!urcd)
+  || (chdir(argv[1]))
+  || (chroot(argv[1]))
+  || (setgroups(0,'\x00'))
+  || (setgid(urcd->pw_gid))
+  || (setuid(urcd->pw_uid))) exit(64);
 
   struct sockaddr_un sock;
   bzero(&sock,sizeof(sock));
@@ -67,7 +72,9 @@ main(int argc, char **argv)
   {
     unlink(sock.sun_path);
     exit(signum);
-  } signal(SIGINT,sock_close); signal(SIGHUP,sock_close); signal(SIGTERM,sock_close); 
+  } signal(SIGINT,sock_close);
+    signal(SIGHUP,sock_close);
+    signal(SIGTERM,sock_close); 
 
   if ((sd=socket(AF_UNIX,SOCK_DGRAM,0))<0) exit(2);
   n = 1;
