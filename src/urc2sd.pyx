@@ -11,6 +11,7 @@ alternative to IRC.\n'''
 
 from binascii import hexlify
 from nacltaia import *
+from taia96n import *
 import unicodedata
 import collections
 import subprocess
@@ -160,15 +161,6 @@ def try_read(fd,buffer_len):
 def try_write(fd,buffer):
  try: return os.write(fd,buffer)
  except: sock_close(2,0)
-
-def taia96n_now(): return { ### version of taia96n_now is randomized by +/- 4 seconds ###
- 'sec':4611686018427387914L+long(now+[-1,-2,-3,-4,1,2,3,4][ord(randombytes(1))%8]),
- 'nano':long(1000000000*(now%1)+500)
-}
-
-def tai_pack(s): return chr(s['sec']>>56&255)+chr(s['sec']>>48&255)+chr(s['sec']>>40&255)+chr(s['sec']>>32&255)+chr(s['sec']>>24&255)+chr(s['sec']>>16&255)+chr(s['sec']>>8&255)+chr(s['sec']&255)
-
-def taia96n_pack(s): return tai_pack(s)+chr(s['nano']>>24&255)+chr(s['nano']>>16&255)+chr(s['nano']>>8&255)+chr(s['nano']&255)
 
 def sock_write(buffer):
  buflen = len(buffer)
