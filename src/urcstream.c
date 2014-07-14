@@ -74,8 +74,7 @@ main(int argc, char **argv)
     signal(SIGHUP,sock_close);
     signal(SIGTERM,sock_close);
 
-  sockfd = socket(AF_UNIX,SOCK_DGRAM,0);
-  if (socket(AF_UNIX,SOCK_DGRAM,0)<0) exit(2);
+  if ((sockfd=socket(AF_UNIX,SOCK_DGRAM,0))<0) exit(2);
   n = 1;
   if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&n,sizeof(n))<0) exit(3);
   int userlen = strlen(user);
