@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <taia.h>
 #include <poll.h>
 #include <pwd.h>
 
@@ -73,7 +74,7 @@ main(int argc, char *argv[])
 
  bzero(&s,sizeof(s));
  s.sun_family = AF_UNIX;
- memcpy(s.sun_path,argv[1],i);
+ memcpy(s.sun_path,argv[1],i); /* contains potential overflow */
 
  if (((sfd=socket(AF_UNIX,SOCK_DGRAM,0))<0)
  || (itoa(s.sun_path+i,getppid(),UNIX_PATH_MAX-i)<0)
