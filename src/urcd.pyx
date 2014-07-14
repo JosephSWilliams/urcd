@@ -52,7 +52,6 @@ URCDB = open('env/URCDB','rb').read().split('\n')[0] if os.path.exists('env/URCD
 IDLE = int(open('env/IDLE','rb').read().split('\n')[0]) if os.path.exists('env/IDLE') else 2048
 FLOOD = int(open('env/FLOOD','rb').read().split('\n')[0]) if os.path.exists('env/FLOOD') else 8
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
-URCHUB = open('env/URCHUB','rb').read().split('\n')[0] if os.path.exists('env/URCHUB') else str()
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
 NICKLEN = int(open('env/NICKLEN','rb').read().split('\n')[0]) if os.path.exists('env/NICKLEN') else 32
@@ -205,7 +204,7 @@ if os.access('stdout',os.X_OK):
 else: wr = 1
 
 uid, gid = pwd.getpwnam('urcd')[2:4]
-os.chdir(URCHUB) if URCHUB else os.chdir(sys.argv[1])
+os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
 os.setgroups(list())
 os.setgid(gid)

@@ -42,7 +42,6 @@ re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'
 
 HELP = int(open('env/HELP','rb').read().split('\n')[0]) if os.path.exists('env/HELP') else 1
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
-URCHUB = open('env/URCHUB','rb').read().split('\n')[0] if os.path.exists('env/URCHUB') else str()
 INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('env/INVITE') else 0
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
 UNICODE = int(open('env/UNICODE','rb').read().split('\n')[0]) if os.path.exists('env/UNICODE') else 0
@@ -122,7 +121,7 @@ devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
 def randombytes(n): return try_read(devurandomfd,n)
 
 uid, gid = pwd.getpwnam('urcd')[2:4]
-os.chdir(URCHUB) if URCHUB else os.chdir(sys.argv[1])
+os.chdir(sys.argv[1])
 os.chroot(os.getcwd())
 os.setgroups(list())
 os.setgid(gid)

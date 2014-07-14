@@ -1,2 +1,0 @@
-make
-ln -s stdin /service/urcd/stdin
