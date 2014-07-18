@@ -26,7 +26,7 @@ re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
 re_CLIENT_PASS = re.compile('^PASS :?\S+$',re.IGNORECASE).search
 re_CLIENT_PING_PONG = re.compile('^P[IO]NG :?.+$',re.IGNORECASE).search
 re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
-re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
+re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+( :.*)?',re.IGNORECASE).search
 re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE [#&!+]['+RE+']+( [-+a-zA-Z]+)?',re.IGNORECASE).search
 re_CLIENT_MODE_NICK = re.compile('^MODE ['+RE+']+$',re.IGNORECASE).search
 re_CLIENT_MODE_NICK_ARG = re.compile('^MODE ['+RE+']+ :?[-+a-zA-Z]',re.IGNORECASE).search
@@ -404,7 +404,8 @@ while 1:
     if flood >= FLOOD:
      try_write(wr,':'+serv+' NOTICE '+Nick+' :RPL_SPAM\n')
      continue
-   cmd, dst, msg = re_SPLIT(buffer,2)
+   try: cmd, dst, msg = re_SPLIT(buffer,2)
+   except: cmd, dst, msg = re_SPLIT(buffer,2)+[str()]
    cmd, dst = cmd.upper(), dst.lower()
    if dst[0] in ['#','&','!','+']:
     if len(dst)>CHANNELLEN:
@@ -414,8 +415,14 @@ while 1:
     try_write(wr,':'+serv+' 401 '+Nick+' :ERR_NOSUCHNICK\n')
     continue
    if cmd == 'TOPIC':
-    try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg[:TOPICLEN]+'\n')
-    if dst in channel_struct.keys(): channel_struct[dst]['topic'] = msg[:TOPICLEN]
+    if dst in channels:
+     if msg:
+      channel_struct[dst]['topic'] = msg[:TOPICLEN]
+      try_write(wr,':'+Nick+'!'+user+'@'+serv+' TOPIC '+dst+' :'+msg[:TOPICLEN]+'\n')
+     elif channel_struct[dst]['topic']:
+      try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
+     else: try_write(wr,':'+serv+' 331 '+Nick+' '+dst+' :RPL_NOTOPIC\n')
+    else: try_write(wr,':'+serv+' 442 '+Nick+' '+dst+' :ERR_NOTONCHANNEL\n')
    if cmd == 'PART':
     if dst in channels:
      try_write(wr,':'+Nick+'!'+user+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n')
@@ -423,7 +430,7 @@ while 1:
      channel_struct[dst]['names'].remove(nick)
     else: try_write(wr,':'+serv+' 442 '+Nick+' '+dst+' :ERR_NOTONCHANNEL\n')
     if not PRESENCE: continue
-   sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',dst)
+   if msg: sock_write(':'+Nick+'!'+Nick+'@'+serv+' '+cmd+' '+dst+' :'+msg+'\n',dst)
 
   elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
    try:
@@ -661,7 +668,10 @@ while 1:
       names = collections.deque([],CHANLIMIT),
       topic = None,
      )
-    if cmd == 'topic': channel_struct[dst]['topic'] = buffer.split(':',2)[2].split('\n',1)[0][:TOPICLEN]
+    if cmd == 'topic':
+     msg = buffer.split(':',2)[2].split('\n',1)[0][:TOPICLEN]
+     if not msg: continue
+     channel_struct[dst]['topic'] = msg[:TOPICLEN]
     if cmd == 'part':
      if src != nick:
       if src in channel_struct[dst]['names']:

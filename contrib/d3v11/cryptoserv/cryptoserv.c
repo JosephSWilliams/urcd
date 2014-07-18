@@ -62,9 +62,9 @@ main(int argc, char *argv[])
  struct passwd *urcd = getpwnam("urcd");
  struct sockaddr_un s;
 
- unsigned char buffer0[1024*2];
- unsigned char buffer1[1024*2];
  unsigned char buffer2[1024*2] = {0};
+ unsigned char buffer1[1024*2] = {0};
+ unsigned char buffer0[1024*2] = {0};
  unsigned char hk[32+32+64+64];
  unsigned char sk[32+64];
 
@@ -72,6 +72,7 @@ main(int argc, char *argv[])
  int nicklen = 0;
  int login = 0;
  int sfd = -1;
+ int NICKLEN;
 
  bzero(&s,sizeof(s));
  s.sun_family = AF_UNIX;
@@ -85,6 +86,14 @@ main(int argc, char *argv[])
   write(2,USAGE,strlen(USAGE));
   exit(2);
  }
+
+ i = open("env/NICKLEN",0);
+ if (i>0)
+ {
+   if (read(i,buffer0,1024)>0) NICKLEN = atoi(buffer0) & 255;
+   else NICKLEN = 32;
+ } else NICKLEN = 32;
+ close(i);
 
  if ((!urcd)
  || (chdir(argv[2]))
@@ -117,8 +126,11 @@ main(int argc, char *argv[])
 
   if ((i>=7)&&(!memcmp("NICK ",buffer1,5))) { /* not reliable */
    nicklen=-5+i-1;
-   memcpy(buffer2+2+12+4+8+32,buffer0+5,nicklen);
-   memcpy(buffer2+2+12+4+8+32+nicklen," :",2);
+   if (nicklen<=NICKLEN) {
+    memcpy(buffer2+2+12+4+8+32,buffer0+5,nicklen);
+    memcpy(buffer2+2+12+4+8+32+nicklen," :",2);
+   }
+   else nicklen = 0;
   } else if (nicklen) {
    if ((i>=20)&&(!memcmp("PRIVMSG CRYPTOSERV :",buffer1,20))) {
     memcpy(buffer2+2+12+4+8+32+nicklen+2,"test\n",5);
