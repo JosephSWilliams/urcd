@@ -23,6 +23,16 @@ export LIBRARY_PATH="/usr/pkg/lib:/usr/local/lib:$LIBRARY_PATH"
 if gcc src/check-nacl.h -o /dev/null 2>/dev/null ; then
  src='src'
  nacl='nacl'
+ test -e /usr/lib/randombytes.o && \
+  randombytes=/usr/lib/randombytes.o
+ test -e /usr/pkg/lib/randombytes.o && \
+  randombytes=/usr/pkg/lib/randombytes.o
+ test -e /usr/local/lib/randombytes.o && \
+  randombytes=/usr/local/lib/randombytes.o
+ if [ -z $randombytes ]; then
+  echo $0': fatal error: randombytes.o not found' 1>&2
+  exit 255
+ fi
 elif gcc src/check-sodium.h -o /dev/null 2>/dev/null ; then
  src='libsodium_src'
  nacl='sodium'
@@ -35,11 +45,6 @@ elif gcc src/check-sodium.h -o /dev/null 2>/dev/null ; then
 else
   echo $0': fatal error: no suitable NaCl library exists' 1>&2
   exit 255
-fi
-
-randombytes=/usr/lib/randombytes.o
-if [ -e /usr/local/lib/randombytes.o ]; then
- randombytes=/usr/local/lib/randombytes.o
 fi
 
 gcc `cat conf-cc` $src/urcsend.c -o urcsend || exit 1
@@ -60,11 +65,11 @@ gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l $nacl $randombytes || e
 gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $HEADERS -o nacltaia.so -l python2.7 -l tai -l $nacl $randombytes || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
-  gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1
+ gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1
 else
-  gcc `cat conf-cc` $src/urccache.c -o urccache -l tai -l $nacl $randombytes || exit 1
-  printf '' | ./urccache `pwd`/$src/
-  if [ $? != 1 ] ; then gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1 ; fi
+ gcc `cat conf-cc` $src/urccache.c -o urccache -l tai -l $nacl $randombytes || exit 1
+ printf '' | ./urccache `pwd`/$src/
+ if [ $? != 1 ] ; then gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1 ; fi
 fi
 
 if ! which cython 2>/dev/null ; then
