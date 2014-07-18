@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <taia.h>
-#include <poll.h>
 #include <pwd.h>
 
 #include "base16.h"
@@ -62,14 +61,16 @@ main(int argc, char *argv[])
 
  struct passwd *urcd = getpwnam("urcd");
  struct sockaddr_un s;
- struct pollfd fd[1];
 
- unsigned char buffer0[1024];
- unsigned char buffer1[1024];
+ unsigned char buffer0[1024*2];
+ unsigned char buffer1[1024*2];
+ unsigned char buffer2[1024*2] = {0};
  unsigned char hk[32+32+64+64];
  unsigned char sk[32+64];
 
  int i = strlen(argv[1]);
+ int nicklen = 0;
+ int login = 0;
  int sfd = -1;
 
  bzero(&s,sizeof(s));
@@ -97,29 +98,37 @@ main(int argc, char *argv[])
  }
 
  fcntl(0,F_SETFL,fcntl(0,F_GETFL,0)&~O_NONBLOCK);
-// fd[0].events = POLLIN | POLLPRI;
-// fd[0].fd = 0;
+
+ memcpy(buffer2+2+12+4+8,":CryptoServ!urc@service PRIVMSG ",32);
+
 
  while (1)
  {
 
-//  poll(fd,1,-1);
-
   for (i=0;i<1024;++i)
   {
-    if (read(0,buffer1+i,1)<1) exit(4);
-    if (buffer1[i] == '\r') --i;
-    if (buffer1[i] == '\n') break;
-  } if (buffer1[i] != '\n') continue;
+    if (read(0,buffer0+i,1)<1) exit(4);
+    if (buffer0[i] == '\r') --i;
+    if (buffer0[i] == '\n') break;
+  } if (buffer0[i] != '\n') continue;
   ++i;
 
-  if (write(1,buffer1,i)<0) exit(5);
+  upper(buffer1,buffer0,i);
 
+  if ((i>=7)&&(!memcmp("NICK ",buffer1,5))) { /* not reliable */
+   nicklen=-5+i-1;
+   memcpy(buffer2+2+12+4+8+32,buffer0+5,nicklen);
+   memcpy(buffer2+2+12+4+8+32+nicklen," :",2);
+  } else if (nicklen) {
+   if ((i>=20)&&(!memcmp("PRIVMSG CRYPTOSERV :",buffer1,20))) {
+    memcpy(buffer2+2+12+4+8+32+nicklen+2,"test\n",5);
+    write(sfd,buffer2,2+12+4+8+32+nicklen+2+5);
+    continue;
+   }
+  }
+ if (write(1,buffer0,i)<0) exit(5);
  }
-
-//  upper(buffer0,buffer1,n);
-
-  
-//crypto_scalarmult_curve25519_base(longtermpk,longtermsk);
-
 }
+
+//   if ((i>=32) && (!memcmp(buffer1+20,"IDENTIFY ",9)
+//crypto_scalarmult_curve25519_base(longtermpk,longtermsk);
