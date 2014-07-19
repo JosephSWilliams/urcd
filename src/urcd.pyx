@@ -505,16 +505,15 @@ while 1:
      names = collections.deque([],CHANLIMIT),
      topic = None,
     )
-    else:
-     if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
-     if channel_struct[dst]['topic']:
-      try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
+    elif nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
     try_write(wr,
      ':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
      ':'+serv+' 353 '+Nick+' = '+dst+' :'+Nick+' '
     )
     for src in channel_struct[dst]['names']: try_write(wr,src+' ')
     try_write(wr,'\n:'+serv+' 366 '+Nick+' '+dst+' :RPL_ENDOFNAMES\n')
+    if channel_struct[dst]['topic']:
+     try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
     if len(channel_struct[dst]['names'])>=CHANLIMIT:
      try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
     channel_struct[dst]['names'].append(nick)
