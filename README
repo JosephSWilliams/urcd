@@ -226,11 +226,11 @@ URCSECRETBOX:
   chmod 600 urcsecretboxdir/
 
   clients can also create channel encryption temporarily
-  by submitting the 64 byte hexadecimal secret key to urcd.
+  by submitting passwords to urcd.
   e.g.:
 
-  /JOIN #channel <secret key>
-  /MODE #channel +k <secret key>
+  /JOIN #channel password
+  /MODE #channel +k password
 
 urcd PASS command (prototype, subject to change):
   remote clients can set or override URCSIGNSECKEY and/or
