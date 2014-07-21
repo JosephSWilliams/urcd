@@ -165,8 +165,8 @@ main(int argc, char *argv[])
      memcpy(path,"urcsigndb/",10);
      memcpy(path+10,buffer2+2+12+4+8+32,nicklen);
      if (((fd=open(path,O_RDONLY))<0) || (read(fd,hex,64)<64) || (base16_decode(pk0,hex,64)<32)) {
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"URCSIGN Account does not exist.\n",32);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+32);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Account does not exist.\n",24);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+24);
       close(fd);
       continue;
      }close(fd);
@@ -181,8 +181,8 @@ main(int argc, char *argv[])
      memcpy(path,"urccryptoboxdir/",16);
      memcpy(path+16,buffer2+2+12+4+8+32,nicklen);
      if (((fd=open(path,O_RDONLY))<0) || (read(fd,hex,64)<64) || (base16_decode(pk0,hex,64)<32)) {
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"URCCRYPTOBOX Account does not exist.\n",37);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+37);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Account does not exist.\n",24);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+24);
       close(fd);
       continue;
      }close(fd);
