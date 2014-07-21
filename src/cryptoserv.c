@@ -216,6 +216,11 @@ main(int argc, char *argv[])
       crypto_sign_keypair(pk0,sk);
       bzero(path,512);
       memcpy(path,"urcsigndb/",10);
+      if (!access(path,F_OK)) {
+       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Account already exists.\n",24);
+       write(sfd,buffer2,2+12+4+8+32+nicklen+2+24);
+       continue;
+      }
       if (identified) memcpy(path+10,identifiednick,identifiednicklen);
       else memcpy(path+10,buffer2+2+12+4+8+32,nicklen);
       fd = open(path,O_CREAT);
