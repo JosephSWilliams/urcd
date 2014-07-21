@@ -15,6 +15,10 @@ recommends:
   cython(>=0.18.0)
 
 todo:
+  create URCHUB/URCLOCAL
+
+  consider crypto modes for cryptoserv
+
   implement ban/except for clients without regex ignore.
 
   add a global hostmask option for users sending messages into
