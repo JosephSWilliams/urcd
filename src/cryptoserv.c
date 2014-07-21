@@ -34,7 +34,7 @@ int itoa(char *s, int n, int slen)
  return 0;
 }
 
-void randombytes(char *bytes) {} /* do nothing */
+void randombytes(char *bytes) {} // override: hack crypto_*_keypair functions
 
 void lower(
  unsigned char *buffer0,
@@ -70,6 +70,8 @@ main(int argc, char *argv[])
  unsigned char pk0[32];
  unsigned char pk1[32];
  unsigned char sk[64];
+
+ float LIMIT;
 
  long starttime;
 
@@ -168,7 +170,7 @@ main(int argc, char *argv[])
       close(fd);
       continue;
      }close(fd);
-     crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1);
+     crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1); // hashes everything sans \n
      crypto_sign_keypair(pk1,sk);
      if (memcmp(pk0,pk1,32)) {
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Invalid passwd.\n",16);
@@ -209,7 +211,7 @@ main(int argc, char *argv[])
      if ((identified) || (time((long *)0)-starttime<128)) {
       goto HELP;
      }
-     crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1);
+     crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1); // hashes everything sans \n
      REGISTER:
       crypto_sign_keypair(pk0,sk);
       bzero(path,512);
@@ -264,7 +266,7 @@ main(int argc, char *argv[])
     /// SET PASSWORD
     if ((i>=20+13+1+1)&&(!memcmp("set password ",buffer1+20,13))) {
      if (!identified) goto HELP;
-     crypto_hash_sha512(sk,buffer0+20+13,-20-13+i-1);
+     crypto_hash_sha512(sk,buffer0+20+13,-20-13+i-1); // hashes everything sans \n
      goto REGISTER;
     }
 
