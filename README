@@ -26,6 +26,8 @@ todo:
 
   implement presence notifications for the ircd side in urc2sd.
 
+  add encrypted channels to urc2sd.
+
 quick install (not recommended):
 
   # install dependencies, if you haven't already
