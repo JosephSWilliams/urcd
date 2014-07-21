@@ -287,6 +287,13 @@ hub2hub:
   ./bin/add-hublisten your.urcd.ano 1234 /service/urcd-hub0/socket/
   ./bin/add-hubconnect peer.urcd.ano 4321 /service/urcd-hub0/socket/
 
+CryptoServ (requires NaCl):
+  # stdin.cryptoserv will create cryptoservroot/urcsigndb and
+  # cryptoservroot/urccryptoboxdir. you'll need to point
+  # env/URCCRYPTOBOXDIR and env/URCSIGNDB accordingly.
+
+  ln -s stdin.cryptoserv stdin
+
 urc2sd:
   #urc2sd follows a similar convention as urcd by using a format
   #that distinguishes signed messages from nonverified messages.

@@ -34,6 +34,10 @@ urc-udpsend
 urc-udprecv
 libsodium-0.6.0.tar.gz
 libsodium-0.6.0
+ucspi-tcp-0.88.tar.gz
 ucspi-tcp-0.88.tar
 ucspi-tcp-0.88
-contrib/d3v11/cryptoserv/cryptoserv
+cryptoservroot/
+cryptoserv
+taia96n.so
+taia96n.py

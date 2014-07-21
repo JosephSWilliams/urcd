@@ -134,7 +134,7 @@ urccryptoboxpfsdb = dict()
 urccryptoboxpassdb = dict()
 if URCCRYPTOBOXDIR:
  for dst in os.listdir(URCCRYPTOBOXDIR):
-  if dst in os.listdir(URCCRYPTOBOXPFS):
+  if URCCRYPTOBOXPFS and dst in os.listdir(URCCRYPTOBOXPFS):
    pk,sk=crypto_box_keypair()
    urccryptoboxpfsdb[dst.lower()] = {"pubkey":pk,"seckey":sk,"tmpkey":randombytes(32)}
    del pk, sk
