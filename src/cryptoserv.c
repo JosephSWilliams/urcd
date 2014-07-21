@@ -82,6 +82,24 @@ main(int argc, char *argv[])
  int NICKLEN;
  int fd;
 
+ fd = open("env/LIMIT",0);
+ if (fd>0)
+ {
+   if (read(fd,buffer0,1024)>0) LIMIT = atof(buffer0);
+   else LIMIT = 1.0;
+ } else LIMIT = 1.0;
+ close(fd);
+
+ bzero(buffer0,1024);
+
+ fd = open("env/NICKLEN",0);
+ if (fd>0)
+ {
+   if (read(fd,buffer0,1024)>0) NICKLEN = atoi(buffer0) & 255;
+   else NICKLEN = 32;
+ } else NICKLEN = 32;
+ close(fd);
+
  bzero(&s,sizeof(s));
  s.sun_family = AF_UNIX;
  memcpy(s.sun_path,argv[1],i); /* contains potential overflow */
@@ -94,14 +112,6 @@ main(int argc, char *argv[])
   write(2,USAGE,strlen(USAGE));
   exit(2);
  }
-
- i = open("env/NICKLEN",0);
- if (i>0)
- {
-   if (read(i,buffer0,1024)>0) NICKLEN = atoi(buffer0) & 255;
-   else NICKLEN = 32;
- } else NICKLEN = 32;
- close(i);
 
  if ((!urcd)
  || (chdir(argv[2]))
@@ -144,6 +154,8 @@ main(int argc, char *argv[])
    else nicklen = 0;
   } else if (nicklen) {
    if ((i>=20)&&(!memcmp("privmsg cryptoserv :",buffer1,20))) {
+
+    usleep((int)(LIMIT*1000000));
 
     /// IDENTIFY
     if ((i>=20+9+1+1)&&(!memcmp("identify ",buffer1+20,9))) {
