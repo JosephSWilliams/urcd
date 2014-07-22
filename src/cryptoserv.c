@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <strings.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <string.h>
@@ -58,8 +59,12 @@ main(int argc, char *argv[])
   exit(1);
  }
 
- struct passwd *urcd = getpwnam("urcd");
+ struct passwd *urcd = getpwnam("urcd"); 
  struct sockaddr_un s;
+ struct dirent *file;
+ struct stat *stats;
+
+ DIR *directory;
 
  unsigned char buffer2[1024*2] = {0};
  unsigned char buffer1[1024*2] = {0};
@@ -74,6 +79,7 @@ main(int argc, char *argv[])
  float LIMIT;
 
  long starttime;
+ long EXPIRY;
 
  int i = strlen(argv[1]);
  int identifiednicklen;
@@ -93,6 +99,14 @@ main(int argc, char *argv[])
  close(fd);
 
  bzero(buffer0,1024);
+
+ fd = open("env/EXPIRY",0);
+ if (fd>0)
+ {
+   if (read(fd,buffer0,1024)>0) EXPIRY = atol(buffer0) * 24L * 60L * 60L;
+   else EXPIRY = 32L * 24L * 60L * 60L;
+ } else EXPIRY = 32L * 24L * 60L * 60L;
+ close(fd);
 
  fd = open("env/NICKLEN",0);
  if (fd>0)
@@ -132,13 +146,34 @@ main(int argc, char *argv[])
 
  memcpy(buffer2+2+12+4+8,":CryptoServ!urc@service PRIVMSG ",32);
 
+ memcpy(path,"urcsigndb/",10); 
+ if (!(directory=opendir("urcsigndb/"))) exit(4);
+ while ((file=readdir(directory)))
+ {
+   if (file->d_name[0] == '.') continue;
+   bzero(path+10,-10+512);
+   memcpy(path+10,file->d_name,strlen(file->d_name));
+   stat(path,(struct stat *)stats);
+   if (time((long *)0) - stats->st_atime >= EXPIRY) remove(path);
+ } closedir(directory);
+
+ memcpy(path,"urccryptoboxdir/",16); 
+ if (!(directory=opendir("urccryptoboxdir/"))) exit(5);
+ while ((file=readdir(directory)))
+ {
+   if (file->d_name[0] == '.') continue;
+   bzero(path+16,-16+512);
+   memcpy(path+10,file->d_name,strlen(file->d_name));
+   stat(path,(struct stat *)stats);
+   if (time((long *)0) - stats->st_atime >= EXPIRY) remove(path);
+ } closedir(directory);
 
  while (1)
  {
 
   for (i=0;i<1024;++i)
   {
-    if (read(0,buffer0+i,1)<1) exit(4);
+    if (read(0,buffer0+i,1)<1) exit(6);
     if (buffer0[i] == '\r') --i;
     if (buffer0[i] == '\n') break;
   } if (buffer0[i] != '\n') continue;
@@ -197,7 +232,7 @@ main(int argc, char *argv[])
      memcpy(buffer0,"PASS ",5);
      memcpy(buffer0+5,hex,192);
      memcpy(buffer0+5+192,"\n",1);
-     if (write(1,buffer0,5+192+1)<=0) exit(5);
+     if (write(1,buffer0,5+192+1)<=0) exit(7);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      memcpy(identifiednick,buffer2+2+12+4+8+32,nicklen);
@@ -223,41 +258,35 @@ main(int argc, char *argv[])
        write(sfd,buffer2,2+12+4+8+32+nicklen+2+24);
        continue;
       }
-      fd = open(path,O_CREAT);
-      fchmod(fd,S_IRUSR|S_IWUSR);
-      close(fd);
-      if ((fd=open(path,O_WRONLY))<0) {
+      if (((fd=open(path,O_CREAT|O_WRONLY))<0) || (fchmod(fd,S_IRUSR|S_IWUSR))<0) {
        memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
        write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
        close(fd);
        continue;
       }
       base16_encode(hex,pk0,32);
-      if (write(fd,hex,64)<64) exit(6);
+      if (write(fd,hex,64)<64) exit(8);
       close(fd);
       crypto_scalarmult_curve25519_base(pk0,sk);
       bzero(path,512);
       memcpy(path,"urccryptoboxdir/",16);
       if (identified) memcpy(path+16,identifiednick,identifiednicklen);
       else memcpy(path+16,buffer2+2+12+4+8+32,nicklen);
-      fd = open(path,O_CREAT);
-      fchmod(fd,S_IRUSR|S_IWUSR);
-      close(fd);
-      if ((fd=open(path,O_WRONLY))<0) {
+      if (((fd=open(path,O_CREAT|O_WRONLY))<0) || (fchmod(fd,S_IRUSR|S_IWUSR))<0) {
        memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
        write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
        close(fd);
        continue;
       }
       base16_encode(hex,pk0,32);
-      if (write(fd,hex,64)<64) exit(7);
+      if (write(fd,hex,64)<64) exit(9);
       close(fd);
       base16_encode(hex,sk,32);
       base16_encode(hex+64,sk,64);
       memcpy(buffer0,"PASS ",5);
       memcpy(buffer0+5,hex,192);
       memcpy(buffer0+5+192,"\n",1);
-      if (write(1,buffer0,5+192+1)<=0) exit(8);
+      if (write(1,buffer0,5+192+1)<=0) exit(10);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"success\n",8);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
       if (!identified) {
@@ -319,6 +348,6 @@ main(int argc, char *argv[])
    if (!informed) goto HELP;
    }
   }
- if (write(1,buffer0,i)<=0) exit(9);
+ if (write(1,buffer0,i)<=0) exit(11);
  }
 }
