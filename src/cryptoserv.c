@@ -163,7 +163,7 @@ main(int argc, char *argv[])
  {
    if (file->d_name[0] == '.') continue;
    bzero(path+16,-16+512);
-   memcpy(path+10,file->d_name,strlen(file->d_name));
+   memcpy(path+16,file->d_name,strlen(file->d_name));
    stat(path,(struct stat *)stats);
    if (time((long *)0) - stats->st_atime >= EXPIRY) remove(path);
  } closedir(directory);
