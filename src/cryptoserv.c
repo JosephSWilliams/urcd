@@ -206,6 +206,7 @@ main(int argc, char *argv[])
       continue;
      }close(fd);
      crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1); // hashes everything sans \n
+     crypto_hash_sha512(sk,buffer2+2+12+4+8+32,nicklen); // salt with nick to avoid collisions
      crypto_sign_keypair(pk1,sk);
      if (memcmp(pk0,pk1,32)) {
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Invalid passwd.\n",16);
@@ -245,6 +246,7 @@ main(int argc, char *argv[])
     if ((i>=20+9+1+1)&&(!memcmp("register ",buffer1+20,9))) {
      if ((identified) || (time((long *)0)-starttime<128)) goto HELP;
      crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1); // hashes everything sans \n
+     crypto_hash_sha512(sk,buffer2+2+12+4+8+32,nicklen); // salt with nick to avoid collisions
      REGISTER:
       crypto_sign_keypair(pk0,sk);
       bzero(path,512);
@@ -299,6 +301,7 @@ main(int argc, char *argv[])
     if ((i>=20+13+1+1)&&(!memcmp("set password ",buffer1+20,13))) {
      if (!identified) goto HELP;
      crypto_hash_sha512(sk,buffer0+20+13,-20-13+i-1); // hashes everything sans \n
+     crypto_hash_sha512(sk,buffer2+2+12+4+8+32,nicklen); // salt with nick to avoid collisions
      goto REGISTER;
     }
 
