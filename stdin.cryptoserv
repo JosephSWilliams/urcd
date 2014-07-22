@@ -5,6 +5,10 @@ mkdir -p cryptoservroot/urcsigndb/
 mkdir -p cryptoservroot/urccryptoboxdir/
 mkdir -p cryptoservroot/urccryptoboxpfs/
 
+echo "`pwd`"/cryptoservroot/urcsigndb > env/URCSIGNDB
+echo "`pwd`"/cryptoservroot/urccryptoboxdir > env/URCCRYPTOBOXDIR
+echo "`pwd`"/cryptoservroot/urccryptoboxpfs > env/URCCRYPTOBOXPFS
+
 chown urcd cryptoservroot/*
 
 exec ./cryptoserv "`cat env/path`" "`pwd`"/cryptoservroot/

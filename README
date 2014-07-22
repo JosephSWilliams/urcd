@@ -294,8 +294,8 @@ hub2hub:
 
 CryptoServ (requires NaCl):
   # stdin.cryptoserv will create cryptoservroot/urcsigndb
-  # cryptoservroot/urccryptoboxdir, and cryptoservroot/urccryptoboxpfs.
-  # you'll need to point env/URCCRYPTOBOXDIR, env/URCCRYPTOBOXPFS, and
+  # cryptoservroot/urccryptoboxdir, and cryptoservroot/urccryptoboxpfs
+  # and point env/URCCRYPTOBOXDIR, env/URCCRYPTOBOXPFS, and
   # env/URCSIGNDB accordingly.
 
   ln -s stdin.cryptoserv stdin
