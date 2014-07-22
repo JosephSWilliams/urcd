@@ -327,6 +327,32 @@ main(int argc, char *argv[])
      continue;
     }
 
+    /// DROP
+    if ((i>=20+4)&&(!memcmp("drop",buffer1+20,4))) {
+     if (!identified) goto HELP;
+     bzero(path,512);
+     memcpy(path,"urccryptoboxdir/",16);
+     memcpy(path+16,identifiednick,identifiednicklen);
+     if (remove(path)<0) {
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+     }
+     bzero(path,512);
+     memcpy(path,"urcsigndb/",10);
+     memcpy(path+10,identifiednick,identifiednicklen);
+     if (remove(path)<0) {
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+      continue;
+     }
+     memcpy(buffer2+2+12+4+8+32+nicklen+2,"success\n",8);
+     write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+     starttime = time((long *)0);
+     identified = 0;
+     continue;
+    }
+
+
     /// HELP
     if ((i>=20+4)&&(!memcmp("help",buffer1+20,4))) {
      HELP:
@@ -344,6 +370,7 @@ main(int argc, char *argv[])
     }
 
    if (!informed) goto HELP;
+   continue;
    }
   }
  if (write(1,buffer0,i)<=0) exit(11);
