@@ -233,7 +233,7 @@ main(int argc, char *argv[])
      memcpy(buffer0+5,hex,192);
      memcpy(buffer0+5+192,"\n",1);
      if (write(1,buffer0,5+192+1)<=0) exit(7);
-     memcpy(buffer2+2+12+4+8+32+nicklen+2,"success\n",8);
+     memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      memcpy(identifiednick,buffer2+2+12+4+8+32,nicklen);
      identifiednicklen = nicklen;
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
        continue;
       }
       if (((fd=open(path,O_CREAT|O_WRONLY))<0) || (fchmod(fd,S_IRUSR|S_IWUSR))<0) {
-       memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
+       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Failure\n",8);
        write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
        close(fd);
        continue;
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
       if (identified) memcpy(path+16,identifiednick,identifiednicklen);
       else memcpy(path+16,buffer2+2+12+4+8+32,nicklen);
       if (((fd=open(path,O_CREAT|O_WRONLY))<0) || (fchmod(fd,S_IRUSR|S_IWUSR))<0) {
-       memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
+       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Failure\n",8);
        write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
        close(fd);
        continue;
@@ -285,14 +285,14 @@ main(int argc, char *argv[])
       memcpy(buffer0+5,hex,192);
       memcpy(buffer0+5+192,"\n",1);
       if (write(1,buffer0,5+192+1)<=0) exit(10);
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"success\n",8);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
       if (!identified) {
        memcpy(identifiednick,buffer2+2+12+4+8+32,nicklen);
        identifiednicklen = nicklen;
        identified = 1;
       }
-    continue;
+     continue;
     }
 
     /// SET PASSWORD
@@ -309,49 +309,41 @@ main(int argc, char *argv[])
      memcpy(path,"urccryptoboxdir/",16);
      memcpy(path+16,identifiednick,identifiednicklen);
      if (remove(path)<0) {
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Failure\n",8);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      }
      bzero(path,512);
      memcpy(path,"urcsigndb/",10);
      memcpy(path+10,identifiednick,identifiednicklen);
      if (remove(path)<0) {
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Failure\n",8);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
       continue;
      }
-     memcpy(buffer2+2+12+4+8+32+nicklen+2,"success\n",8);
+     memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      starttime = time((long *)0);
      identified = 0;
      continue;
     }
 
-    /// DROP
-    if ((i>=20+4)&&(!memcmp("drop",buffer1+20,4))) {
-     if (!identified) goto HELP;
-     bzero(path,512);
-     memcpy(path,"urccryptoboxdir/",16);
-     memcpy(path+16,identifiednick,identifiednicklen);
-     if (remove(path)<0) {
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
-     }
-     bzero(path,512);
-     memcpy(path,"urcsigndb/",10);
-     memcpy(path+10,identifiednick,identifiednicklen);
-     if (remove(path)<0) {
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"failure\n",8);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+    /// LOGOUT
+    if ((i>=20+6)&&(!memcmp("logout",buffer1+20,6))) {
+     if (!identified) {
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"You are not identified.\n",24);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+24);
       continue;
      }
-     memcpy(buffer2+2+12+4+8+32+nicklen+2,"success\n",8);
+     memcpy(buffer0,"PASS ",5);
+     memcpy(buffer0+5+192,"\n",1);
+     for (i=5;i<192;++i) buffer0[i]='0';
+     if (write(1,buffer0,5+192+1)<=0) exit(11);
+     memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      starttime = time((long *)0);
      identified = 0;
      continue;
     }
-
 
     /// HELP
     if ((i>=20+4)&&(!memcmp("help",buffer1+20,4))) {
@@ -367,12 +359,14 @@ main(int argc, char *argv[])
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+75);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`DROP' removes your account after you REGISTER/IDENTIFY.\n",57);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+57);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"`LOGOUT' deactivates URCSIGN and URCCRYPTOBOX.\n",47);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+47);
     }
 
-   if (!informed) goto HELP;
-   continue;
+    if (!informed) goto HELP;
+    continue;
    }
   }
- if (write(1,buffer0,i)<=0) exit(11);
+ if (write(1,buffer0,i)<=0) exit(12);
  }
 }
