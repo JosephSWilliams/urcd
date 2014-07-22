@@ -62,7 +62,7 @@ main(int argc, char *argv[])
  struct passwd *urcd = getpwnam("urcd"); 
  struct sockaddr_un s;
  struct dirent *file;
- struct stat *stats;
+ struct stat stats;
 
  DIR *directory;
 
@@ -153,8 +153,8 @@ main(int argc, char *argv[])
    if (file->d_name[0] == '.') continue;
    bzero(path+10,-10+512);
    memcpy(path+10,file->d_name,strlen(file->d_name));
-   stat(path,(struct stat *)stats);
-   if (time((long *)0) - stats->st_atime >= EXPIRY) remove(path);
+   stat(path,(struct stat *)&stats);
+   if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
  } closedir(directory);
 
  memcpy(path,"urccryptoboxdir/",16); 
@@ -164,8 +164,8 @@ main(int argc, char *argv[])
    if (file->d_name[0] == '.') continue;
    bzero(path+16,-16+512);
    memcpy(path+16,file->d_name,strlen(file->d_name));
-   stat(path,(struct stat *)stats);
-   if (time((long *)0) - stats->st_atime >= EXPIRY) remove(path);
+   stat(path,(struct stat *)&stats);
+   if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
  } closedir(directory);
 
  while (1)
@@ -243,9 +243,7 @@ main(int argc, char *argv[])
 
     /// REGISTER
     if ((i>=20+9+1+1)&&(!memcmp("register ",buffer1+20,9))) {
-     if ((identified) || (time((long *)0)-starttime<128)) {
-      goto HELP;
-     }
+     if ((identified) || (time((long *)0)-starttime<128)) goto HELP;
      crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1); // hashes everything sans \n
      REGISTER:
       crypto_sign_keypair(pk0,sk);
