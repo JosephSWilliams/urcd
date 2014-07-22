@@ -301,7 +301,7 @@ main(int argc, char *argv[])
     if ((i>=20+13+1+1)&&(!memcmp("set password ",buffer1+20,13))) {
      if (!identified) goto HELP;
      crypto_hash_sha512(sk,buffer0+20+13,-20-13+i-1); // hashes everything sans \n
-     crypto_hash_sha512(sk,buffer2+2+12+4+8+32,nicklen); // salt with nick to avoid collisions
+     crypto_hash_sha512(sk,identifiednick,identifiednicklen); // salt with nick to avoid collisions
      goto REGISTER;
     }
 
