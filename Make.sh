@@ -17,6 +17,7 @@ elif [ -e '/usr/local/include/python2.7/Python.h'       ] &&
 fi
 
 # OpenBSD && NetBSD \o/
+export CPATH="/usr/pkg/include:/usr/local/include:$CPATH"
 export LIBRARY_PATH="/usr/pkg/lib:/usr/local/lib:$LIBRARY_PATH"
 
 # Support libsodium fanboys
