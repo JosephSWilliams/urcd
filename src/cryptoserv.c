@@ -146,27 +146,29 @@ main(int argc, char *argv[])
 
  memcpy(buffer2+2+12+4+8,":CryptoServ!urc@service PRIVMSG ",32);
 
- memcpy(path,"urcsigndb/",10); 
- if (!(directory=opendir("urcsigndb/"))) exit(4);
- while ((file=readdir(directory)))
- {
-   if (file->d_name[0] == '.') continue;
-   bzero(path+10,-10+512);
-   memcpy(path+10,file->d_name,strlen(file->d_name));
-   stat(path,(struct stat *)&stats);
-   if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
- } closedir(directory);
+ if (EXPIRY) {
+  memcpy(path,"urcsigndb/",10); 
+  if (!(directory=opendir("urcsigndb/"))) exit(4);
+  while ((file=readdir(directory)))
+  {
+    if (file->d_name[0] == '.') continue;
+    bzero(path+10,-10+512);
+    memcpy(path+10,file->d_name,strlen(file->d_name));
+    stat(path,(struct stat *)&stats);
+    if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
+  } closedir(directory);
 
- memcpy(path,"urccryptoboxdir/",16); 
- if (!(directory=opendir("urccryptoboxdir/"))) exit(5);
- while ((file=readdir(directory)))
- {
-   if (file->d_name[0] == '.') continue;
-   bzero(path+16,-16+512);
-   memcpy(path+16,file->d_name,strlen(file->d_name));
-   stat(path,(struct stat *)&stats);
-   if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
- } closedir(directory);
+  memcpy(path,"urccryptoboxdir/",16); 
+  if (!(directory=opendir("urccryptoboxdir/"))) exit(5);
+  while ((file=readdir(directory)))
+  {
+    if (file->d_name[0] == '.') continue;
+    bzero(path+16,-16+512);
+    memcpy(path+16,file->d_name,strlen(file->d_name));
+    stat(path,(struct stat *)&stats);
+    if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
+  } closedir(directory);
+ }
 
  while (1)
  {

@@ -367,8 +367,9 @@ POLICY and ISUPPORT:
     can write to the network.
 
   EXPIRY:
-    integer argument with a default of 32 days. This is how long a CryptoServ
-    account has until it is deleted from inactivity.
+    integer argument with a default of 32 days. this is how long a CryptoServ
+    account has until it is deleted from inactivity. setting this value to 0
+    will disable account expirations.
 
   COLOUR:
     integer default is 0. changing this value to 1 will allow colour encoding
