@@ -3,6 +3,7 @@
 mkdir -p cryptoservroot/
 mkdir -p cryptoservroot/urcsigndb/
 mkdir -p cryptoservroot/urccryptoboxdir/
+mkdir -p cryptoservroot/urccryptoboxpfs/
 
 chown urcd cryptoservroot/*
 

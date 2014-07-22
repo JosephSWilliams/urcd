@@ -209,7 +209,7 @@ main(int argc, char *argv[])
      crypto_sign_keypair(pk1,sk);
      if (memcmp(pk0,pk1,32)) {
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Invalid passwd.\n",16);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+16);
       continue;
      }
      bzero(path,512);
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
      crypto_scalarmult_curve25519_base(pk1,sk);
      if (memcmp(pk0,pk1,32)) {
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Invalid passwd.\n",16);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+16);
       continue;
      }
      base16_encode(hex,sk,32);
@@ -302,6 +302,39 @@ main(int argc, char *argv[])
      goto REGISTER;
     }
 
+    /// SET PFS
+    if ((i>=20+8+2+1)&&(!memcmp("set pfs ",buffer1+20,8))) {
+     if (!identified) {
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"You are not identified.\n",24);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+24);
+      continue;
+     }
+     bzero(path,512);
+     memcpy(path,"urccryptoboxpfs/",16);
+     memcpy(path+16,identifiednick,identifiednicklen);
+     if ((i>=20+8+3+1)&&(!memcmp("off",buffer1+20+8,3))) {
+      if (remove(path)<0) {
+       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Failure\n",8);
+       write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+       continue;
+      }
+     } else if ((i>=20+8+2+1)&&(!memcmp("on",buffer1+20+8,2))) {
+      if ((fd=open(path,O_CREAT))<0) {
+       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Failure\n",8);
+       write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+       close(fd);
+       continue;
+      }close(fd);
+     } else {
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Invalid option.\n",16);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+16);
+      continue;
+     }
+     memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
+     write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
+     continue;
+    }
+
     /// DROP
     if ((i>=20+4)&&(!memcmp("drop",buffer1+20,4))) {
      if (!identified) goto HELP;
@@ -349,14 +382,16 @@ main(int argc, char *argv[])
     if ((i>=20+4)&&(!memcmp("help",buffer1+20,4))) {
      HELP:
       informed = 1;
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Usage:\n",7);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+7);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"The following commands will most likely take effect when you and/or your peers /reconnect:\n",91);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+91);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`REGISTER <passwd>' after 128 seconds to create an account.\n",60);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+60);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`IDENTIFY <passwd>' to login to your account and activate URCSIGN and URCCRYPTOBOX.\n",84);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+84);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`SET PASSWORD <passwd>' changes your password after you REGISTER/IDENTIFY.\n",75);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+75);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"`SET PFS <ON, OFF>' toggles perfect forward secrecy for PM.\n",60);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+60);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`DROP' removes your account after you REGISTER/IDENTIFY.\n",57);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+57);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`LOGOUT' deactivates URCSIGN and URCCRYPTOBOX.\n",47);
