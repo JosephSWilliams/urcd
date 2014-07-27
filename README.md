@@ -1,0 +1,422 @@
+urcd:
+  af_unix relay chat daemon and
+  af_unix relay chat daemon accessories...
+
+  for more information regarding this software
+  and the URC protocols, `less doc/URC'.
+
+depends:
+  NaCl or libsodium, libtai, ucspi-tcp,
+  python(>=2.6), python-dev(>=2.6),
+  daemontools, sh, gcc
+
+recommends:
+  NaCl instead of libsodium,
+  cython(>=0.18.0)
+
+todo:
+  create URCHUB/URCLOCAL
+
+  consider crypto modes for cryptoserv
+
+  implement ban/except for clients without regex ignore.
+
+  add a global hostmask option for users sending messages into
+  urc from an ircnet for urc2sd.
+
+  implement presence notifications for the ircd side in urc2sd.
+
+  add encrypted channels to urc2sd.
+
+quick install (not recommended):
+
+  # install dependencies, if you haven't already
+  ./install-ucspi-tcp.sh
+  ./install-libtai.sh
+
+  # recommended over ./install-libsodium.sh
+  ./install-nacl.sh
+
+  useradd urcd
+
+  $editor env/*
+
+  # OpenBSD
+  echo '-ftrampolines' > conf-cc
+
+  # if python2.6
+  sed 's/\.7/.6/g' Make.sh | sh -v
+
+  # elif python2.7
+  ./Make.sh
+  ./bin/urcd.sh $ntwrk
+
+install (recommended):
+
+  # install dependencies, if you haven't already
+  ./install-daemontools.sh
+  ./install-ucspi-tcp.sh
+  ./install-libtai.sh
+
+  # recommended over ./install-libsodium.sh
+  ./install-nacl.sh
+
+  useradd urcd
+
+  # OpenBSD
+  echo '-ftrampolines' > conf-cc
+
+  # if python2.6
+  sed 's/\.7/.6/g' Make.sh | sh -v
+
+  # elif python2.7
+  ./Make.sh
+
+  # edit the network/hostmask
+  $editor env/serv
+
+  # edit the motd
+  $editor env/motd
+
+  ln -s `pwd` /service/urcd
+  ./bin/add-urchub
+
+  sleep 4
+  svstat /service/urcd
+
+  ### see the hub2hub section below it is ###
+  ### recommended to connect to 3 urchubs ###
+
+adding curvecp:
+  mkdir -p /services/urcd-curvecp
+
+  ln -s `pwd`/env /services/urcd-curvecp/env
+  ln -s `pwd`/urcd /services/urcd-curvecp/urcd
+  ln -s `pwd`/run.urcd-curvecp /services/urcd-curvecp/run
+
+  curvecpmakekey /services/urcd-curvecp/curvecp
+
+  find /services/urcd-curvecp/curvecp -type d -exec chmod 700 {} \;
+  find /services/urcd-curvecp/curvecp -type f -exec chmod 600 {} \;
+  chown urcd /services/urcd-curvecp/curvecp -R
+
+  ln -s /services/urcd-curvecp /service/urcd-curvecp
+
+  sleep 4
+  svstat /service/urcd-curvecp
+
+  echo "PUBKEY: `curvecpprintkey /services/urcd-curvecp/curvecp`"
+
+  curvecp + irc client (test):
+
+    tcpserver 127.0.0.1 6667 \
+      curvecpclient irc.d3v11.ano `curvecpprintkey /services/urcd-curvecp/curvecp` \
+      `cat env/addr` `cat env/port` 01110101011100100110001101100100 \
+      curvecpmessage -c ./ucspi-stream &
+
+    irssi -c 127.0.0.1
+
+interface:
+  place an executable program in the cwd
+  of urcd named 'stdin'. the program reads
+  stdin from the irc client. anything your
+  program writes to stdout will be written
+  to urcd
+
+  place an executable program in the cwd
+  of urcd named 'stdout'. the program reads
+  stdin from urcd. anything your program
+  writes to stdout will be written to the
+  irc client
+
+  for urc2sd follow the same process. happy
+  hacking.
+
+no censorship (security):
+  URC networks are censorship resistant. i
+  recommend URCSIGN and/or URCCRYPTOBOX to
+  ignore spam and trolls. URCd will replace
+  the user field with VERIFIED for users with
+  valid authentication or signature verification.
+  All other user fields will be replaced with
+  URCD. e.g.:
+
+  nick!URCD@server
+  nick!VERIFIED@server
+
+  irssi ("ban/except"):
+    /ignore *!*@* ALL
+    /ignore -except friend!*@* ALL
+    /ignore -except *!VERIFIED@* ALL
+
+  xchat ("ban/except"):
+    /ignore *!*@* ALL
+    /ignore friend!*@* ALL UNIGNORE
+    /ignore *!VERIFIED@* ALL UNIGNORE
+
+URCSIGN (prototype, subject to change):
+  ./sign_keypair
+
+  # (global) save your seckey/pubkey and secure them
+  $editor env/URCSIGNPUBKEY
+  $editor env/URCSIGNSECKEY
+  chmod 600 env/URCSIGNSECKEY
+
+  # use a specific seckey for a destination, or override global
+  mkdir -p urcsignseckeydir
+  echo urcsignseckeydir > env/URCSIGNSECKEYDIR
+  echo $seckey > urcsignseckeydir/\#channel
+  chmod 600 urcsignseckeydir/
+
+  # save your friends' pubkeys and secure them
+  mkdir -p urcsigndb/
+  chmod 600 urcsigndb/
+  echo $pubkey > urcsigndb/$nick
+  echo urcsigndb/ > env/URCSIGNDB
+
+  # use a specific pubkey for a destination, or override global
+  mkdir -p urcsignpubkeydir
+  echo urcsignpubkeydir > env/URCSIGNPUBKEYDIR
+  echo $pubkey > urcsignpubkeydir/\#channel/nick
+  chmod 600 urcsignpubkeydir/
+
+  # urcd will replace the user field with VERIFIED for valid
+  # signatures and replace all other user fields with URCD.
+  # see "no censorship" above.
+
+URCCRYPTOBOX:
+  # urcd can provide secret and encrypted PM
+
+  ./keypair
+  echo $seckey > env/URCCRYPTOBOXSECKEY
+  mkdir -p urccryptoboxdir/
+  echo urccryptoboxdir > env/URCCRYPTOBOXDIR
+  echo $pubkey > urccryptoboxdir/$nick
+  chmod 600 urccryptoboxdir/
+
+  # use a specific seckey for a destination, or override global
+  mkdir -p urccryptoboxseckeydir/
+  echo urccryptoboxseckeydir > env/URCCRYPTOBOXSECKEYDIR
+  echo $seckey > urccryptoboxseckeydir/$nick
+  chmod 600 urccryptoboxseckeydir/
+
+  # urcd will replace the user field with VERIFIED for valid
+  # authentication and replace all other user fields with URCD.
+  # see "no censorship" above.
+
+  URCCRYPTOBOXPFS:
+    # urcd can provide secret perfect forward secrecy for encrypted PM
+    # for destinations already configured for URCCRYPTOBOX. urcd will
+    # send and error notice when unable to decrypt a session box. simply
+    # respond to your friend to exchange session keys. if you want to
+    # change session keys, simply /reconnect. urcd will not store any
+    # session cryptography. both parties need to have this enabled to work.
+
+    echo urccryptoboxpfs/ > env/URCCRYPTOBOXPFS
+    mkdir -p urccryptoboxpfs/
+    chmod 600 urccryptoboxpfs/
+    touch urccryptoboxpfs/$nick
+
+URCSECRETBOX:
+  urcd can provide secret and encrypted channels
+  using a 64 byte hexadecimal key
+
+  ./keypair # you only need the seckey
+  mkdir -p urcsecretboxdir/
+  echo urcsecretboxdir > env/URCSECRETBOXDIR
+  echo $seckey > urcsecretboxdir/\#channel
+  chmod 600 urcsecretboxdir/
+
+  clients can also create channel encryption temporarily
+  by submitting passwords to urcd.
+  e.g.:
+
+  /JOIN #channel password
+  /MODE #channel +k password
+
+urcd PASS command (prototype, subject to change):
+  remote clients can set or override URCSIGNSECKEY and/or
+  URCCRYPTOBOXSECKEY by sending NaCl secret keys to urcd in
+  hexadecimal format using the PASS command. there are three
+  acceptable formats:
+
+  0.) a 128 byte key will set URCSIGNSECKEY only.
+
+  1.) a 64 byte key will set URCCRYPTOBOXSECKEY only.
+
+  2.) a 192 byte key will set URCCRYPTOBOXSECKEY using the first
+      64 bytes, and set URCSIGNSECKEY using the last 128 bytes.
+
+server2server (deprecated: use hub2hub):
+  ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
+
+  # your peers can link their server using:
+  ./bin/add-tcpsend your.urcd.ano 1234 /service/urcd/socket/
+
+  # you will need to link to your peer's server:
+  ./bin/add-tcpsend peer.urcd.ano 4321 /service/urcd/socket/
+
+  # transit nodes may use ./add-tcplisten and clients can
+  # stream with ./add-tcpconnect
+
+server2server (tor)(deprecated: use hub2hub):
+  ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
+
+  # your peers can link their server using:
+  ./bin/add-torsend your.urcd.ano 1234 /service/urcd/socket/
+
+  # you will need to link to your peer's server:
+  ./bin/add-torsend peer.urcd.ano 4321 /service/urcd/socket/
+
+  # transit nodes may use ./add-tcplisten and clients can
+  # stream with ./add-torconnect
+
+server2server (curvecp)(deprecated: use hub2hub):
+  ./bin/add-curvecprecv your.urcd.ano 1234 /service/urcd/socket/
+
+  # your peers can link their server using:
+  ./bin/add-curvecpsend your.urcd.ano 1234 /service/urcd/socket/ your.urcd.ano $your_pubkey
+
+  # you will need to link to your peer's server:
+  ./bin/add-curvecpsend peer.urcd.ano 4321 /service/urcd/socket/ peer.urcd.ano $peer_pubkey
+
+  # transit nodes may use ./add-curvecplisten and clients can
+  # stream with ./add-curvecpconnect
+
+hub2hub:
+  test -e /services/urcd-hub0/ || ./bin/add-urchub
+
+  # using urcstream with urcd/urc2sd (deprecated)
+  ./bin/add-urcstream2hub /service/urcd/socket/ /service/urcd-hub0/socket/
+
+  ./bin/add-hublisten your.urcd.ano 1234 /service/urcd-hub0/socket/
+  ./bin/add-hubconnect peer.urcd.ano 4321 /service/urcd-hub0/socket/
+
+CryptoServ (requires NaCl):
+  # stdin.cryptoserv will create cryptoservroot/urcsigndb
+  # cryptoservroot/urccryptoboxdir, and cryptoservroot/urccryptoboxpfs
+  # and point env/URCCRYPTOBOXDIR, env/URCCRYPTOBOXPFS, and
+  # env/URCSIGNDB accordingly.
+
+  ln -s stdin.cryptoserv stdin
+
+urc2sd:
+  #urc2sd follows a similar convention as urcd by using a format
+  #that distinguishes signed messages from nonverified messages.
+  #i.e: signed messages appear as: "nick!sign@server> msg",
+  #while nonsigned messages appear as "nick!urcd@server> msg".
+  #urc2sd filters traffic coming from the urc network reliably
+  #this way by using the ban and except masks set by the chanops
+  #on the the ircnet's channels.
+
+  mkdir -p /services/urc2sd
+
+  ln -s `pwd`/urc2sd /services/urc2sd/urc2sd
+  ln -s `pwd`/ucspi-client2server /services/urc2sd/ucspi-client2server
+
+  # default
+  ln -s `pwd`/run.urc2sd /services/urc2sd/run
+
+  # tor
+  ln -s `pwd`/run.urc2sd-tor /services/urc2sd/run
+  ln -s `pwd`/ucspi-socks4aclient /services/urc2sd/ucspi-socks4aclient
+
+  printf $addr > /services/urc2sd/addr
+  printf $port > /services/urc2sd/port
+  printf '/services/urcd-hub0/socket/' > /services/urc2sd/path
+  printf 'urcd' > /services/urc2sd/nick
+  printf '#channel' > /services/urc2sd/channels
+
+  touch /services/urc2sd/auto_cmd
+
+  ln -s /services/urc2sd /service/urc2sd
+
+POLICY and ISUPPORT:
+  these values are filenames inside env/ and contain different types of data.
+
+  IDLE:
+    integer argument with a default of 2048 seconds. this value dictates how long
+    remote clients can idle before their presence is dropped.
+
+  PING:
+    integer argument with a default of 16 seconds. this value dictates the ping
+    intervals to a client, and the amount of time a client has to perform
+    a connection. if PING is activated and the client doesn't respond within
+    the specified time before TIMEOUT, the client is dropped. a 0 value will
+    disable this feature.
+
+  URCDB:
+    default is empty. adding a /path/to/urc.db will tell urcd where to store a
+    database. the database stores information from the network. this prevents
+    losing this information between connections. (security) set chmod 600 on
+    this file after it is created. e.g.: /topic, /names, and /list.
+
+    WARNING:
+     using this option on public urcd's, or sharing a database from a private
+     urcd can reveal /topic, /names, and /list to unprivileged clients.
+
+  FLOOD:
+    integer argument with a default threshold of 8. every write to the network
+    by a client increments the flood counter. if the flood counter breaches the
+    threshold the client will lose ability to write to the network until the
+    counter returns below the threshold value. a 0 value will disable this
+    feature.
+
+  LIMIT:
+    float argument default is 1.0. this is the maximum rate in which a client
+    can write to the network.
+
+  EXPIRY:
+    integer argument with a default of 32 days. this is how long a CryptoServ
+    account has until it is deleted from inactivity. setting this value to 0
+    will disable account expirations.
+
+  COLOUR:
+    integer default is 0. changing this value to 1 will allow colour encoding
+    to pass to the client.
+
+  UNICODE:
+    integer default is 0. changing this value to 1 will allow unicode encoding
+    to pass to the client.
+
+  NICKLEN:
+    integer default is 32. this is the maximum byte length of acceptable nick's
+    on the network.
+
+  TIMEOUT:
+    integer default is 256. this value represents the allowed time a client
+    can remain silent before their connection is dropped. this value also
+    represents how often URCDB is synchronized if enabled.
+
+  PRESENCE:
+    integer default is 0. changing this value to 1 will announce JOIN, PART,
+    and QUIT messages from the client to the network.
+
+  TOPICLEN:
+    integer default is 512. this is the maximum byte length of acceptable
+    topics.
+
+  CHANLIMIT:
+    integer default is 64. this value represents the maximum amount of channels
+    and the maximum amount of users that can participate in channels.
+
+  CHANNELLEN:
+    integer default is 64. this value represents the maximum byte length of
+    channels on the network.
+
+  PADDING:
+    integer default is 255. this value represents the block sizes of encrypted
+    packets. setting a 0 value will disable this feature, however it is not
+    recommended.
+
+  BROADCAST:
+    integer default is 0. setting this value to 1 enables UDP broadcasts in
+    urc-udpsend and urc-udprecv.
+
+logging URC services:
+  mkdir -p /path/to/urcd-service/log/
+  ln -s run.log /path/to/urcd-service/log/run
+  supervise /path/to/urcd-service/log 2>/dev/null & disown
+  sleep 4
+  svstat /path/to/urcd-service/log
+  svc -t /path/to/urcd-service/

@@ -12,6 +12,7 @@ git add -f \
  run.urc2sd-tor \
  src \
  README \
+ README.md \
  install-*.sh \
  db \
  contrib/ \
