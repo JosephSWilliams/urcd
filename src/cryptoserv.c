@@ -66,6 +66,7 @@ main(int argc, char *argv[])
 
  DIR *directory;
 
+ unsigned char buffer3[1024*2] = {0};
  unsigned char buffer2[1024*2] = {0};
  unsigned char buffer1[1024*2] = {0};
  unsigned char buffer0[1024*2] = {0};
@@ -207,8 +208,9 @@ main(int argc, char *argv[])
       close(fd);
       continue;
      }close(fd);
-     crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1); // hashes everything sans \n
-     crypto_hash_sha512(sk,buffer2+2+12+4+8+32,nicklen); // salt with nick to avoid collisions
+     memcpy(buffer3,buffer0+20+9,-20-9+i-1);
+     memcpy(buffer3-20-9+i-1,buffer2+2+12+4+8+32,nicklen);
+     crypto_hash_sha512(sk,buffer3,-20-9+i-1+nicklen);
      crypto_sign_keypair(pk1,sk);
      if (memcmp(pk0,pk1,32)) {
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Invalid passwd.\n",16);
@@ -247,8 +249,9 @@ main(int argc, char *argv[])
     /// REGISTER
     if ((i>=20+9+1+1)&&(!memcmp("register ",buffer1+20,9))) {
      if ((identified) || (time((long *)0)-starttime<128)) goto HELP;
-     crypto_hash_sha512(sk,buffer0+20+9,-20-9+i-1); // hashes everything sans \n
-     crypto_hash_sha512(sk,buffer2+2+12+4+8+32,nicklen); // salt with nick to avoid collisions
+     memcpy(buffer3,buffer0+20+9,-20-9+i-1);
+     memcpy(buffer3-20-9+i-1,buffer2+2+12+4+8+32,nicklen);
+     crypto_hash_sha512(sk,buffer3,-20-9+i-1+nicklen);
      REGISTER:
       crypto_sign_keypair(pk0,sk);
       bzero(path,512);
@@ -302,8 +305,9 @@ main(int argc, char *argv[])
     /// SET PASSWORD
     if ((i>=20+13+1+1)&&(!memcmp("set password ",buffer1+20,13))) {
      if (!identified) goto HELP;
-     crypto_hash_sha512(sk,buffer0+20+13,-20-13+i-1); // hashes everything sans \n
-     crypto_hash_sha512(sk,identifiednick,identifiednicklen); // salt with nick to avoid collisions
+     memcpy(buffer3,buffer0+20+9,-20-9+i-1);
+     memcpy(buffer3-20-9+i-1,identifiednick,nicklen);
+     crypto_hash_sha512(sk,buffer3,-20-9+i-1+nicklen);
      goto REGISTER;
     }
 
