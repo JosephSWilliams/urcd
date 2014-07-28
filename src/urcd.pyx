@@ -342,7 +342,8 @@ while 1:
   if re_CLIENT_PASS(buffer):
    cmd = re_SPLIT(buffer,2)[1]
    try:
-    if len(cmd) == 128: URCSIGNSECKEY = unhex(cmd)
+    if cmd == '0'*len(cmd): URCCRYPTOBOXSECKEY,URCSIGNSECKEY,urccryptoboxdb[dst] = str(),str(),dict()
+    elif len(cmd) == 128: URCSIGNSECKEY = unhex(cmd)
     elif len(cmd) == 64 or len(cmd) == 192:
      URCCRYPTOBOXSECKEY,URCSIGNSECKEY = unhex(cmd[:64]),unhex(cmd[64:])
      for dst in urccryptoboxpassdb.keys():

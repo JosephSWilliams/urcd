@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 
  fcntl(0,F_SETFL,fcntl(0,F_GETFL,0)&~O_NONBLOCK);
 
- memcpy(buffer2+2+12+4+8,":CryptoServ!urc@service PRIVMSG ",32);
+ memcpy(buffer2+2+12+4+8,":CryptoServ!URCD@service NOTICE ",32);
 
  if (EXPIRY) {
   memcpy(path,"urcsigndb/",10); 
