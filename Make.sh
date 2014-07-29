@@ -8,7 +8,7 @@ fi
 touch conf-cc
 
 # need Python.h and structmember.h
-if [ -e '/usr/include/python2.7/']; then
+if [ -e '/usr/include/python2.7/' ]; then
  PYTHON_HEADERS='/usr/include/python2.7'
 elif [ -e '/usr/local/include/python2.7/' ]; then
  PYTHON_HEADERS='/usr/local/include/python2.7'
