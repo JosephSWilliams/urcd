@@ -362,6 +362,10 @@ main(int argc, char *argv[])
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
       continue;
      }
+     memcpy(buffer0,"PASS ",5);
+     memcpy(buffer0+5+192,"\n",1);
+     for (i=5;i<192;++i) buffer0[i]='0';
+     if (write(1,buffer0,5+192+1)<=0) exit(11);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      starttime = time((long *)0);
@@ -379,7 +383,7 @@ main(int argc, char *argv[])
      memcpy(buffer0,"PASS ",5);
      memcpy(buffer0+5+192,"\n",1);
      for (i=5;i<192;++i) buffer0[i]='0';
-     if (write(1,buffer0,5+192+1)<=0) exit(11);
+     if (write(1,buffer0,5+192+1)<=0) exit(12);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      starttime = time((long *)0);
@@ -411,6 +415,6 @@ main(int argc, char *argv[])
     continue;
    }
   }
- if (write(1,buffer0,i)<=0) exit(12);
+ if (write(1,buffer0,i)<=0) exit(13);
  }
 }
