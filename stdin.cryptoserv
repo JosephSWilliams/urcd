@@ -5,6 +5,11 @@ mkdir -p cryptoservroot/urcsigndb/
 mkdir -p cryptoservroot/urccryptoboxdir/
 mkdir -p cryptoservroot/urccryptoboxpfs/
 
+test -e cryptoservroot/.git/ || (
+ cd cryptoservroot/
+ git init
+)
+
 echo "`pwd`"/cryptoservroot/urcsigndb > env/URCSIGNDB
 echo "`pwd`"/cryptoservroot/urccryptoboxdir > env/URCCRYPTOBOXDIR
 echo "`pwd`"/cryptoservroot/urccryptoboxpfs > env/URCCRYPTOBOXPFS
