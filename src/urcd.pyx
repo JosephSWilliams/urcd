@@ -497,7 +497,7 @@ while 1:
      continue
     if dst in channels: continue
     channels.append(dst)
-    if msg:
+    if msg and not msg in ['x','?']:
      URCSIGNSECRETBOXDIR = 1
      urcsecretboxdb[dst.lower()] = crypto_hash_sha512(msg)[32:64]
     if not dst in channel_struct.keys(): channel_struct[dst] = dict(
