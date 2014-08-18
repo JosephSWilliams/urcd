@@ -28,6 +28,7 @@ import os
 RE = 'a-zA-Z0-9^(\)\-_{\}[\]|\\\\'
 re_USER = re.compile('!\S+@',re.IGNORECASE).sub
 re_SPLIT = re.compile(' +',re.IGNORECASE).split
+re_CLIENT_HELP = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ PRIVMSG [#&!+]['+RE+']+ :['+RE+']+[:,]? help$',re.IGNORECASE).search
 re_CLIENT_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 re_CLIENT_PART = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ PART [#&!+]['+RE+']+( :)?',re.IGNORECASE).search
 re_CLIENT_QUIT = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ QUIT( :)?',re.IGNORECASE).search
@@ -204,6 +205,8 @@ while 1:
    if byte == '\n': break
    if byte != '\r' and len(buffer)<768: buffer += byte
 
+  if re_CLIENT_HELP(buffer): try_write(1,'NOTICE '+re_SPLIT(buffer,3)[2]+' :'+USAGE)
+
   if re_CLIENT_PRIVMSG_NOTICE_TOPIC(buffer):
    if buffer[1:].split('!',1)[0] != nick: sock_write(buffer+'\n')
 
@@ -231,6 +234,7 @@ while 1:
 
   elif re.search('^:'+re.escape(nick).upper()+'!.+ NICK ',buffer.upper()):
    nick = re_SPLIT(buffer)[2]
+   re_CLIENT_HELP = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ PRIVMSG [#&!+]['+RE+']+ :['+re.escape(nick)+']+[:,]? help$',re.IGNORECASE).search
 
   elif re.search('^:.+ 433 .+ '+re.escape(nick),buffer):
    nick+='_'
