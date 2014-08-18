@@ -41,7 +41,14 @@ re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 
-HELP = int(open('env/HELP','rb').read().split('\n')[0]) if os.path.exists('env/HELP') else 1
+### some operating systems do not set atime reliably ###
+if os.path.exists('env/HELP') \
+and time.time() - os.stat('env/HELP')[7] >= 2048 \
+and int(open('env/HELP','rb').read().split('\n')[0]):
+ os.utime('env/HELP',(time.time(),time.time()))
+ HELP = 1
+else: HELP = 0
+
 LIMIT = float(open('env/LIMIT','rb').read().split('\n')[0]) if os.path.exists('env/LIMIT') else 1
 INVITE = int(open('env/INVITE','rb').read().split('\n')[0]) if os.path.exists('env/INVITE') else 0
 COLOUR = int(open('env/COLOUR','rb').read().split('\n')[0]) if os.path.exists('env/COLOUR') else 0
