@@ -15,6 +15,8 @@ recommends:
   cython(>=0.18.0)
 
 todo:
+  fix hostmasks in urcd
+
   create URCHUB/URCLOCAL
 
   consider crypto modes for cryptoserv
@@ -247,50 +249,11 @@ urcd PASS command (prototype, subject to change):
   2.) a 192 byte key will set URCCRYPTOBOXSECKEY using the first
       64 bytes, and set URCSIGNSECKEY using the last 128 bytes.
 
-server2server (deprecated: use hub2hub):
-  ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
-
-  # your peers can link their server using:
-  ./bin/add-tcpsend your.urcd.ano 1234 /service/urcd/socket/
-
-  # you will need to link to your peer's server:
-  ./bin/add-tcpsend peer.urcd.ano 4321 /service/urcd/socket/
-
-  # transit nodes may use ./add-tcplisten and clients can
-  # stream with ./add-tcpconnect
-
-server2server (tor)(deprecated: use hub2hub):
-  ./bin/add-tcprecv your.urcd.ano 1234 /service/urcd/socket/
-
-  # your peers can link their server using:
-  ./bin/add-torsend your.urcd.ano 1234 /service/urcd/socket/
-
-  # you will need to link to your peer's server:
-  ./bin/add-torsend peer.urcd.ano 4321 /service/urcd/socket/
-
-  # transit nodes may use ./add-tcplisten and clients can
-  # stream with ./add-torconnect
-
-server2server (curvecp)(deprecated: use hub2hub):
-  ./bin/add-curvecprecv your.urcd.ano 1234 /service/urcd/socket/
-
-  # your peers can link their server using:
-  ./bin/add-curvecpsend your.urcd.ano 1234 /service/urcd/socket/ your.urcd.ano $your_pubkey
-
-  # you will need to link to your peer's server:
-  ./bin/add-curvecpsend peer.urcd.ano 4321 /service/urcd/socket/ peer.urcd.ano $peer_pubkey
-
-  # transit nodes may use ./add-curvecplisten and clients can
-  # stream with ./add-curvecpconnect
-
 hub2hub:
   test -e /services/urcd-hub0/ || ./bin/add-urchub
-
-  # using urcstream with urcd/urc2sd (deprecated)
   ./bin/add-urcstream2hub /service/urcd/socket/ /service/urcd-hub0/socket/
-
-  ./bin/add-hublisten your.urcd.ano 1234 /service/urcd-hub0/socket/
-  ./bin/add-hubconnect peer.urcd.ano 4321 /service/urcd-hub0/socket/
+  ./bin/add-hublisten your.urcd.ano 6789 /service/urcd-hub0/socket/
+  ./bin/add-hubconnect peer.urcd.ano 6789 /service/urcd-hub0/socket/
 
 CryptoServ (requires NaCl):
   # stdin.cryptoserv will create cryptoservroot/urcsigndb
