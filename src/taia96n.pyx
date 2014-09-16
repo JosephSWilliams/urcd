@@ -1,19 +1,12 @@
 #/usr/bin/env python
-from random import choice
+from random randrange
 from time import time
-
-long_offsets = [
- -8,8,-7,7,
- -6,6,-5,5,
- -4,4,-3,3,
- -2,2,-1,1,
-]
 
 def taia96n_now():
  now = time()
  return {
-  'sec':4611686018427387914L+long(now)+choice(long_offsets),
-  'nano':long(1000000000*(now%1)+500),
+  'sec':4611686018427387914L+long(now)+randrange(-8,8),
+  'nano':long(1000000000*(now%1)+randrange(0,512),
 }
 
 def tai_pack(s): return str(
