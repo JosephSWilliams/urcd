@@ -75,6 +75,8 @@ nick = str()
 Nick = str()
 now = time.time()
 user = str(os.getpid())
+Src = dict()
+Mask = dict()
 active_clients = dict()
 channel_struct = dict() ### operations assume nick is in channel_struct[dst]['names'] if dst in channels ###
 channels = collections.deque([],CHANLIMIT)
@@ -89,13 +91,26 @@ if URCDB:
  except:
   os.remove(URCDB)
   db = shelve.open(URCDB,flag='c',writeback=True)
+
+ try: channel_struct = db['channel_struct']
+ except: channel_struct = dict()
+
+ try: ### BC code for key and type checking can be removed later ###
+  if type(db['Src']) == dict: Src = db['Src']
+ except: pass
+
+ try: ### BC code for key and type checking can be removed later ###
+  if type(db['Mask']) == dict: Mask = db['Mask']
+ except: pass
+
  try: ### BC code for key and type checking can be removed later ###
   if type(db['active_clients']) == dict: active_clients = db['active_clients']
  except: pass
- try: channel_struct = db['channel_struct']
- except: channel_struct = dict()
+
+ while len(Src) > CHANLIMIT*CHANLIMIT: del Src[Src.keys()[0]]
  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
- while len(active_clients.keys()) > CHANLIMIT*CHANLIMIT: del active_clients[active_clients.keys()[0]]
+ while len(Mask) > CHANLIMIT*CHANLIMIT: del Mask[Mask.keys()[0]]
+ while len(active_clients) > CHANLIMIT*CHANLIMIT: del active_clients[active_clients.keys()[0]]
 
 def try_read(fd,buflen):
  try: return os.read(fd,buflen)
@@ -173,6 +188,8 @@ for dst in channel_struct.keys():
  if channel_struct[dst]['topic']: channel_struct[dst]['topic'] = channel_struct[dst]['topic'][:TOPICLEN]
  for src in channel_struct[dst]['names']:
   if not src in active_clients.keys(): active_clients[src] = now
+  if not src in Mask.keys(): Mask[src] = serv
+  if not src in Src.keys(): Src[src] = src
 
 def sock_close(sn,sf):
  try: os.remove(str(os.getpid()))
@@ -182,7 +199,10 @@ def sock_close(sn,sf):
    for dst in channels:
     if dst in channel_struct.keys() and nick in channel_struct[dst]['names']:
      channel_struct[dst]['names'].remove(nick)
-   db['channel_struct'], db['active_clients'] = channel_struct, active_clients
+   db['channel_struct'] = channel_struct
+   db['active_clients'] = active_clients
+   db['Mask'] = Mask
+   db['Src'] = Src
    db.close()
   sys.exit(sn&255)
 
@@ -303,15 +323,20 @@ while 1:
   if src != nick and now - active_clients[src] >= IDLE:
    for dst in channels:
     if src in channel_struct[dst]['names']:
-     try_write(wr,':'+src+'!URCD@'+serv+' QUIT :IDLE\n')
+     try_write(wr,':'+Src[src]+'!URCD@'+Mask[src]+' QUIT :IDLE\n')
      break
    for dst in channel_struct.keys():
     if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
    del active_clients[src]
+   del Mask[src]
+   del Src[src]
  del names
 
  if URCDB and now - sync >= TIMEOUT:
-  db['channel_struct'], db['active_clients'] = channel_struct, active_clients
+  db['channel_struct'] = channel_struct
+  db['active_clients'] = active_clients
+  db['Mask'] = Mask
+  db['Src'] = Src
   db.sync()
   sync = now
 
@@ -359,6 +384,7 @@ while 1:
      try_write(wr,':'+serv+' 432 '+Nick+' :ERR_ERRONEUSNICKNAME\n')
      Nick, nick = str(), str()
      continue
+    Src[nick], Mask[nick] = Nick, serv
     msg = ' +' if PRESENCE else ' +i'
     try_write(wr,
      ':'+serv+' 001 '+Nick+' :'+serv+'\n'
@@ -381,6 +407,7 @@ while 1:
     try_write(wr,':'+serv+' 432 '+Nick+' :ERR_ERRONEUSNICKNAME\n')
     Nick, nick = src, src.lower()
     continue
+   Src[nick], Mask[nick] = Nick, serv
    for dst in channel_struct.keys():
     if dst in channels:
      channel_struct[dst]['names'].remove(src.lower())
@@ -467,7 +494,7 @@ while 1:
    dst = re_SPLIT(buffer,2)[1].lower()
    if dst in channel_struct.keys():
     for src in channel_struct[dst]['names']:
-     try_write(wr,':'+serv+' 352 '+Nick+' '+dst+' '+src+' '+serv+' '+src+' '+src+' H :0 '+src+'\n')
+     try_write(wr,':'+serv+' 352 '+Nick+' '+dst+' '+Src[src]+' '+Mask[src]+' '+src+' '+src+' H :0 '+src+'\n')
    try_write(wr,':'+serv+' 315 '+Nick+' '+dst+' :RPL_ENDOFWHO\n')
 
   elif re_CLIENT_INVITE(buffer):
@@ -509,12 +536,12 @@ while 1:
      ':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
      ':'+serv+' 353 '+Nick+' = '+dst+' :'+Nick+' '
     )
-    for src in channel_struct[dst]['names']: try_write(wr,src+' ')
+    for src in channel_struct[dst]['names']: try_write(wr,Src[src]+' ')
     try_write(wr,'\n:'+serv+' 366 '+Nick+' '+dst+' :RPL_ENDOFNAMES\n')
     if channel_struct[dst]['topic']:
      try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
     if len(channel_struct[dst]['names'])>=CHANLIMIT:
-     try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
+     try_write(wr,':'+Src[channel_struct[dst]['names'][0]]+'!URCD@'+Mask[channel_struct[dst]['names'][0]]+' PART '+dst+'\n')
     channel_struct[dst]['names'].append(nick)
     if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n',dst)
    del dst_list, msg_list
@@ -629,7 +656,7 @@ while 1:
      urccryptoboxpfsdb[src]["tmpkey"] = msg[:32]
      msg = crypto_box_open(msg[32:],buffer[2:2+12+4+8],msg[:32],urccryptoboxpfsdb[src]["seckey"])
      if not msg:
-       try_write(wr,':'+src+'!ERROR@'+serv+' NOTICE '+Nick+' :unable to decrypt message\n')
+       try_write(wr,':'+Src[src]+'!ERROR@'+Mask[src]+' NOTICE '+Nick+' :unable to decrypt message\n')
        continue
    if src == msg[1:].split('!',1)[0].lower(): buffer = re_USER('!VERIFIED@',msg.split('\n',1)[0],1)
    else: buffer = re_USER('!URCD@',msg.split('\n',1)[0],1)
@@ -650,6 +677,8 @@ while 1:
    src = buffer.split(':',2)[1].split('!',1)[0].lower()
    if len(src)>NICKLEN: continue
    active_clients[src] = now
+   Src[src] = buffer.split(':',2)[1].split('!',1)[0]
+   Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
    cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
    if dst[0] in ['#','&','!','+']:
@@ -680,9 +709,9 @@ while 1:
       try_write(wr,re_SPLIT(buffer,1)[0]+' JOIN :'+dst+'\n')
       if len(channel_struct[dst]['names'])>=CHANLIMIT:
        if nick != channel_struct[dst]['names'][0]:
-        try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
+        try_write(wr,':'+Src[channel_struct[dst]['names'][0]]+'!URCD@'+Mask[channel_struct[dst]['names'][0]]+' PART '+dst+'\n')
        else:
-        try_write(wr,':'+channel_struct[dst]['names'][1]+'!URCD@'+serv+' PART '+dst+'\n')
+        try_write(wr,':'+Src[channel_struct[dst]['names'][1]]+'!URCD@'+Mask[channel_struct[dst]['names'][1]]+' PART '+dst+'\n')
         channel_struct[dst]['names'].append(nick)
      channel_struct[dst]['names'].append(src)
    elif cmd == 'part': continue
@@ -692,6 +721,8 @@ while 1:
    src = buffer.split(':',2)[1].split('!',1)[0].lower()
    if len(src)>NICKLEN: continue
    active_clients[src] = now
+   Src[src] = buffer.split(':',2)[1].split('!',1)[0]
+   Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
    dst = buffer.split(':')[2].split('\n',1)[0].lower()
    if len(dst)>CHANNELLEN: continue
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
@@ -711,9 +742,9 @@ while 1:
      try_write(wr,buffer)
      if len(channel_struct[dst]['names'])>=CHANLIMIT:
       if nick != channel_struct[dst]['names'][0]:
-       try_write(wr,':'+channel_struct[dst]['names'][0]+'!URCD@'+serv+' PART '+dst+'\n')
+       try_write(wr,':'+Src[channel_struct[dst]['names'][0]]+'!URCD@'+Mask[channel_struct[dst]['names'][0]]+' PART '+dst+'\n')
       else:
-       try_write(wr,':'+channel_struct[dst]['names'][1]+'!URCD@'+serv+' PART '+dst+'\n')
+       try_write(wr,':'+Src[channel_struct[dst]['names'][1]]+'!URCD@'+Mask[channel_struct[dst]['names'][1]]+' PART '+dst+'\n')
        channel_struct[dst]['names'].append(nick)
     channel_struct[dst]['names'].append(src)
 
@@ -727,13 +758,18 @@ while 1:
      if cmd == '\x01' and dst in channels:
       try_write(wr,buffer)
       cmd = '\x00'
-   if src in active_clients.keys(): del active_clients[src]
+   if src in active_clients.keys():
+    del active_clients[src]
+    del Mask[src]
+    del Src[src]
 
   elif re_SERVER_KICK(buffer):
    cmd = buffer.split(':',2)[1].split('!',1)[0].lower()
    dst, src = re_SPLIT(buffer.lower(),4)[2:4]
    if len(cmd)>NICKLEN or len(src)>NICKLEN or len(dst)>CHANNELLEN: continue
    active_clients[cmd] = now
+   Src[src] = buffer.split(':',2)[1].split('!',1)[0]
+   Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
    if not dst in channel_struct.keys():
     if len(channel_struct.keys())>=CHANLIMIT:

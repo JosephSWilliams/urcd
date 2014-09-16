@@ -1,12 +1,12 @@
 #/usr/bin/env python
-from random randrange
+from random import randrange
 from time import time
 
 def taia96n_now():
  now = time()
  return {
   'sec':4611686018427387914L+long(now)+randrange(-8,8),
-  'nano':long(1000000000*(now%1)+randrange(0,512),
+  'nano':long(1000000000*(now%1)+randrange(0,512)),
 }
 
 def tai_pack(s): return str(
