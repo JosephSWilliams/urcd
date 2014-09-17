@@ -6,7 +6,13 @@ def taia96n_now():
  now = time()
  return {
   'sec':4611686018427387914L+long(now)+randrange(-8,8),
-  'nano':long(1000000000*(now%1)+randrange(0,512)),
+  'nano':randrange(0,4294967295L),
+
+# uncomment if you need nano second accuracy. i left
+# this optional to avoid clockskew leaks (thanks chi)
+#
+#  'nano':long(1000000000*(now%1)+randrange(0,512)),
+
 }
 
 def tai_pack(s): return str(

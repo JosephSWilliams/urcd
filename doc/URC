@@ -47,12 +47,6 @@ Advantages
     correct keys can discover this information. By default, all
     encrypted packets are padded to protect against other side channels.
 
--   TAIA96N is resistant to side channels by using random labels that
-    fall within a time parameter. This allows URC to require minimal
-    cache requirements for reliability and efficiency and prevent
-    the reusage of old messages (Replay Attacks) without compromising
-    a users time information. Admins should use accurate clocks.
-
 -   Security is priority - URC is written in a small amount of open
     source C and Python code. URC daemons only function inside of a
     chroot jail with only the privileges necessary to run. URC supports
@@ -168,7 +162,7 @@ CRYPTO_BOX1.
 Download and Install
 ====================
 
-    torify git clone git://URC666rourhz45bn.onion/urcd.git /usr/local/src/urcd
+    torify git clone git://cbadanhgoo6oamul.onion/urcd.git /usr/local/src/urcd
     cd /usr/local/src/urcd/
     less README
 
