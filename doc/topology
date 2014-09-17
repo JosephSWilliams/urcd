@@ -1,0 +1,35 @@
+/*
+    This document decribes the magick of URC routing.
+*/
+
+
+    A node will consist of a urchub that SHOULD accept public connections and a
+private URCd on localhost. Hosting a seperate public URCd is optional. IRC
+clients connect to a URCd, that acts as an IRC server by translating URC packets
+that travel a URC network of urchubs. When and IRC client sends a message to
+URCd, it converts it to a urchub format and broadcasts it across the network.
+There are a number of factors that ensure messages can remain as private as
+possible while mechanisms in urchub protocols allow noise to be filtered easily.
+Noise can be defined messages like spam, or messages from unverified sources, or
+unencrypted clients. If you are interested in cryptography and URC primitives
+then view doc/URC.
+
+
+
+
+
+            < >----< >------------< >----< >
+             |      |              |      |
+             |      |              |      |
+     < >----< >----< >            < >----< >
+             |  --             ----
+             |--            ----
+            < >-----------< >
+                                   /* example URC network */
+
+
+    In the above example, an IRC client sending a message to URCd, is able to
+reach every other IRC client connected to an URCd on any URC node. Messages
+sent from a URC node to a urchub, are broadcasted to each other urchub connected
+to it, and each correct IRC client once it is translated by URCd.
+
