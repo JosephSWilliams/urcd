@@ -15,21 +15,25 @@ unencrypted clients. If you are interested in cryptography and URC primitives
 then view doc/URC.
 
 
-
-
-
-            < >----< >------------< >----< >
-             |      |              |      |
-             |      |              |      |
-     < >----< >----< >            < >----< >
-             |  --             ----
-             |--            ----
-            < >-----------< >
+            <ano>----<ano>----------<tor>----<tor>
+             |        |              |        |
+             |        |              |        |
+   <ano>----<ano>----<ano>          <tor>----<tor>
+             |    -----            ---
+             |-----             ---
+            <i2p>------------<i2p>
                                    /* example URC network */
 
 
     In the above example, an IRC client sending a message to URCd, is able to
 reach every other IRC client connected to an URCd on any URC node. Messages
 sent from a URC node to a urchub, are broadcasted to each other urchub connected
-to it, and each correct IRC client once it is translated by URCd.
-
+to it, and each correct IRC client once it is translated by URCd. URC allows
+messages to seemlessly flow among multiple networks, such as Tor, i2p,
+Anonet, and other networks without additional software or configurations if
+there is at least one route between each client. A client connected to any URC
+node in the example above could send a message that would be available to each
+IRC client connected to another URC node. Every URC node using the URCd software
+suite has builtin protection mechanisms against flood, DoS/DDOS, and exploits.
+Countermeasures are taken in URC's timing, encryption, authentication, and
+signature algorithms to maximize privacy.
