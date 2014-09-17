@@ -65,11 +65,12 @@ Advantages
     Anonet, and other networks.
 
 -   URC's Taia96n implementation can easily be modified to provide
-    nano second accuracy. Taia96n is accurate to the second by default.
+    nano second accuracy. Taia96n is accurate to the second by default,
+    and then padded by a few seconds to prevent leaks of clockskew.
     Nano bytes in the default implementation are random to prevent leaks.
     Taia96n does not reveal time zone information. Using Taia96n
     is reliable for preventing replay attacks and allows packet
-    uniqueness and effecient caching.
+    uniqueness and effecient caching. Admins should use accurate clocks.
 
 URCLINE
 =======

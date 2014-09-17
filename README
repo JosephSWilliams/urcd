@@ -30,7 +30,7 @@ todo:
 
   add encrypted channels to urc2sd.
 
-install (recommended):
+install:
 
   # install dependencies, if you haven't already
   ./install-daemontools.sh
@@ -63,8 +63,16 @@ install (recommended):
   sleep 4
   svstat /service/urcd
 
-  ### see the hub2hub section below it is ###
-  ### recommended to connect to 3 urchubs ###
+CryptoServ (requires NaCl):
+  ln -s stdin.cryptoserv stdin
+
+hub2hub:
+  ### create your urchub
+  test -e /services/urcd-hub0/ || ./bin/add-urchub
+  ./bin/add-hublisten your.urcd.ano 6789 /service/urcd-hub0/socket/
+
+   ### add peers. i recommend three
+  ./bin/add-hubconnect peer.urcd.ano 6789 /service/urcd-hub0/socket/
 
 no censorship (security):
   URC networks are censorship resistant. i
@@ -87,11 +95,3 @@ no censorship (security):
     /ignore *!*@* ALL
     /ignore friend!*@* ALL UNIGNORE
     /ignore *!VERIFIED@* ALL UNIGNORE
-
-hub2hub:
-  test -e /services/urcd-hub0/ || ./bin/add-urchub
-  ./bin/add-hublisten your.urcd.ano 6789 /service/urcd-hub0/socket/
-  ./bin/add-hubconnect peer.urcd.ano 6789 /service/urcd-hub0/socket/
-
-CryptoServ (requires NaCl):
-  ln -s stdin.cryptoserv stdin
