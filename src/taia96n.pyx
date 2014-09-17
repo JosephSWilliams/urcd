@@ -11,7 +11,7 @@ def taia96n_now():
 # uncomment if you need nano second accuracy. i left
 # this optional to avoid clockskew leaks (thanks chi)
 #
-#  'nano':long(1000000000*(now%1)+500),
+#  'nano':long(1000000000*(now%1)+randrange(0,512)),
 
 }
 
