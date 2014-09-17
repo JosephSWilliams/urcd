@@ -14,6 +14,11 @@
 #include "tai_dec.h"
 #include "tai_inc.h"
 
+/*
+ there is an 8 minute replay window on bootstrap.
+ cache does not backup memory when process dies.
+*/
+
 main(int argc, char **argv)
 {
 
@@ -45,7 +50,6 @@ main(int argc, char **argv)
   float cached[256];
   bzero(cached,sizeof(cached));
   unsigned long timecached[256];
-  unsigned long noreplay = time(0L);
   for (i=0;i<256;++i) timecached[i] = time(0L);
 
   
@@ -63,15 +67,7 @@ main(int argc, char **argv)
       if (i<1) exit(2);
       n += i;
     }
-/*
-    if (noreplay) {  !!! (security) this needs to be fixed !!!
-      if (time(0L) - noreplay >= 512L) noreplay = 0L;
-      if (buffer[12]) {
-        if (write(1,"\4",1)<1) exit(3);
-        goto readbuffer;
-      }
-    }
-*/
+
     taia_now(ts);
     taia_pack(ts,ts);
 

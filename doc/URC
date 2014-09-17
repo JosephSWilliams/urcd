@@ -64,6 +64,13 @@ Advantages
 -   Scalability - URC can span multiple networks, such as TOR, i2p,
     Anonet, and other networks.
 
+-   URC's Taia96n implementation can easily be modified to provide
+    nano second accuracy. Taia96n is accurate to the second by default.
+    Nano bytes in the default implementation are random to prevent leaks.
+    Taia96n does not reveal time zone information. Using Taia96n
+    is reliable for preventing replay attacks and allows packet
+    uniqueness and effecient caching.
+
 URCLINE
 =======
 
