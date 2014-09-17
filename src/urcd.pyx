@@ -108,8 +108,8 @@ if URCDB:
  except: pass
 
  while len(Src) > CHANLIMIT*CHANLIMIT: del Src[Src.keys()[0]]
- while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
  while len(Mask) > CHANLIMIT*CHANLIMIT: del Mask[Mask.keys()[0]]
+ while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
  while len(active_clients) > CHANLIMIT*CHANLIMIT: del active_clients[active_clients.keys()[0]]
 
 def try_read(fd,buflen):
@@ -494,7 +494,7 @@ while 1:
    dst = re_SPLIT(buffer,2)[1].lower()
    if dst in channel_struct.keys():
     for src in channel_struct[dst]['names']:
-     try_write(wr,':'+serv+' 352 '+Nick+' '+dst+' '+Src[src]+' '+Mask[src]+' '+src+' '+src+' H :0 '+src+'\n')
+     try_write(wr,':'+serv+' 352 '+Nick+' '+dst+' '+Src[src]+' '+Mask[src]+' '+Src[src]+' '+Src[src]+' H :0 '+Src[src]+'\n')
    try_write(wr,':'+serv+' 315 '+Nick+' '+dst+' :RPL_ENDOFWHO\n')
 
   elif re_CLIENT_INVITE(buffer):
