@@ -46,10 +46,10 @@ signature algorithms to maximize privacy.
                            |
 <------.    ircclient      |
        |         *------> ircd <- urc2sd -.
-       v                                  |      ^
-  urchubstream -.                         |      |
-                |                         |      |
-  urcd -> urchub/urccache -> urchubstream +------*
+       v                                  |        ^
+  urchubstream -.                         |        |
+                |                         |        |
+  urcd -> urchub/urccache --------> urchubstream +-*
    |                                      |
    |   ircclient ---------> urcd -> urchub/urccache
    |                                      |
