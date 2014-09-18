@@ -3,7 +3,21 @@ URC
 Description
 ===========
 
-URC is a decentralized chat protocol aimed as a replacement for IRC.
+    An IRC style, private, security aware, open source project called URC.
+URC is supported by multiple daemons and programs in this suite for building,
+connecting, and/or bridging existing URC networks. If configured and understood
+properly, URC can be as easy as using the ircclient you favor, while being
+as private and secure as enterprise, military, and/or critical systems. In
+example, Alice can connect to her local URCd with her ircclient and listen to
+channels without anyone knowing she is present until she sends a message. If
+Alice sends Bob an encrypted private message while enjoying URC, the message
+will be delivered to Bob without anyone knowing exactly when Alice sent the
+message, to whom the message was delivered, the contents of the message, nor
+details, such as the size. URC can also support similar encrypted conferences
+in the password protected channels, or chat privately or publically among
+friends. The cryptography in URC also allows clients to verify who they are
+among other clients if necessary.
+
 
 Advantages
 ==========
@@ -64,13 +78,23 @@ Advantages
 -   Scalability - URC can span multiple networks, such as TOR, i2p,
     Anonet, and other networks.
 
--   URC's Taia96n implementation can easily be modified to provide
+-   Taia96n - URC's implementation can easily be modified to provide
     nano second accuracy. Taia96n is accurate to the second by default,
     and then padded by a few seconds to prevent leaks of clockskew.
     Nano bytes in the default implementation are random to prevent leaks.
     Taia96n does not reveal time zone information. Using Taia96n
     is reliable for preventing replay attacks and allows packet
-    uniqueness and effecient caching. Admins should use accurate clocks.
+    uniqueness and effecient caching. Admins should use accurate clocks,
+    for maximum security.
+
+-   No Trust - The URC protocol and supporting softwares take a different
+    approach to an often overlooked point of failure used on many crypto
+    and communication systems. URC does not need a third party to establish
+    private, and secure communications over a decentralized network. For
+    example, URC does not require, nor allow another server to verify the
+    authenticity of a client's messages, nor does the protocol require or
+    allow remote systems to overide or alter the policies on a local URCd.
+
 
 URCLINE
 =======

@@ -1,18 +1,21 @@
-urcd:
-  af_unix relay chat daemon and
-  af_unix relay chat daemon accessories...
-
-  for more information regarding this software
-  and the URC protocols, `less doc/URC'.
+URCd:
+ The most private, secure, open source, "Internet Relay Chat" style chat
+ network. The contents are softwares provide URC, an IRC-like protocol,
+ by providing a means to easily create, connect, and/or bridge existing URC
+ networks, where IRC clients might connect and chat among one another in an
+ IRC like environment, with a simple, evolved protocol, engineered for personal,
+ and secure communications, that is possible through a decentralized
+ peer-to-peer network by using advanced cryptographic techniques, with a simple
+ interface. 
 
 depends:
-  NaCl or libsodium, libtai, ucspi-tcp,
-  python(>=2.6), python-dev(>=2.6),
-  daemontools, sh, gcc
+ NaCl or libsodium, libtai, ucspi-tcp,
+ python(>=2.6), python-dev(>=2.6),
+ daemontools, sh, gcc
 
 recommends:
-  NaCl instead of libsodium,
-  cython(>=0.18.0)
+ NaCl instead of libsodium,
+ cython(>=0.18.0)
 
 todo:
   fix hostmasks in urcd
@@ -32,21 +35,21 @@ todo:
 
 install:
 
-  # install dependencies, if you haven't already
-  ./install-daemontools.sh
-  ./install-ucspi-tcp.sh
-  ./install-libtai.sh
+  # install dependencies, if you haven't already:
+   ./install-daemontools.sh
+   ./install-ucspi-tcp.sh
+   ./install-libtai.sh
 
-  # recommended over ./install-libsodium.sh
-  ./install-nacl.sh
+  # recommended over ./install-libsodium.sh:
+   ./install-nacl.sh
 
   useradd urcd
 
-  # OpenBSD
-  echo '-ftrampolines' > conf-cc
+  # OpenBSD:
+   echo '-ftrampolines' > conf-cc
 
-  # if python2.6
-  sed 's/\.7/.6/g' Make.sh | sh -v
+  # if python2.6:
+   sed 's/\.7/.6/g' Make.sh | sh -v
 
   # elif python2.7
   ./Make.sh
@@ -66,8 +69,9 @@ CryptoServ (requires NaCl):
   ln -s stdin.cryptoserv stdin
 
 hub2hub:
-  ### create your urchub
+  ### create your urchub, you only need to do this once
   test -e /services/urcd-hub0/ || ./bin/add-urchub
+
   ./bin/add-hublisten your.urcd.ano 6789 /service/urcd-hub0/socket/
 
    ### add peers. i recommend three
