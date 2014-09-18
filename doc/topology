@@ -6,7 +6,7 @@
     A node will consist of a urchub that SHOULD accept public connections and a
 private URCd on localhost. Hosting a seperate public URCd is optional. IRC
 clients connect to a URCd, that acts as an IRC server by translating URC packets
-that travel a URC network of urchubs. When and IRC client sends a message to
+that travel a URC network of urchubs. When an IRC client sends a message to
 URCd, it converts it to a urchub format and broadcasts it across the network.
 There are a number of factors that ensure messages can remain as private as
 possible while mechanisms in urchub protocols allow noise to be filtered easily.
@@ -26,7 +26,7 @@ then view doc/URC.
 
 
     In the above example, an IRC client sending a message to URCd, is able to
-reach every other IRC client connected to an URCd on any URC node. Messages
+reach every other IRC client connected to a URCd on any URC node. Messages
 sent from a URC node to a urchub, are broadcasted to each other urchub connected
 to it, and each correct IRC client once it is translated by URCd. URC allows
 messages to seemlessly flow among multiple networks, such as Tor, i2p,
@@ -37,3 +37,35 @@ IRC client connected to another URC node. Every URC node using the URCd software
 suite has builtin protection mechanisms against flood, DoS/DDOS, and exploits.
 Countermeasures are taken in URC's timing, encryption, authentication, and
 signature algorithms to maximize privacy.
+
+
+/* example program map */
+
+
+                       ircclient
+                           |
+<------.    ircclient      |
+       |         *------> ircd <- urc2sd -.
+       v                                  |      ^
+  urchubstream -.                         |      |
+                |                         |      |
+  urcd -> urchub/urccache -> urchubstream +------*
+   |                                      |
+   |   ircclient ---------> urcd -> urchub/urccache
+   |                                      |
+   *-> ircclient                    urchubstream
+   *-> ircclient                          |
+                                          v
+
+
+    The urchub is the cornerstone of any URC node. Data flows among all the hubs
+ on the network, and each packet reaches each node. URC does not restrict you
+from methods of communication. If you find that URC is difficult to traffic
+with your network and/or particular software, please complain so that *I* can
+fix it, or at least point you in the right direction. I make no guarantees,
+however URC has a history of little to no issues here.
+
+    URC's cache detects duplicate packets and instructs the hub to discard them.
+The cache communicates to the hub via pipe and the other URC programs use
+AF_UNIX, SOCK_DGRAM. Multiple protocols in the transport layer can carry URC
+packets between urchubs.

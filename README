@@ -58,9 +58,8 @@ install:
   $editor env/motd
 
   ln -s `pwd` /service/urcd
-  ./bin/add-urchub
 
-  sleep 4
+  echo "`pwd`/urc.db" > env/URCDB
   svstat /service/urcd
 
 CryptoServ (requires NaCl):
