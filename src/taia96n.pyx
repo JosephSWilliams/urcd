@@ -14,6 +14,12 @@ def taia96n_now():
 #  'sec':4611686018427387914L+long(now),
 #  'nano':long(1000000000*(now%1)+randrange(0,512)),
 
+# uncomment for djb style taia96n, with nano second
+# precision
+#
+#  'sec':4611686018427387914L+long(now),
+#  'nano':long(1000000000*(now%1)+500),
+
 }
 
 def tai_pack(s): return str(

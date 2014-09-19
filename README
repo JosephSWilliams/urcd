@@ -34,7 +34,6 @@ todo:
   add encrypted channels to urc2sd.
 
 install:
-
   # install dependencies, if you haven't already:
    ./install-daemontools.sh
    ./install-ucspi-tcp.sh

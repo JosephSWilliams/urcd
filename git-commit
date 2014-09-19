@@ -17,7 +17,6 @@ git add -f \
  db \
  contrib/ \
  doc/ \
- DONATE \
  stdin.cryptoserv
 
 TZ=UTC git commit --date="`date -u +'%s'`"
