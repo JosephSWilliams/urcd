@@ -197,9 +197,7 @@ def sock_close(sn,sf):
  except: pass
  if sn:
   if URCDB:
-   for dst in channels:
-    if dst in channel_struct.keys() and nick in channel_struct[dst]['names']:
-     channel_struct[dst]['names'].remove(nick)
+   for dst in channels: channel_struct[dst]['names'].remove(nick)
    db['channel_struct'] = channel_struct
    db['active_clients'] = active_clients
    db['Mask'] = Mask
@@ -334,12 +332,16 @@ while 1:
  del names
 
  if URCDB and now - sync >= TIMEOUT:
+  if not PRESENCE:
+   for dst in channels: channel_struct[dst]['names'].remove(nick)
   db['channel_struct'] = channel_struct
   db['active_clients'] = active_clients
   db['Mask'] = Mask
   db['Src'] = Src
   db.sync()
   sync = now
+  if not PRESENCE:
+   for dst in channels: channel_struct[dst]['names'].append(nick)
 
  if not client_revents(0):
   if now - seen >= TIMEOUT:
@@ -362,7 +364,7 @@ while 1:
     if client_revents(0): sock_close(7,0)
     time.sleep(1)
    if byte == '\n': break
-   if byte != '\r' and len(buffer)<768: buffer += byte
+   if byte != '\r' and len(buffer)<512: buffer += byte ### RFC IRC MTU 512 ###
   buffer = re_CHATZILLA('',re_MIRC('NICK ',buffer)) ### workaround ChatZilla and mIRC ###
 
   if re_CLIENT_PASS(buffer):
@@ -584,8 +586,7 @@ while 1:
 
   ### CryptoServ ###
   if len(buffer)<2+12+4+8: continue
-  if not ord(buffer[0]) and not ord(buffer[1]):
-   if not re_SERVER_CRYPTOSERV_NOTICE(buffer[2+12+4+8:]): continue
+  if re_SERVER_CRYPTOSERV_NOTICE(buffer[2+12+4+8:]) and (ord(buffer[0])|ord(buffer[1])): continue
 
   ### URCSIGN ###
   if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
