@@ -42,6 +42,7 @@ re_CLIENT_USER = re.compile('^USER ',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_CRYPTOSERV_NOTICE = re.compile('^:CryptoServ!URCD@service NOTICE [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
 re_SERVER_JOIN = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
 re_SERVER_QUIT = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
 re_SERVER_KICK = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
@@ -580,6 +581,11 @@ while 1:
  while server_revents(0) and not client_revents(0):
 
   AUTH, buffer = "", try_read(sd,2+12+4+8+1024)
+
+  ### CryptoServ ###
+  if len(buffer)<2+12+4+8: continue
+  if not ord(buffer[0]) and not ord(buffer[1]):
+   if not re_SERVER_CRYPTOSERV_NOTICE(buffer[2+12+4+8:]): continue
 
   ### URCSIGN ###
   if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':

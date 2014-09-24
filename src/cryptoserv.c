@@ -364,7 +364,7 @@ main(int argc, char *argv[])
      }
      memcpy(buffer0,"PASS ",5);
      memcpy(buffer0+5+192,"\n",1);
-     for (i=5;i<192;++i) buffer0[i]='0';
+     for (i=0;i<192;++i) buffer0[5+i]='0';
      if (write(1,buffer0,5+192+1)<=0) exit(11);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
@@ -382,7 +382,7 @@ main(int argc, char *argv[])
      }
      memcpy(buffer0,"PASS ",5);
      memcpy(buffer0+5+192,"\n",1);
-     for (i=5;i<192;++i) buffer0[i]='0';
+     for (i=0;i<192;++i) buffer0[5+i]='0';
      if (write(1,buffer0,5+192+1)<=0) exit(12);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
