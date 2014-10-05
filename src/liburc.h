@@ -8,6 +8,11 @@
 #include <fcntl.h>
 #include <tai.h>
 
+/* security: enforce compatibility and santize malicious configurations */
+#if crypto_sign_BYTES != 64
+exit(255);
+#endif
+
 void setlen(unsigned char *b, int blen) {
  b[0] = blen / 256;
  b[1] = blen % 256;
@@ -49,10 +54,10 @@ int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
 }
 
 int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
- unsigned char sm[2+12+4+8+1024+crypto_sign_BYTES];
+ unsigned char sm[2+12+4+8+1024+64];
  unsigned long long smlen;
  blen &= 1023; /* security: prevent overflow */
- setlen(p,blen+crypto_sign_BYTES);
+ setlen(p,blen+64);
  taia96n(p+2);
  p[12]=1;
  p[13]=0;
