@@ -21,8 +21,9 @@ exit(255);
 #endif
 
 void setlen(unsigned char *b, int blen) {
- b[0] = blen / 256;
- b[1] = blen % 256;
+ int len = blen & 1023; /* security: prevent overflow */
+ b[0] = len / 256;
+ b[1] = len % 256;
 }
 
 /* security: strong entropy not guaranteed */
