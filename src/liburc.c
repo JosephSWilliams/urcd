@@ -63,7 +63,7 @@ PyObject *pyurcsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  if ((!PyArg_ParseTupleAndKeywords(
   args,
   kw,
-  "|s#s#:urcsign_fmt",
+  "|s#s#:urcsecretbox_fmt",
   (char **)kwlist,
   &b,
   &bsize,
@@ -75,8 +75,8 @@ PyObject *pyurcsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+16);
 }
 
-/* hack __init__ */
-PyObject *pyliburc(PyObject *self) { return Py_BuildValue("i", -1); }
+/* ImportError: workaround dummy init function (initliburc) */
+PyObject *pyliburc(PyObject *self) { return Py_BuildValue("i", 0); }
 
 static PyMethodDef Module_methods[] = {
  { "liburc",           pyliburc,           METH_NOARGS },
