@@ -15,7 +15,7 @@ PyObject *pyurchub_fmt(PyObject *self, PyObject *args, PyObject *kw) {
    &bsize
   )) return Py_BuildValue("i", -1);
   bsize &= 1023; /* security: prevent overflow */
-  urchub_fmt(p,b,bsize);
+  if (urchub_fmt(p,b,bsize) == -1) return Py_BuildValue("i", -1);
   return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize);
 }
 
@@ -37,7 +37,7 @@ PyObject *pyurcsign_fmt(PyObject *self, PyObject *args, PyObject *kw) {
    &sksize
   )) || (sksize != crypto_sign_SECRETKEYBYTES)) return Py_BuildValue("i", -1);
   bsize &= 1023; /* security: prevent overflow */
-  urcsign_fmt(p,b,bsize,sk);
+  if (urcsign_fmt(p,b,bsize,sk) == -1) return Py_BuildValue("i", -1);
   return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+crypto_sign_BYTES);
 }
 

@@ -15,12 +15,12 @@ void setlen(unsigned char *b, int blen) {
 
 /* security: strong entropy not guaranteed */
 void randombytes(unsigned char *b, int blen) {
-  int i;
-  struct timeval now;
-  for (i=0;i<blen;++i) {
-   gettimeofday(&now,'\x00');
-   srand(now.tv_usec);
-   b[i] = rand() & 255;
+ int i;
+ struct timeval now;
+ for (i=0;i<blen;++i) {
+  gettimeofday(&now,'\x00');
+  srand(now.tv_usec);
+  b[i] = rand() & 255;
  }
 }
 
@@ -44,6 +44,7 @@ int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
  p[15]=0;
  randombytes(p+2+12+4,8);
  memmove(p+2+12+4+8,b,blen);
+ return 0;
 }
 
 int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
