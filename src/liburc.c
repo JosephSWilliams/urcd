@@ -9,6 +9,9 @@ exit(255);
 exit(255);
 #endif
 
+#define URC_MTU_MASK 1023
+#define IRC_MTU_MASK 511
+
 PyObject *pyurchub_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  unsigned char p[2+12+4+8+1024];
  char *b;
@@ -22,7 +25,7 @@ PyObject *pyurchub_fmt(PyObject *self, PyObject *args, PyObject *kw) {
   &b,
   &bsize
  )) return Py_BuildValue("i", -1);
- bsize &= 1023; /* security: prevent overflow */
+ if (bsize > IRC_MTU_MASK) return Py_BuildValue("i", -1);
  if (urchub_fmt(p,b,bsize) == -1) return Py_BuildValue("i", -1);
  return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize);
 }
@@ -44,7 +47,7 @@ PyObject *pyurcsign_fmt(PyObject *self, PyObject *args, PyObject *kw) {
   &sk,
   &sksize
  )) || (sksize != 64)) return Py_BuildValue("i", -1);
- bsize &= 1023; /* security: prevent overflow */
+ if (bsize > IRC_MTU_MASK) return Py_BuildValue("i", -1);
  if (urcsign_fmt(p,b,bsize,sk) == -1) return Py_BuildValue("i", -1);
  return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+64);
 }
@@ -70,7 +73,7 @@ PyObject *pyurcsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
   &sk,
   &sksize
  )) || (sksize != 32)) return Py_BuildValue("i", -1);
- bsize &= 1023; /* security: prevent overflow */
+ if (bsize > IRC_MTU_MASK) return Py_BuildValue("i", -1);
  if (urcsecretbox_fmt(p,b,bsize,sk) == -1) return Py_BuildValue("i", -1);
  return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+16);
 }

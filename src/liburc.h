@@ -20,10 +20,14 @@ exit(255);
 exit(255);
 #endif
 
-void setlen(unsigned char *b, int blen) {
- int len = blen & 1023; /* security: prevent overflow */
- b[0] = len / 256;
- b[1] = len % 256;
+#define URC_MTU_MASK 1023
+#define IRC_MTU_MASK 511
+
+int setlen(unsigned char *b, int blen) {
+ if (blen > URC_MTU_MASK) return -1;
+ b[0] = blen / 256;
+ b[1] = blen % 256;
+ return 0;
 }
 
 /* security: strong entropy not guaranteed */
@@ -49,8 +53,8 @@ void taia96n(unsigned char *ts) {
 }
 
 int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
- blen &= 1023; /* security: prevent overflow */
- setlen(p,blen);
+ if (blen > IRC_MTU_MASK) return -1;
+ if (setlen(p,blen) == -1) return -1;
  taia96n(p+2);
  p[12]=0;
  p[13]=0;
@@ -62,10 +66,10 @@ int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
 }
 
 int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
+ if (blen > IRC_MTU_MASK) return -1;
  unsigned char sm[2+12+4+8+1024+64];
  unsigned long long smlen;
- blen &= 1023; /* security: prevent overflow */
- setlen(p,blen+64);
+ if (setlen(p,blen+64) == -1) return -1;
  taia96n(p+2);
  p[12]=1;
  p[13]=0;
@@ -80,12 +84,12 @@ int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk)
 }
 
 int urcsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
+ if (blen > IRC_MTU_MASK) return -1;
  unsigned char m[1024*2];
  unsigned char c[1024*2];
  bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
- blen &= 1023; /* security: prevent overflow */
- setlen(p,blen+16);
+ if (setlen(p,blen+16) == -1) return -1;
  taia96n(p+2);
  p[12]=2;
  p[13]=0;
