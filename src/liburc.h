@@ -36,6 +36,7 @@ void taia96n(unsigned char *ts) {
 }
 
 int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
+ blen &= 1023; /* security: prevent overflow */
  setlen(p,blen);
  taia96n(p+2);
  p[12]=0;
@@ -50,6 +51,7 @@ int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
 int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
  unsigned char sm[2+12+4+8+1024+crypto_sign_BYTES];
  unsigned long long smlen;
+ blen &= 1023; /* security: prevent overflow */
  setlen(p,blen+crypto_sign_BYTES);
  taia96n(p+2);
  p[12]=1;
