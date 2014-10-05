@@ -65,6 +65,9 @@ gcc `cat conf-cc` $src/ucspi-server2client.c -o ucspi-server2client || exit 1
 gcc `cat conf-cc` $src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 gcc `cat conf-cc` $src/keypair.c -o keypair -l $nacl $randombytes || exit 1
 gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l $nacl $randombytes || exit 1
+
+gcc -O2 -fPIC -DPIC $src/liburc.c -shared -I $PYTHON_HEADERS -o liburc.so -l python2.7 -l tai -l $nacl || exit 1
+
 gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $PYTHON_HEADERS -o nacltaia.so -l python2.7 -l tai -l $nacl $randombytes || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
