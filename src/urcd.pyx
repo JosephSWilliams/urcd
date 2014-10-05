@@ -466,7 +466,7 @@ while 1:
   elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
    try:
     dst, cmd, msg = re_SPLIT(buffer,4)[1:4]
-    msg = crypto_hash_sha512(msg)[32:64] if not msg in ['x','?'] else str()
+    msg = crypto_hash_sha512(msg+dst.lower())[32:64] if not msg in ['x','?'] else str()
    except: dst, cmd, msg = re_SPLIT(buffer,2)[1],str(),str()
    if cmd == '+k' and len(msg)==32 and dst.lower() in channels and len(urcsecretboxdb.keys())<=CHANLIMIT:
     urcsecretboxdb[dst.lower()], URCSECRETBOXDIR = msg, 1
@@ -514,7 +514,7 @@ while 1:
   elif re_CLIENT_JOIN(buffer):
    try:
     dst_list = re_SPLIT(buffer,3)[1].lower().split(',')
-    msg_list = re_SPLIT(buffer,3)[2].lower().split(',')
+    msg_list = re_SPLIT(buffer,3)[2].split(',')
    except: msg_list = list()
    if len(dst_list)>len(msg_list):
     for dst in dst_list[len(msg_list):]: msg_list.append(str())
@@ -529,7 +529,7 @@ while 1:
     channels.append(dst)
     if msg and not msg in ['x','?']:
      URCSECRETBOXDIR = 1
-     urcsecretboxdb[dst.lower()] = crypto_hash_sha512(msg)[32:64]
+     urcsecretboxdb[dst.lower()] = crypto_hash_sha512(msg+dst)[32:64]
     if not dst in channel_struct.keys(): channel_struct[dst] = dict(
      names = collections.deque([],CHANLIMIT),
      topic = None,
