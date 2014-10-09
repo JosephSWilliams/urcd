@@ -1,6 +1,6 @@
 URCd:
  The most private, secure, open source, "Internet Relay Chat" style chat
- network. The contents are softwares provide URC, an IRC-like protocol,
+ network. The contents are softwares providing URC, an IRC-like protocol,
  by providing a means to easily create, connect, and/or bridge existing URC
  networks, where IRC clients might connect and chat among one another in an
  IRC like environment, with a simple, evolved protocol, engineered for personal,
@@ -18,10 +18,6 @@ recommends:
  cython(>=0.18.0)
 
 todo:
-  fix hostmasks in urcd
-
-  create URCHUB/URCLOCAL
-
   consider crypto modes for cryptoserv
 
   implement ban/except for clients without regex ignore.
