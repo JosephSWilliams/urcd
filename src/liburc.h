@@ -32,13 +32,22 @@ int setlen(unsigned char *b, int blen) {
 
 /* security: strong entropy not guaranteed */
 void randombytes(unsigned char *b, int blen) {
- int i;
- struct timeval now;
- for (i=0;i<blen;++i) {
-  gettimeofday(&now,'\x00');
-  srand(now.tv_usec);
-  b[i] = rand() & 255;
- }
+ /*
+  static int devurandomfd = -1;
+  if (devurandomfd == -1) open("/dev/urandom",O_RDONLY);
+  if (devurandomfd == -1) {
+ */
+  int i;
+  struct timeval now;
+  for (i=0;i<blen;++i) {
+   gettimeofday(&now,'\x00');
+   srand(now.tv_usec);
+   b[i] = rand() & 255;
+  }
+ /*
+  }
+  else read(devurandomfd,b,blen);
+ */
 }
 
 void taia96n(unsigned char *ts) {

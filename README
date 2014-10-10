@@ -1,12 +1,8 @@
 URCd:
- The most private, secure, open source, "Internet Relay Chat" style chat
- network. The contents are softwares providing URC, an IRC-like protocol,
- by providing a means to easily create, connect, and/or bridge existing URC
- networks, where IRC clients might connect and chat among one another in an
- IRC like environment, with a simple, evolved protocol, engineered for personal,
- and secure communications, that is possible through a decentralized
- peer-to-peer network by using advanced cryptographic techniques, with a simple
- interface. 
+ "10,000 genomes of human lizard hybrid soldiers being sent server to server
+ between Angola and Luxembourg" - Retard
+
+ if you want a real description view doc/*
 
 depends:
  NaCl or libsodium, libtai, ucspi-tcp,
@@ -18,16 +14,16 @@ recommends:
  cython(>=0.18.0)
 
 todo:
-  consider crypto modes for cryptoserv
+ consider crypto modes for cryptoserv
 
-  implement ban/except for clients without regex ignore.
+ implement ban/except for clients without regex ignore.
 
-  add a global hostmask option for users sending messages into
-  urc from an ircnet for urc2sd.
+ add a global hostmask option for users sending messages into
+ urc from an ircnet for urc2sd.
 
-  implement presence notifications for the ircd side in urc2sd.
+ implement presence notifications for the ircd side in urc2sd.
 
-  add encrypted channels to urc2sd.
+ add encrypted channels to urc2sd.
 
 install:
   # install dependencies, if you haven't already:
@@ -61,35 +57,35 @@ install:
   svstat /service/urcd
 
 CryptoServ (requires NaCl):
-  ln -s stdin.cryptoserv stdin
+ ln -s stdin.cryptoserv stdin
 
 hub2hub:
-  ### create your urchub, you only need to do this once
-  test -e /services/urcd-hub0/ || ./bin/add-urchub
+ ### create your urchub, you only need to do this once
+ test -e /services/urcd-hub0/ || ./bin/add-urchub
 
-  ./bin/add-hublisten your.urcd.ano 6789 /service/urcd-hub0/socket/
+ ./bin/add-hublisten your.urcd.ano 6789 /service/urcd-hub0/socket/
 
-   ### add peers. i recommend three
-  ./bin/add-hubconnect peer.urcd.ano 6789 /service/urcd-hub0/socket/
+ ### add peers. i recommend three
+ ./bin/add-hubconnect peer.urcd.ano 6789 /service/urcd-hub0/socket/
 
 no censorship (security):
-  URC networks are censorship resistant. i
-  recommend URCSIGN and/or URCCRYPTOBOX to
-  ignore spam and trolls. URCd will replace
-  the user field with VERIFIED for users with
-  valid authentication or signature verification.
-  All other user fields will be replaced with
-  URCD. e.g.:
+ URC networks are censorship resistant. i
+ recommend URCSIGN and/or URCCRYPTOBOX to
+ ignore spam and trolls. URCd will replace
+ the user field with VERIFIED for users with
+ valid authentication or signature verification.
+ All other user fields will be replaced with
+ URCD. e.g.:
 
-  nick!URCD@server
-  nick!VERIFIED@server
+ nick!URCD@server
+ nick!VERIFIED@server
 
-  irssi ("ban/except"):
-    /ignore *!*@* ALL
-    /ignore -except friend!*@* ALL
-    /ignore -except *!VERIFIED@* ALL
+ irssi ("ban/except"):
+  /ignore *!*@* ALL
+  /ignore -except friend!*@* ALL
+  /ignore -except *!VERIFIED@* ALL
 
-  xchat ("ban/except"):
-    /ignore *!*@* ALL
-    /ignore friend!*@* ALL UNIGNORE
-    /ignore *!VERIFIED@* ALL UNIGNORE
+ xchat ("ban/except"):
+  /ignore *!*@* ALL
+  /ignore friend!*@* ALL UNIGNORE
+  /ignore *!VERIFIED@* ALL UNIGNORE
