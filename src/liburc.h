@@ -88,8 +88,19 @@ int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk)
  memmove(p+2+12+4+8,b,blen);
  if (crypto_sign(sm,&smlen,p,2+12+4+8+blen,sk) == -1) return -1;
  memmove(p+2+12+4+8+blen,sm,32);
- memmove(p+2+12+4+8+blen+32,sm+32+blen,32);
+ memmove(p+2+12+4+8+blen+32,sm+smlen-32,32);
  return 0;
+}
+
+int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
+ if (plen > URC_MTU_MASK) return -1;
+ unsigned char sm[32+2+12+4+8+1024+32];
+ unsigned char m[32+2+12+4+8+1024+32];
+ unsigned long long mlen;
+ memmove(sm,p+plen-64,32);
+ memmove(sm+32,p,plen-64);
+ memmove(sm+32+plen-64,p+plen-32,32);
+ return crypto_sign_open(m,&mlen,(const unsigned char *)sm,plen,(const unsigned char *)pk);
 }
 
 int urcsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
