@@ -55,7 +55,7 @@ PyObject *pyurcsign_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+64);
 }
 
-PyObject *pyurcsign_verify(PyObject *self, PyObject *args, PyObject *kw){
+PyObject *pyurcsign_verify(PyObject *self, PyObject *args, PyObject *kw) {
  static const char *kwlist[] = {"p", "pk", 0};
  unsigned char *p, *pk;
  Py_ssize_t psize=0, pksize=0;

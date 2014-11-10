@@ -20,6 +20,7 @@ exit(255);
 exit(255);
 #endif
 
+#define URC_MTU 2+12+4+8+1024
 #define URC_MTU_MASK 1023
 #define IRC_MTU_MASK 511
 
