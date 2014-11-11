@@ -122,3 +122,15 @@ int urcsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
  memmove(p+2+12+4+8,c+16,blen+16);
  return 0;
 }
+
+int urcsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned char *sk) {
+ if (plen > URC_MTU) return -1;
+ unsigned char m[1024*2];
+ unsigned char c[1024*2];
+ bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
+ bzero(c,16);
+ memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
+ if (crypto_secretbox_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
+ memmove(b,m+32,-2-4-8+plen-16);
+ return 0;
+}

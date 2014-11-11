@@ -12,6 +12,7 @@ exit(255);
 exit(255);
 #endif
 
+#define URC_MTU 2+12+4+8+1024
 #define URC_MTU_MASK 1023
 #define IRC_MTU_MASK 511
 
@@ -74,16 +75,12 @@ PyObject *pyurcsign_verify(PyObject *self, PyObject *args, PyObject *kw) {
 }
 
 PyObject *pyurcsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char p[2+12+4+8+1024+16]; 
- unsigned char m[1024*2];
- unsigned char c[1024*2];
+ unsigned char p[2+12+4+8+1024+16];
  char *b;
  char *sk;
  Py_ssize_t bsize = 0;
  Py_ssize_t sksize = 0;
  static const char *kwlist[] = {"b","sk",0};
- bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
- bzero(c,16);
  if ((!PyArg_ParseTupleAndKeywords(
   args,
   kw,
@@ -99,15 +96,38 @@ PyObject *pyurcsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+16);
 }
 
+PyObject *pyurcsecretbox_open(PyObject *self, PyObject *args, PyObject *kw) {
+ unsigned char b[1024];
+ char *p;
+ char *sk;
+ Py_ssize_t psize = 0;
+ Py_ssize_t sksize = 0;
+ static const char *kwlist[] = {"p","sk",0};
+ if ((!PyArg_ParseTupleAndKeywords(
+  args,
+  kw,
+  "|s#s#:urcsecretbox_open",
+  (char **)kwlist,
+  &p,
+  &psize,
+  &sk,
+  &sksize
+ )) || (sksize != 32)) return Py_BuildValue("i", -1);
+ if (psize > URC_MTU) return Py_BuildValue("i", -1);
+ if (urcsecretbox_open(b,p,psize,sk) == -1) return Py_BuildValue("i", -1);
+ return PyBytes_FromStringAndSize((char *)b, -2-12-4-8+psize-16);
+}
+
 /* ImportError: workaround dummy init function (initliburc) */
 PyObject *pyliburc(PyObject *self) { return Py_BuildValue("i", 0); }
 
 static PyMethodDef Module_methods[] = {
- { "liburc",           pyliburc,           METH_NOARGS },
- { "urchub_fmt",       pyurchub_fmt,       METH_VARARGS|METH_KEYWORDS},
- { "urcsign_fmt",      pyurcsign_fmt,      METH_VARARGS|METH_KEYWORDS},
- { "urcsign_verify",   pyurcsign_verify,   METH_VARARGS|METH_KEYWORDS},
- { "urcsecretbox_fmt", pyurcsecretbox_fmt, METH_VARARGS|METH_KEYWORDS},
+ { "liburc",            pyliburc,            METH_NOARGS },
+ { "urchub_fmt",        pyurchub_fmt,        METH_VARARGS|METH_KEYWORDS},
+ { "urcsign_fmt",       pyurcsign_fmt,       METH_VARARGS|METH_KEYWORDS},
+ { "urcsign_verify",    pyurcsign_verify,    METH_VARARGS|METH_KEYWORDS},
+ { "urcsecretbox_fmt",  pyurcsecretbox_fmt,  METH_VARARGS|METH_KEYWORDS},
+ { "urcsecretbox_open", pyurcsecretbox_open, METH_VARARGS|METH_KEYWORDS},
  { NULL, NULL}
 };
 
@@ -116,3 +136,4 @@ void initurchub_fmt(){ (void) Py_InitModule("urchub_fmt", Module_methods); }
 void initurcsign_fmt(){ (void) Py_InitModule("urcsign_fmt", Module_methods); }
 void initurcsign_verify(){ (void) Py_InitModule("urcsign_verify", Module_methods); }
 void initurcsecretbox_fmt(){ (void) Py_InitModule("urcsecretbox_fmt", Module_methods); }
+void initurcsecretbox_open(){ (void) Py_InitModule("urcsecretbox_open", Module_methods); }
