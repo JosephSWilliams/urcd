@@ -66,9 +66,9 @@ PyObject *pyurcsign_verify(PyObject *self, PyObject *args, PyObject *kw) {
   kw,
   "|s#s#:urcsign_verify",
   (char **)kwlist,
-  (char **)&p,
+  &p,
   &psize,
-  (char **)&pk,
+  &pk,
   &pksize
  )) return Py_BuildValue("i", -1);
  if (pksize != 32) return Py_BuildValue("i", -1);
