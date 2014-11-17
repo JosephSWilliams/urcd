@@ -17,7 +17,8 @@ git add -f \
  db \
  contrib/ \
  doc/ \
- stdin.cryptoserv
+ stdin.cryptoserv \
+ COPYRIGHT
 
 TZ=UTC git commit --date="`date -u +'%s'`"
 test -x /usr/lib/git-core/git-update-server-info && /usr/lib/git-core/git-update-server-info
