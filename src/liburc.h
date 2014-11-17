@@ -9,13 +9,13 @@
 
 /* security: enforce compatibility and santize malicious configurations */
 #if crypto_secretbox_BOXZEROBYTES != 16
-exit(255);
+ exit(255);
 #endif
 #if crypto_secretbox_ZEROBYTES != 32
-exit(255);
+ exit(255);
 #endif
 #if crypto_sign_BYTES != 64
-exit(255);
+ exit(255);
 #endif
 
 #define URC_MTU 1024

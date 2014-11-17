@@ -3,13 +3,13 @@
 
 /* security: enforce compatibility and santize malicious configurations */
 #if crypto_sign_SECRETKEYBYTES != 64
-exit(255);
+ exit(255);
 #endif
 #if crypto_sign_PUBLICKEYBYTES != 32
-exit(255);
+ exit(255);
 #endif
 #if crypto_sign_BYTES != 64
-exit(255);
+ exit(255);
 #endif
 
 #define URC_MTU 1024
