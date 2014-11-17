@@ -27,6 +27,8 @@ todo:
 
  add encrypted channels to urc2sd.
 
+ make kat noise
+
 install:
   # install dependencies, if you haven't already:
    ./install-daemontools.sh
