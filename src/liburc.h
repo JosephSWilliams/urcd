@@ -49,7 +49,6 @@ void randombytes(unsigned char *b, int blen) {
 }
 
 void taia96n(unsigned char *ts) {
- int i;
  struct timeval now;
  tai_now(ts);
  tai_pack(ts,ts);
@@ -129,6 +128,31 @@ int urcsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned cha
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
  if (crypto_secretbox_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
  memmove(b,m+32,-2-4-8+plen-16);
+ return 0;
+}
+
+int urcsignsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *ssk, unsigned char *csk) {
+ if (blen > IRC_MTU) return -1;
+ unsigned char sm[2+12+4+8+1024+64];
+ unsigned char m[1024*2];
+ unsigned char c[1024*2];
+ unsigned long long smlen;
+ if (setlen(p,blen+64) == -1) return -1;
+ taia96n(p+2);
+ p[12]=3;
+ p[13]=0;
+ p[14]=0;
+ p[15]=0;
+ randombytes(p+2+12+4,8);
+ memmove(p+2+12+4+8,b,blen);
+ if (crypto_sign(sm,&smlen,p,2+12+4+8+blen,ssk) == -1) return -1;
+ memmove(p+2+12+4+8+blen,sm,32);
+ memmove(p+2+12+4+8+blen+32,sm+smlen-32,32);
+ bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
+ bzero(c,16);
+ memmove(m+32,p+2+12+4+8,blen+64);
+ if (crypto_secretbox(c,m,32+blen,(const unsigned char *)p+2,(const unsigned char *)csk) == -1) return -1;
+ memmove(p+2+12+4+8,c+16,blen+64+16);
  return 0;
 }
 
