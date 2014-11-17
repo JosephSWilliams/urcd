@@ -150,6 +150,49 @@ PyObject *pyurcsignsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+64+16);
 }
 
+PyObject *pyurcsignsecretbox_open(PyObject *self, PyObject *args, PyObject *kw) {
+ unsigned char b[1024];
+ char *p;
+ char *csk;
+ Py_ssize_t psize = 0;
+ Py_ssize_t csksize = 0;
+ static const char *kwlist[] = {"p","csk",0};
+ if (!PyArg_ParseTupleAndKeywords(
+  args,
+  kw,
+  "|s#s#:urcsignsecretbox_open",
+  (char **)kwlist,
+  &p,
+  &psize,
+  &csk,
+  &csksize
+ )) return Py_BuildValue("i", -1);
+ if (csksize != 32) return Py_BuildValue("i", -1);
+ if (psize > URC_MTU) return Py_BuildValue("i", -1);
+ if (urcsignsecretbox_open(b,p,psize,csk) == -1) return Py_BuildValue("i", -1);
+ return PyBytes_FromStringAndSize((char *)b, psize-16);
+}
+
+PyObject *pyurcsignsecretbox_verify(PyObject *self, PyObject *args, PyObject *kw) {
+ unsigned char *p;
+ unsigned char *pk;
+ Py_ssize_t psize=0, pksize=0;
+ static const char *kwlist[] = {"p", "pk", 0};
+ if (!PyArg_ParseTupleAndKeywords(
+  args,
+  kw,
+  "|s#s#:urcsignsecretbox_verify",
+  (char **)kwlist,
+  &p,
+  &psize,
+  &pk,
+  &pksize
+ )) return Py_BuildValue("i", -1);
+ if (pksize != 32) return Py_BuildValue("i", -1);
+ if (urcsignsecretbox_verify(p,psize,pk) == -1) return Py_BuildValue("i", -1);
+ return Py_BuildValue("i", 0);
+}
+
 PyObject *pyurccryptobox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  unsigned char p[1024];
  char *b;
@@ -210,16 +253,17 @@ PyObject *pyurccryptobox_open(PyObject *self, PyObject *args, PyObject *kw) {
 PyObject *pyliburc(PyObject *self) { return Py_BuildValue("i", 0); }
 
 static PyMethodDef Module_methods[] = {
- { "liburc",               pyliburc,                 METH_NOARGS },
- { "urchub_fmt",           pyurchub_fmt,             METH_VARARGS|METH_KEYWORDS},
- { "urcsign_fmt",          pyurcsign_fmt,            METH_VARARGS|METH_KEYWORDS},
- { "urcsign_verify",       pyurcsign_verify,         METH_VARARGS|METH_KEYWORDS},
- { "urcsecretbox_fmt",     pyurcsecretbox_fmt,       METH_VARARGS|METH_KEYWORDS},
- { "urcsecretbox_open",    pyurcsecretbox_open,      METH_VARARGS|METH_KEYWORDS},
- { "urccryptobox_fmt",     pyurccryptobox_fmt,       METH_VARARGS|METH_KEYWORDS},
- { "urccryptobox_open",    pyurccryptobox_open,      METH_VARARGS|METH_KEYWORDS},
- { "urcsignsecretbox_fmt", pyurcsignsecretbox_fmt,   METH_VARARGS|METH_KEYWORDS},
-// { "urcsignsecretbox_open", pyurcsignsecretbox_open, METH_VARARGS|METH_KEYWORDS},
+ { "liburc",                  pyliburc,                  METH_NOARGS },
+ { "urchub_fmt",              pyurchub_fmt,              METH_VARARGS|METH_KEYWORDS},
+ { "urcsign_fmt",             pyurcsign_fmt,             METH_VARARGS|METH_KEYWORDS},
+ { "urcsign_verify",          pyurcsign_verify,          METH_VARARGS|METH_KEYWORDS},
+ { "urcsecretbox_fmt",        pyurcsecretbox_fmt,        METH_VARARGS|METH_KEYWORDS},
+ { "urcsecretbox_open",       pyurcsecretbox_open,       METH_VARARGS|METH_KEYWORDS},
+ { "urcsignsecretbox_fmt",    pyurcsignsecretbox_fmt,    METH_VARARGS|METH_KEYWORDS},
+ { "urcsignsecretbox_open",   pyurcsignsecretbox_open,   METH_VARARGS|METH_KEYWORDS},
+ { "urcsignsecretbox_verify", pyurcsignsecretbox_verify, METH_VARARGS|METH_KEYWORDS},
+ { "urccryptobox_fmt",        pyurccryptobox_fmt,        METH_VARARGS|METH_KEYWORDS},
+ { "urccryptobox_open",       pyurccryptobox_open,       METH_VARARGS|METH_KEYWORDS},
  { NULL, NULL}
 };
 
@@ -232,4 +276,4 @@ void initurcsecretbox_open(){ (void) Py_InitModule("urcsecretbox_open", Module_m
 void initurccryptobox_fmt(){ (void) Py_InitModule("urccryptobox_fmt", Module_methods); }
 void initurccryptobox_open(){ (void) Py_InitModule("urccryptobox_open", Module_methods); }
 void initurcsignsecretbox_fmt(){ (void) Py_InitModule("urcsignsecretbox_fmt", Module_methods); }
-//void initurcsignsecretbox_open(){ (void) Py_InitModule("urcsignsecretbox_open", Module_methods); }
+void initurcsignsecretbox_open(){ (void) Py_InitModule("urcsignsecretbox_open", Module_methods); }

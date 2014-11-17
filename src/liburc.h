@@ -127,7 +127,7 @@ int urcsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned cha
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
  if (crypto_secretbox_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
- memmove(b,m+32,-2-4-8+plen-16);
+ memmove(b,m+32,-2-12-4-8+plen-16);
  return 0;
 }
 
@@ -137,7 +137,7 @@ int urcsignsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned 
  unsigned char m[1024*2];
  unsigned char c[1024*2];
  unsigned long long smlen;
- if (setlen(p,blen+64) == -1) return -1;
+ if (setlen(p,blen+64+16) == -1) return -1;
  taia96n(p+2);
  p[12]=3;
  p[13]=0;
@@ -151,9 +151,33 @@ int urcsignsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned 
  bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
  memmove(m+32,p+2+12+4+8,blen+64);
- if (crypto_secretbox(c,m,32+blen,(const unsigned char *)p+2,(const unsigned char *)csk) == -1) return -1;
+ if (crypto_secretbox(c,m,32+blen+64,(const unsigned char *)p+2,(const unsigned char *)csk) == -1) return -1;
  memmove(p+2+12+4+8,c+16,blen+64+16);
  return 0;
+}
+
+int urcsignsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned char *sk) {
+ if (plen > URC_MTU) return -1;
+ unsigned char m[1024*2];
+ unsigned char c[1024*2];
+ bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
+ bzero(c,16);
+ memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
+ if (crypto_secretbox_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
+ memmove(b,p,2+12+4+8);
+ memmove(b+2+12+4+8,m+32,-2-12-4-8+plen-16);
+ return 0;
+}
+
+int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
+ if (plen > URC_MTU) return -1;
+ unsigned char sm[32+2+12+4+8+1024+32];
+ unsigned char m[32+2+12+4+8+1024+32];
+ unsigned long long mlen;
+ memmove(sm,p+plen-64,32);
+ memmove(sm+32,p,plen-64);
+ memmove(sm+32+plen-64,p+plen-32,32);
+ return crypto_sign_open(m,&mlen,(const unsigned char *)sm,plen,(const unsigned char *)pk);
 }
 
 int urccryptobox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *pk, unsigned char *sk) {
