@@ -104,5 +104,6 @@ gcc `cat conf-cc` -O2 -shared -pthread -fPIC -fwrapv -Wall \
 
 rm -rf build libsodium_src || exit 1
 
-if ! su urcd ; then useradd urcd
+if ! su urcd -c exit 0 ; then
+ useradd urcd
 fi

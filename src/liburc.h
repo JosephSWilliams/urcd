@@ -102,6 +102,7 @@ int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk)
 }
 
 int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
+ if (p[0] != 1) return -1;
  if (plen > URC_MTU) return -1;
  unsigned char sm[32+2+12+4+8+1024+32];
  unsigned char m[32+2+12+4+8+1024+32];
@@ -132,6 +133,7 @@ int urcsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
 }
 
 int urcsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned char *sk) {
+ if (p[0] != 2) return -1;
  if (plen > URC_MTU) return -1;
  unsigned char m[1024*2];
  unsigned char c[1024*2];
@@ -169,6 +171,7 @@ int urcsignsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned 
 }
 
 int urcsignsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned char *sk) {
+ if (p[0] != 3) return -1;
  if (plen > URC_MTU) return -1;
  unsigned char m[1024*2];
  unsigned char c[1024*2];
@@ -182,6 +185,7 @@ int urcsignsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned
 }
 
 int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
+ if (p[0] != 3) return -1;
  if (plen > URC_MTU) return -1;
  unsigned char sm[32+2+12+4+8+1024+32];
  unsigned char m[32+2+12+4+8+1024+32];
@@ -212,6 +216,7 @@ int urccryptobox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
 }
 
 int urccryptobox_open(unsigned char *b, unsigned char *p, int plen, unsigned char *pk, unsigned char *sk) {
+ if (p[0] != 4) return -1;
  if (plen > URC_MTU) return -1;
  unsigned char m[1024*2];
  unsigned char c[1024*2];
