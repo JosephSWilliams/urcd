@@ -103,3 +103,6 @@ gcc `cat conf-cc` -O2 -shared -pthread -fPIC -fwrapv -Wall \
  -fno-strict-aliasing -I $PYTHON_HEADERS build/taia96n.c -o taia96n.so || exit 1
 
 rm -rf build libsodium_src || exit 1
+
+if ! su urcd ; then useradd urcd
+fi

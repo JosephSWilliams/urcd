@@ -1,11 +1,14 @@
 #include <nacl/crypto_secretbox.h>
 #include <nacl/crypto_sign.h>
 #include <nacl/crypto_box.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <strings.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <tai.h>
+#include <pwd.h>
 
 /* security: enforce compatibility and santize malicious configurations */
 #if crypto_secretbox_BOXZEROBYTES != 16
@@ -21,20 +24,24 @@
 #define URC_MTU 1024
 #define IRC_MTU 512
 
-int setlen(unsigned char *b, int blen) {
- if (blen > URC_MTU) return -1;
- b[0] = blen / 256;
- b[1] = blen % 256;
+int devurandomfd = -1;
+
+int urc_jail(char *path) {
+ if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
+ struct passwd *urcd = getpwnam("urcd");
+ if ((!urcd)
+ || (chdir(path))
+ || (chroot(path))
+ || (setgroups(0,'\x00'))
+ || (setgid(urcd->pw_gid))
+ || (setuid(urcd->pw_uid)))
+  return -1;
  return 0;
 }
 
-/* security: strong entropy not guaranteed */
+/* security: strong entropy not guaranteed without devurandomfd open */
 void randombytes(unsigned char *b, int blen) {
- /*
-  static int devurandomfd = -1;
-  if (devurandomfd == -1) open("/dev/urandom",O_RDONLY);
-  if (devurandomfd == -1) {
- */
+ if (devurandomfd == -1) {
   int i;
   struct timeval now;
   for (i=0;i<blen;++i) {
@@ -42,10 +49,14 @@ void randombytes(unsigned char *b, int blen) {
    srand(now.tv_usec);
    b[i] = rand() & 255;
   }
- /*
-  }
-  else read(devurandomfd,b,blen);
- */
+ } else read(devurandomfd,b,blen);
+}
+
+int setlen(unsigned char *b, int blen) {
+ if (blen > URC_MTU) return -1;
+ b[0] = blen / 256;
+ b[1] = blen % 256;
+ return 0;
 }
 
 void taia96n(unsigned char *ts) {
