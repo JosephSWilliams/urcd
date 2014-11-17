@@ -41,6 +41,7 @@ int urc_jail(char *path) {
 
 /* security: strong entropy not guaranteed without devurandomfd open */
 void randombytes(unsigned char *b, int blen) {
+ if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  if (devurandomfd == -1) {
   int i;
   struct timeval now;
