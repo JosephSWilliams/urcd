@@ -586,8 +586,7 @@ while 1:
   if len(buffer)<2+12+4+8: continue
 
   ### Block Malicious /NICK *Serv attacks
-  if not ord(buffer[0]) and not ord(buffer[1]) and re_SERVICE(buffer[2+12+4+8:]):
-   AUTH = buffer[2+12+4+8+1:].split('!',1)[0].lower()
+  if not ord(buffer[0]) and not ord(buffer[1]): AUTH = '\x00'
 
   ### URCSIGN ###
   if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
@@ -673,7 +672,7 @@ while 1:
   else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
   ### Block Malicious /NICK *Serv attacks
-  if re_SERVICE(buffer) and AUTH != buffer[1:].split('!',1)[0].lower(): continue
+  if re_SERVICE(buffer) and AUTH != '\x00': continue
 
   server_revents(ord(randombytes(1))<<4) ### may reduce some side channels ###
 

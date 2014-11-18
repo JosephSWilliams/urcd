@@ -200,7 +200,7 @@ int urccryptobox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
  if (blen > IRC_MTU) return -1;
  unsigned char m[1024*2];
  unsigned char c[1024*2];
- bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
+ bzero(m,32); /* http://nacl.cr.yp.to/cryptobox.html */
  bzero(c,16);
  if (setlen(p,blen+16) == -1) return -1;
  taia96n(p+2);
@@ -220,7 +220,7 @@ int urccryptobox_open(unsigned char *b, unsigned char *p, int plen, unsigned cha
  if (plen > URC_MTU) return -1;
  unsigned char m[1024*2];
  unsigned char c[1024*2];
- bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
+ bzero(m,32); /* http://nacl.cr.yp.to/cryptobox.html */
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
  if (crypto_box_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)pk,(const unsigned char *)sk) == -1) return -1;

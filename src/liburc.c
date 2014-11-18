@@ -54,7 +54,7 @@ PyObject *pyrandombytes(PyObject *self, PyObject *args, PyObject *kw){
 }
 
 PyObject *pyurchub_fmt(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char p[1024];
+ unsigned char p[1024*2];
  char *b;
  Py_ssize_t bsize = 0;
  static const char *kwlist[] = {"b",0};
@@ -72,7 +72,7 @@ PyObject *pyurchub_fmt(PyObject *self, PyObject *args, PyObject *kw) {
 }
 
 PyObject *pyurcsign_fmt(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char p[1024];
+ unsigned char p[1024*2];
  char *b;
  char *sk;
  Py_ssize_t bsize = 0;
@@ -116,7 +116,7 @@ PyObject *pyurcsign_verify(PyObject *self, PyObject *args, PyObject *kw) {
 }
 
 PyObject *pyurcsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char p[1024];
+ unsigned char p[1024*2];
  char *b;
  char *sk;
  Py_ssize_t bsize = 0;
@@ -139,7 +139,7 @@ PyObject *pyurcsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
 }
 
 PyObject *pyurcsecretbox_open(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char b[1024];
+ unsigned char b[1024*2];
  char *p;
  char *sk;
  Py_ssize_t psize = 0;
@@ -162,7 +162,7 @@ PyObject *pyurcsecretbox_open(PyObject *self, PyObject *args, PyObject *kw) {
 }
 
 PyObject *pyurcsignsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char p[1024];
+ unsigned char p[1024*2];
  char *b;
  char *ssk;
  char *csk;
@@ -190,7 +190,7 @@ PyObject *pyurcsignsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
 }
 
 PyObject *pyurcsignsecretbox_open(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char b[1024];
+ unsigned char b[1024*2];
  char *p;
  char *csk;
  Py_ssize_t psize = 0;
@@ -233,7 +233,7 @@ PyObject *pyurcsignsecretbox_verify(PyObject *self, PyObject *args, PyObject *kw
 }
 
 PyObject *pyurccryptobox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char p[1024];
+ unsigned char p[1024*2];
  char *b;
  char *pk;
  char *sk;
@@ -261,7 +261,7 @@ PyObject *pyurccryptobox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
 }
 
 PyObject *pyurccryptobox_open(PyObject *self, PyObject *args, PyObject *kw) {
- unsigned char b[1024];
+ unsigned char b[1024*2];
  char *p;
  char *pk;
  char *sk;
