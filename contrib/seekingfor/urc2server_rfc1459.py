@@ -4,6 +4,7 @@
 import unicodedata
 import collections
 import subprocess
+import liburc
 import codecs
 import select
 import socket
@@ -113,15 +114,18 @@ def try_write(fd,buffer):
     sock_close(15,0)
 
 def sock_write(buffer):
-  #os.write(2,'[sockwrite] ' + buffer)
-  buffer = buffer[:-1] + ' ' + str(int(time.time()))
-  check = sha1(buffer).hexdigest()[:10]
-  buffer = buffer + ' ' + check + ' urc-integ\n'
-  for path in os.listdir(root):
-    try:
-      if path != user: sock.sendto(buffer,path)
-    except:
-      pass
+ buffer = liburc.urchub_fmt(buffer)
+ try: sock.sendto(buffer,'hub')
+ except: pass
+#  os.write(2,'[sockwrite] ' + buffer)
+#  buffer = buffer[:-1] + ' ' + str(int(time.time()))
+#  check = sha1(buffer).hexdigest()[:10]
+#  buffer = buffer + ' ' + check + ' urc-integ\n'
+#  for path in os.listdir(root):
+#    try:
+#      if path != user: sock.sendto(buffer,path)
+#    except:
+#      pass
 
 try_write(wr,
   'PASS ' + LINKPASS + '\n'
@@ -240,7 +244,7 @@ while 1:
 
     time.sleep(LIMIT)
 
-    buffer = try_read(sd,1024).split('\n',1)[0]
+    buffer = try_read(sd,1024).split('\n',1)[0][2+12+4+8:]
     if not buffer: continue
     #os.write(2, 'socket-in: ' + buffer + '\n')
     parts = buffer.split(' ')
