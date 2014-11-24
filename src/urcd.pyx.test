@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 from binascii import unhexlify as unhex
+from hashlib import sha512
 from errno import EAGAIN
-from nacltaia import *
 from taia96n import *
 import unicodedata
 import collections
 import subprocess
+import liburc
 import codecs
 import select
 import socket
@@ -39,8 +40,8 @@ re_CLIENT_PART = re.compile('^PART ([#&!+]['+RE+']+,?)+ ?',re.IGNORECASE).search
 re_CLIENT_LIST = re.compile('^LIST',re.IGNORECASE).search
 re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
 re_CLIENT_USER = re.compile('^USER ',re.IGNORECASE).search
-re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
-re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
+re_BUFFER_CTCP_DCC = re.compile('\01(?!ACTION )',re.IGNORECASE).sub
+re_BUFFER_COLOUR = re.compile('(\03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\02\03\x0f\x1d\x1f]',re.IGNORECASE).sub
 re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
 re_SERVER_JOIN = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
 re_SERVER_QUIT = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
@@ -61,16 +62,34 @@ PRESENCE = int(open('env/PRESENCE','rb').read().split('\n')[0]) if os.path.exist
 URCSIGNDB = open('env/URCSIGNDB','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNDB') else str()
 TOPICLEN = int(open('env/TOPICLEN','rb').read().split('\n')[0]) if os.path.exists('env/TOPICLEN') else 512
 CHANLIMIT = int(open('env/CHANLIMIT','rb').read().split('\n')[0]) if os.path.exists('env/CHANLIMIT') else 64
-PADDING = int(open('env/PADDING','rb').read().split('\n')[0]) & 255 if os.path.exists('env/PADDING') else 255
 CHANNELLEN = int(open('env/CHANNELLEN','rb').read().split('\n')[0]) if os.path.exists('env/CHANNELLEN') else 64
 URCCRYPTOBOXDIR = open('env/URCCRYPTOBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXDIR') else str()
-URCCRYPTOBOXPFS = open('env/URCCRYPTOBOXPFS','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXPFS') else str()
+#URCCRYPTOBOXPFS = open('env/URCCRYPTOBOXPFS','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXPFS') else str()
 URCSECRETBOXDIR = open('env/URCSECRETBOXDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSECRETBOXDIR') else str()
-URCSIGNSECKEYDIR = open('env/URCSIGNSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNSECKEYDIR') else str()
-URCSIGNPUBKEYDIR = open('env/URCSIGNPUBKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNPUBKEYDIR') else str()
+#URCSIGNSECKEYDIR = open('env/URCSIGNSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNSECKEYDIR') else str()
+#URCSIGNPUBKEYDIR = open('env/URCSIGNPUBKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCSIGNPUBKEYDIR') else str()
 URCSIGNSECKEY = open('env/URCSIGNSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCSIGNSECKEY') else str()
-URCCRYPTOBOXSECKEYDIR = open('env/URCCRYPTOBOXSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXSECKEYDIR') else str()
+#URCCRYPTOBOXSECKEYDIR = open('env/URCCRYPTOBOXSECKEYDIR','rb').read().split('\n')[0] if os.path.exists('env/URCCRYPTOBOXSECKEYDIR') else str()
 URCCRYPTOBOXSECKEY = open('env/URCCRYPTOBOXSECKEY','rb').read().split('\n')[0].decode('hex') if os.path.exists('env/URCCRYPTOBOXSECKEY') else str()
+
+### cryptography ###
+urcsign_sk = URCSIGNSECKEY
+urcsign_db = dict()
+urcsecretbox_db = dict()
+urccryptobox_sk = URCCRYPTOBOXSECKEY
+urccryptobox_db = dict()
+
+if URCSIGNDB:
+ for src in os.listdir(URCSIGNDB):
+  urcsign_db[src.lower()] = open(URCSIGNDB+'/'+src).read()[:64].decode('hex')
+
+if URCSECRETBOXDIR:
+ for dst in os.listdir(URCSECRETBOXDIR):
+  urcsecretbox_db[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst).read()[:64].decode('hex')
+
+if URCCRYPTOBOXDIR:
+ for dst in os.listdir(URCCRYPTOBOXDIR):
+  urccryptobox_db[dst.lower()] = open(URCCRYPTOBOXDIR+'/'+dst).read()[:64].decode('hex')
 
 nick = str()
 Nick = str()
@@ -96,18 +115,6 @@ if URCDB:
  try: channel_struct = db['channel_struct']
  except: channel_struct = dict()
 
- try: ### BC code for key and type checking can be removed later ###
-  if type(db['Src']) == dict: Src = db['Src']
- except: pass
-
- try: ### BC code for key and type checking can be removed later ###
-  if type(db['Mask']) == dict: Mask = db['Mask']
- except: pass
-
- try: ### BC code for key and type checking can be removed later ###
-  if type(db['active_clients']) == dict: active_clients = db['active_clients']
- except: pass
-
  while len(Src) > CHANLIMIT*CHANLIMIT: del Src[Src.keys()[0]]
  while len(Mask) > CHANLIMIT*CHANLIMIT: del Mask[Mask.keys()[0]]
  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
@@ -127,62 +134,6 @@ def try_write(fd,buffer):
   if buffer:
    if time.time() - now >= TIMEOUT: sock_close(3,0)
    time.sleep(1)
-
-### nacl-20110221's randombytes() not compatible with chroot ###
-devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
-def randombytes(n): return try_read(devurandomfd,n)
-
-### NaCl's crypto_sign / crypto_sign_open API sucks ###
-def _crypto_sign(m,sk):
- s = crypto_sign(m,sk)
- return s[:32]+s[-32:]
-
-def _crypto_sign_open(m,s,pk):
- return 1 if crypto_sign_open(s[:32]+m+s[32:],pk) != 0 else 0
-
-urcsecretboxdb = dict()
-if URCSECRETBOXDIR:
- for dst in os.listdir(URCSECRETBOXDIR):
-  urcsecretboxdb[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst,'rb').read(64).decode('hex')
-
-urccryptoboxdb = dict()
-urccryptoboxpfsdb = dict()
-urccryptoboxpassdb = dict()
-if URCCRYPTOBOXDIR:
- for dst in os.listdir(URCCRYPTOBOXDIR):
-  if URCCRYPTOBOXPFS and dst in os.listdir(URCCRYPTOBOXPFS):
-   pk,sk=crypto_box_keypair()
-   urccryptoboxpfsdb[dst.lower()] = {"pubkey":pk,"seckey":sk,"tmpkey":randombytes(32)}
-   del pk, sk
-  if URCCRYPTOBOXSECKEYDIR and dst in os.listdir(URCCRYPTOBOXSECKEYDIR):
-   urccryptoboxdb[dst.lower()] = crypto_box_beforenm(
-    open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex'),
-    open(URCCRYPTOBOXSECKEYDIR+'/'+dst,'rb').read(64).decode('hex')
-   )
-  elif URCCRYPTOBOXSECKEY:
-   urccryptoboxdb[dst.lower()] = crypto_box_beforenm(
-    open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex'),
-    URCCRYPTOBOXSECKEY
-   )
-  urccryptoboxpassdb[dst.lower()] = open(URCCRYPTOBOXDIR+'/'+dst,'rb').read(64).decode('hex')
-
-if URCSIGNPUBKEYDIR:
- urcsignpubkeydb = dict()
- for dst in os.listdir(URCSIGNPUBKEYDIR):
-  dst = dst.lower()
-  urcsignpubkeydb[dst] = dict()
-  for src in os.listdir(URCSIGNPUBKEYDIR+'/'+dst):
-   urcsignpubkeydb[dst][src.lower()] = open(URCSIGNPUBKEYDIR+'/'+dst+'/'+src,'rb').read(64).decode('hex')
-
-if URCSIGNSECKEYDIR:
- urcsignseckeydb = dict()
- for dst in os.listdir(URCSIGNSECKEYDIR):
-  urcsignseckeydb[dst.lower()] = open(URCSIGNSECKEYDIR+'/'+dst,'rb').read(128).decode('hex')
-
-if URCSIGNDB:
- urcsigndb = dict()
- for src in os.listdir(URCSIGNDB):
-  urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(64).decode('hex')
 
 for dst in channel_struct.keys():
  channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
@@ -222,14 +173,7 @@ if os.access('stdout',os.X_OK):
  del p
 else: wr = 1
 
-uid, gid = pwd.getpwnam('urcd')[2:4]
-os.chdir(sys.argv[1])
-os.chroot(os.getcwd())
-os.setgroups(list())
-os.setgid(gid)
-os.setuid(uid)
-root = os.getcwd()
-del uid, gid
+if liburc.urc_jail(sys.argv[1]) == -1: sock_close(4,0)
 
 sock=socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
 sock_close(0,0)
@@ -257,55 +201,17 @@ fcntl.fcntl(wr,fcntl.F_SETFL,fcntl.fcntl(wr,fcntl.F_GETFL)|os.O_NONBLOCK)
 def sock_write(*argv): ### (buffer, dst, ...) ###
  buffer = argv[0]
  buflen = len(buffer)
- padlen = PADDING - buflen % PADDING if PADDING else 0
  dst = argv[1].lower() if len(argv) > 1 else str()
-
- if URCSIGNSECKEYDIR and dst and dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
- elif URCSIGNSECKEY: signseckey = URCSIGNSECKEY
- else: signseckey = str()
-
- if URCSECRETBOXDIR and dst and dst in urcsecretboxdb.keys(): seckey = urcsecretboxdb[dst]
- else: seckey = str()
-
- if URCCRYPTOBOXDIR and dst and dst in urccryptoboxdb.keys(): crypto_box_seckey = urccryptoboxdb[dst]
- else: crypto_box_seckey = str()
-
- ### URCCRYPTOBOX ###
- if crypto_box_seckey:
-  buflen += 16 + padlen
-  nonce = taia96n_pack(taia96n_now())+'\x04\x00\x00\x00'+randombytes(8)
-  if not dst in urccryptoboxpfsdb.keys():
-   buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+randombytes(padlen),nonce,crypto_box_seckey)
-  else:
-   buflen += 32 + 16
-   buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(urccryptoboxpfsdb[dst]["pubkey"]+
-    crypto_box(buffer+randombytes(padlen),nonce,urccryptoboxpfsdb[dst]["tmpkey"],urccryptoboxpfsdb[dst]["seckey"]),
-    nonce,crypto_box_seckey
-   )
-
- ### URCSIGNSECRETBOX ###
- elif seckey and signseckey:
-  buflen += 64 + 16 + padlen
-  nonce = taia96n_pack(taia96n_now())+'\x03\x00\x00\x00'+randombytes(8)
-  buffer = chr(buflen>>8)+chr(buflen%256)+nonce+buffer+randombytes(padlen)
-  buffer += _crypto_sign(buffer,signseckey)
-  buffer = buffer[:2+12+4+8]+crypto_secretbox(buffer[2+12+4+8:],nonce,seckey)
-
- ### URCSECRETBOX ###
- elif seckey:
-  buflen += 16 + padlen
-  nonce = taia96n_pack(taia96n_now())+'\x02\x00\x00\x00'+randombytes(8)
-  buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+randombytes(padlen),nonce,seckey)
-
- ### URCSIGN ###
- elif signseckey:
-  buflen += 64
-  buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x01\x00\x00\x00'+randombytes(8)+buffer
-  buffer += _crypto_sign(buffer,signseckey)
-
- ### URCHUB ###
- else: buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x00\x00\x00\x00'+randombytes(8)+buffer
-
+ if dst[-4:] == 'serv' and not dst[0] in ['#','&','!','+']:
+  try_write(wr,':'+dst+'!ERROR@'+serv+' NOTICE '+Nick+' :security: blocked outgoing message\n')
+  return
+ if dst in urcsecretbox_db.keys():
+  if urcsign_sk: buffer = liburc.urcsignsecretbox_fmt(buffer,urcsign_sk,urcsecretbox_db[dst])
+  else: buffer = liburc.urcsecretbox_fmt(buffer,urcsecretbox_db[dst])
+ elif dst in urccryptobox_db.keys() and urccryptobox_sk:
+  buffer = liburc.urccryptobox_fmt(buffer,urccryptobox_db[dst],urccryptobox_sk)
+ elif urcsign_sk: buffer = liburc.urcsign_fmt(buffer,urcsign_sk)
+ else: buffer = liburc.urchub_fmt(buffer)
  try: sock.sendto(buffer,'hub')
  except: pass
 
@@ -346,9 +252,9 @@ while 1:
  if not client_revents(0):
   if now - seen >= TIMEOUT:
    if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :ETIMEDOUT\n',dst)
-   sock_close(4,0)
+   sock_close(5,0)
   if now - ping >= PINGWAIT:
-   if (PING and not PONG) or (not nick): sock_close(5,0)
+   if (PING and not PONG) or (not nick): sock_close(6,0)
    if PING: try_write(wr,'PING :'+user+'\n')
    ping = now
  else:
@@ -358,24 +264,21 @@ while 1:
   while 1: ### python really sucks at this ###
    if now - seen >= TIMEOUT:
     if PRESENCE and Nick: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :EOF\n',dst)
-    sock_close(6,0)
+    sock_close(7,0)
    byte = try_read(rd,1)
    if byte == '':
-    if client_revents(0): sock_close(7,0)
+    if client_revents(0): sock_close(8,0)
     time.sleep(1)
    if byte == '\n': break
-   if byte != '\r' and len(buffer)<512: buffer += byte ### RFC IRC MTU 512 ###
+   if byte != '\r' and len(buffer)<512: buffer += byte ### RFC1459 IRC MTU 512 ###
   buffer = re_CHATZILLA('',re_MIRC('NICK ',buffer)) ### workaround ChatZilla and mIRC ###
 
   if re_CLIENT_PASS(buffer):
    cmd = re_SPLIT(buffer,2)[1]
    try:
-    if cmd == '0'*len(cmd): URCCRYPTOBOXSECKEY,URCSIGNSECKEY,urccryptoboxdb = str(),str(),dict()
-    elif len(cmd) == 128: URCSIGNSECKEY = unhex(cmd)
-    elif len(cmd) == 64 or len(cmd) == 192:
-     URCCRYPTOBOXSECKEY,URCSIGNSECKEY = unhex(cmd[:64]),unhex(cmd[64:])
-     for dst in urccryptoboxpassdb.keys():
-      urccryptoboxdb[dst] = crypto_box_beforenm(urccryptoboxpassdb[dst],URCCRYPTOBOXSECKEY)
+    if cmd == '0'*len(cmd): urccryptobox_sk, urcsign_sk = str(), str()
+    elif len(cmd) == 128: urcsign_sk = unhex(cmd)
+    elif len(cmd) == 64 or len(cmd) == 192: urccryptobox_sk, urcsign_sk = unhex(cmd[:64]), unhex(cmd[64:])
     else: try_write(wr,':'+serv+' 464 :ERR_PASSWDMISMATCH\n')
    except: try_write(wr,':'+serv+' 464 :ERR_PASSWDMISMATCH\n')
 
@@ -466,13 +369,13 @@ while 1:
   elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
    try:
     dst, cmd, msg = re_SPLIT(buffer,4)[1:4]
-    msg = crypto_hash_sha512(msg+dst.lower())[32:64] if not msg in ['x','?'] else str()
+    msg = sha512(msg+dst.lower()).digest()[32:64] if not msg in ['x','?'] else str()
    except: dst, cmd, msg = re_SPLIT(buffer,2)[1],str(),str()
-   if cmd == '+k' and len(msg)==32 and dst.lower() in channels and len(urcsecretboxdb.keys())<=CHANLIMIT:
-    urcsecretboxdb[dst.lower()], URCSECRETBOXDIR = msg, 1
-   elif cmd =='-k' and dst.lower() in urcsecretboxdb.keys():
-    del urcsecretboxdb[dst.lower()]
-   if dst.lower() in urcsecretboxdb.keys():
+   if cmd == '+k' and len(msg)==32 and dst.lower() in channels and len(urcsecretbox_db.keys())<=CHANLIMIT:
+    urcsecretbox_db[dst.lower()] = msg
+   elif cmd =='-k' and dst.lower() in urcsecretbox_db.keys():
+    del urcsecretbox_db[dst.lower()]
+   if dst.lower() in urcsecretbox_db.keys():
     try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kn')
     try_write(wr,'\n') if URCDB else try_write(wr,'s\n')
    else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
@@ -528,8 +431,7 @@ while 1:
     if dst in channels: continue
     channels.append(dst)
     if msg and not msg in ['x','?']:
-     URCSECRETBOXDIR = 1
-     urcsecretboxdb[dst.lower()] = crypto_hash_sha512(msg+dst)[32:64]
+     urcsecretbox_db[dst.lower()] = sha512(msg+dst).digest()[32:64]
     if not dst in channel_struct.keys(): channel_struct[dst] = dict(
      names = collections.deque([],CHANLIMIT),
      topic = None,
@@ -563,7 +465,7 @@ while 1:
    for dst in channel_struct.keys():
     if channel_struct[dst]['names']:
      try_write(wr,':'+serv+' 322 '+Nick+' '+dst+' '+str(len(channel_struct[dst]['names'])))
-     if dst in urcsecretboxdb.keys():
+     if dst in urcsecretbox_db.keys():
       if URCDB: try_write(wr,' :[+kn] ')
       else: try_write(wr,' :[+kns] ')
      else: try_write(wr,' :[+n] ')
@@ -573,7 +475,7 @@ while 1:
 
   elif re_CLIENT_QUIT(buffer):
    if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' QUIT :'+re_SPLIT(buffer,1)[1]+'\n',dst)
-   sock_close(8,0)
+   sock_close(9,0)
 
   ### implement new re_CLIENT_CMD's here ###
 
@@ -582,105 +484,76 @@ while 1:
 
  while server_revents(0) and not client_revents(0):
 
-  AUTH, buffer = "", try_read(sd,2+12+4+8+1024)
+  buffer, auth = try_read(sd,2+12+4+8+1024), str()
   if len(buffer)<2+12+4+8: continue
 
-  ### Block Malicious /NICK *Serv attacks
-  if not ord(buffer[0]) and not ord(buffer[1]): AUTH = '\x00'
-
-  ### URCSIGN ###
-  if buffer[2+12:2+12+4] == '\x01\x00\x00\x00':
-   buflen = len(buffer)
-   try:
-    src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),3)[:3]
-    src = src.split('!',1)[0]
-   except: src, cmd, dst = buffer[2+12+4+8+1:].split('!',1)[0].lower(), str(), str()
-
-   if URCSIGNPUBKEYDIR \
-   and dst in urcsignpubkeydb.keys() \
-   and src in urcsignpubkeydb[dst].keys():
-    try:
-     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsignpubkeydb[dst][src]):
-      buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
-     else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-    except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-   elif URCSIGNDB:
-    try:
-     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsigndb[src]):
-      buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
-     else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-    except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-   else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-
-  ### URCSECRETBOX ###
-  elif buffer[2+12:2+12+4] == '\x02\x00\x00\x00':
-   if not URCSECRETBOXDIR: continue
-   for dst in urcsecretboxdb.keys():
-    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urcsecretboxdb[dst])
-    if msg: break
-   if not msg: continue
-   AUTH, buffer = dst, re_USER('!URCD@',msg.split('\n',1)[0],1)
-
-  ### URCSIGNSECRETBOX ###
-  elif buffer[2+12:2+12+4] == '\x03\x00\x00\x00':
-   if not URCSECRETBOXDIR: continue
-   for dst in urcsecretboxdb.keys():
-    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urcsecretboxdb[dst])
-    if msg: break
-   if not msg: continue
-
-   AUTH, buffer = dst, buffer[:2+12+4+8]+msg
-   buflen = len(buffer)
-   try:
-    src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),3)[:3]
-    src = src.split('!',1)[0]
-   except: src, cmd, dst = buffer[2+12+4+8+1:].split('!',1)[0].lower(), str(), str()
-
-   if URCSIGNPUBKEYDIR \
-   and dst in urcsignpubkeydb.keys() \
-   and src in urcsignpubkeydb[dst].keys():
-    try:
-     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsignpubkeydb[dst][src]):
-      buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
-     else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-    except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-   elif URCSIGNDB:
-    try:
-     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsigndb[src]):
-      buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
-     else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-    except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-   else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
-
-  ### URCCRYPTOBOX ###
-  elif buffer[2+12:2+12+4] == '\x04\x00\x00\x00':
-   if not URCCRYPTOBOXDIR: continue
-   for src in urccryptoboxdb.keys():
-    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urccryptoboxdb[src])
-    if msg: break
-   if not msg: continue
-   if src in urccryptoboxpfsdb.keys():
-     urccryptoboxpfsdb[src]["tmpkey"] = msg[:32]
-     msg = crypto_box_open(msg[32:],buffer[2:2+12+4+8],msg[:32],urccryptoboxpfsdb[src]["seckey"])
-     if not msg:
-       try_write(wr,':'+Src[src]+'!ERROR@'+Mask[src]+' NOTICE '+Nick+' :unable to decrypt message\n')
-       continue
-   if src == msg[1:].split('!',1)[0].lower(): buffer = re_USER('!VERIFIED@',msg.split('\n',1)[0],1)
-   else: buffer = re_USER('!URCD@',msg.split('\n',1)[0],1)
+#  ### Block Malicious /NICK *Serv attacks
+#  if not ord(buffer[1]) and not ord(buffer[0]): auth = '\0'
 
   ### URCHUB ###
-  else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+  if buffer[2+12:2+12+4] == '\0\0\0\0':
+   buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
-  ### Block Malicious /NICK *Serv attacks
-  if re_SERVICE(buffer) and AUTH != '\x00': continue
+  ### URCSIGN ###
+  elif buffer[2+12:2+12+4] == '\1\0\0\0':
+   if 1: src = buffer[2+12+4+8+1:].split('!',1)[0].lower()
+   #except: continue
+   if src in urcsign_db.keys():
+    res = liburc.urcsign_verify(buffer,urcsign_db[src])
+    try_write(2,"urcd debug: "+str(res)+"\n")
+    if res == -1: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
+    else: buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
-  server_revents(ord(randombytes(1))<<4) ### may reduce some side channels ###
+  ### URCSECRETBOX ###
+  elif buffer[2+12:2+12+4] == '\2\0\0\0':
+   if not       urcsecretbox_db: continue
+   for dst in   urcsecretbox_db.keys():
+    res = liburc.urcsecretbox_open(buffer,
+                 urcsecretbox_db[dst])
+    if res != -1: break
+   if res == -1: continue
+   buffer, auth = re_USER('!URCD@',res.split('\n',1)[0],1), dst
 
-  buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
+  ### URCSIGNSECRETBOX ###
+  elif buffer[2+12:2+12+4] == '\3\0\0\0':
+   if not       urcsecretbox_db: continue
+   for dst in   urcsecretbox_db.keys():
+    res = liburc.urcsecretbox_open(buffer,urcsecretbox_db[dst])
+    if res != -1: break
+   if  res == -1: continue
+   auth = dst
+   try: src = res[2+12+4+8+1:].split('!',1)[0].lower()
+   except: continue
+   if src in urcsign_db.keys():
+    res = liburc.urcsignsecretbox_verify(res,urcsign_db[src])
+    if res == -1: buffer = re_USER('!URCD@',res[2+12+4+8:].split('\n',1)[0],1)
+    else: buffer = re_USER('!VERIFIED@',res[2+12+4+8:].split('\n',1)[0],1)
+
+  ### URCCRYPTOBOX ###
+  elif buffer[2+12:2+12+4] == '\4\0\0\0':
+   if not       urccryptobox_db: continue
+   for src in   urccrypto_db.keys():
+    res = liburc.urccryptobox_open(buffer,urccryptobox_db[src],urccryptobox_sk)
+    if res == -1: break
+   if  res == -1: continue
+   if  src != res[1:].split('!')[0].lower(): continue
+   buffer = re_USER('!VERIFIED@',res.split('\n',1)[0],1)
+
+#  ### URCCRYPTOBOXPFS ###
+#  elif buffer[2+12:2+12+4] == '\5\0\0\0':
+
+#  else: continue
+
+#  ### Block Malicious /NICK *Serv attacks
+#  if re_SERVICE(buffer) and auth != '\0': continue
+
+  server_revents(ord(liburc.randombytes(1))<<4) ### may reduce some side channels ###
+
+  buffer = re_BUFFER_CTCP_DCC('',buffer) + '\1' if '\1ACTION ' in buffer.upper() else buffer.replace('\1','')
   if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
   if not UNICODE:
    buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
-   buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
+   buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\1','\2','\3','\x0f','\x1d','\x1f'])
   buffer += '\n'
 
   if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
@@ -690,7 +563,7 @@ while 1:
    Src[src] = buffer.split(':',2)[1].split('!',1)[0]
    Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
    cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
-   if dst in urcsecretboxdb.keys() and AUTH != dst: continue
+   if dst in urcsecretbox_db.keys() and auth != dst: continue
    if dst[0] in ['#','&','!','+']:
     if len(dst)>CHANNELLEN: continue
     if not dst in channel_struct.keys():
@@ -735,7 +608,7 @@ while 1:
    Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
    dst = buffer.split(':')[2].split('\n',1)[0].lower()
    if len(dst)>CHANNELLEN: continue
-   if dst in urcsecretboxdb.keys() and AUTH != dst: continue
+   if dst in urcsecretbox_db.keys() and auth != dst: continue
    if not dst in channel_struct.keys():
     if len(channel_struct.keys())>=CHANLIMIT:
      for dst in channel_struct.keys():
@@ -761,13 +634,13 @@ while 1:
   elif re_SERVER_QUIT(buffer):
    src = buffer.split(':',2)[1].split('!',1)[0].lower()
    if src == nick or len(src)>NICKLEN: continue
-   cmd = '\x01'
+   cmd = '\01'
    for dst in channel_struct.keys():
     if src in channel_struct[dst]['names']:
      channel_struct[dst]['names'].remove(src)
-     if cmd == '\x01' and dst in channels:
+     if cmd == '\01' and dst in channels:
       try_write(wr,buffer)
-      cmd = '\x00'
+      cmd = '\0'
    if src in active_clients.keys():
     del active_clients[src]
     del Mask[src]
@@ -780,7 +653,7 @@ while 1:
    active_clients[cmd] = now
    Src[src] = buffer.split(':',2)[1].split('!',1)[0]
    Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
-   if dst in urcsecretboxdb.keys() and AUTH != dst: continue
+   if dst in urcsecretbox_db.keys() and auth != dst: continue
    if not dst in channel_struct.keys():
     if len(channel_struct.keys())>=CHANLIMIT:
      for dst in channel_struct.keys():
