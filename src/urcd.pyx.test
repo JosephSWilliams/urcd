@@ -542,7 +542,7 @@ while 1:
 #  ### URCCRYPTOBOXPFS ###
 #  elif buffer[2+12:2+12+4] == '\5\0\0\0':
 
-#  else: continue
+  else: continue
 
 #  ### Block Malicious /NICK *Serv attacks
 #  if re_SERVICE(buffer) and auth != '\0': continue

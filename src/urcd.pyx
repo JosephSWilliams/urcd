@@ -92,22 +92,8 @@ if URCDB:
  except:
   os.remove(URCDB)
   db = shelve.open(URCDB,flag='c',writeback=True)
-
  try: channel_struct = db['channel_struct']
  except: channel_struct = dict()
-
- try: ### BC code for key and type checking can be removed later ###
-  if type(db['Src']) == dict: Src = db['Src']
- except: pass
-
- try: ### BC code for key and type checking can be removed later ###
-  if type(db['Mask']) == dict: Mask = db['Mask']
- except: pass
-
- try: ### BC code for key and type checking can be removed later ###
-  if type(db['active_clients']) == dict: active_clients = db['active_clients']
- except: pass
-
  while len(Src) > CHANLIMIT*CHANLIMIT: del Src[Src.keys()[0]]
  while len(Mask) > CHANLIMIT*CHANLIMIT: del Mask[Mask.keys()[0]]
  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
@@ -259,6 +245,10 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  buflen = len(buffer)
  padlen = PADDING - buflen % PADDING if PADDING else 0
  dst = argv[1].lower() if len(argv) > 1 else str()
+
+ if dst[-4] == 'serv' and not dst[0] in ['#','&','!','+']:
+  try_write(2,":"+dst+"!ERROR@"+serv+" NOTICE "+Nick+" :security: outgoing message blocked")
+  return
 
  if URCSIGNSECKEYDIR and dst and dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
  elif URCSIGNSECKEY: signseckey = URCSIGNSECKEY
