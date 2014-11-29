@@ -43,13 +43,15 @@ int urc_jail(char *path) {
 void randombytes(unsigned char *b, int blen) {
  if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  if (devurandomfd == -1) {
-  int i;
+  unsigned char * a = malloc(256 * sizeof(unsigned char));
   struct timeval now;
+  int i;
   for (i=0;i<blen;++i) {
    gettimeofday(&now,'\x00');
    srand(now.tv_usec);
    b[i] = rand() & 255;
-  }
+   if (a) b[i] ^= a[i & 255];
+  }if (a) free(a);
  } else read(devurandomfd,b,blen);
 }
 
