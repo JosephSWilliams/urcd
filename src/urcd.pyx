@@ -228,7 +228,7 @@ poll.register(rd,select.POLLIN|select.POLLPRI)
 poll.register(sd,select.POLLIN)
 poll=poll.poll
 
-### python doesn't have a way of testing pollfd.revents ###
+### python does not have struct pollfd :-( ###
 client_revents=select.poll()
 client_revents.register(rd,select.POLLIN|select.POLLPRI)
 client_revents=client_revents.poll

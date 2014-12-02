@@ -27,6 +27,7 @@
 int devurandomfd = -1;
 
 int urc_jail(char *path) {
+ if (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
  if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  struct passwd *urcd = getpwnam("urcd");
  if ((!urcd)
@@ -41,6 +42,7 @@ int urc_jail(char *path) {
 
 /* security: strong entropy not guaranteed without devurandomfd open */
 void randombytes(unsigned char *b, int blen) {
+ if (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
  if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  if (devurandomfd == -1) {
   unsigned char * a = malloc(256 * sizeof(unsigned char));
@@ -202,7 +204,7 @@ int urccryptobox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
  if (blen > IRC_MTU) return -1;
  unsigned char m[1024*2];
  unsigned char c[1024*2];
- bzero(m,32); /* http://nacl.cr.yp.to/cryptobox.html */
+ bzero(m,32); /* http://nacl.cr.yp.to/box.html */
  bzero(c,16);
  if (setlen(p,blen+16) == -1) return -1;
  taia96n(p+2);
@@ -222,7 +224,7 @@ int urccryptobox_open(unsigned char *b, unsigned char *p, int plen, unsigned cha
  if (plen > URC_MTU) return -1;
  unsigned char m[1024*2];
  unsigned char c[1024*2];
- bzero(m,32); /* http://nacl.cr.yp.to/cryptobox.html */
+ bzero(m,32); /* http://nacl.cr.yp.to/box.html */
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
  if (crypto_box_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)pk,(const unsigned char *)sk) == -1) return -1;
