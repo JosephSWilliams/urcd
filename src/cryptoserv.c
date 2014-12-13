@@ -169,6 +169,17 @@ main(int argc, char *argv[])
     stat(path,(struct stat *)&stats);
     if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
   } closedir(directory);
+
+  memcpy(path,"urccryptoboxpfs/",16); 
+  if (!(directory=opendir("urccryptoboxpfs/"))) exit(6);
+  while ((file=readdir(directory)))
+  {
+    if (file->d_name[0] == '.') continue;
+    bzero(path+16,-16+512);
+    memcpy(path+16,file->d_name,strlen(file->d_name));
+    stat(path,(struct stat *)&stats);
+    if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
+  } closedir(directory);
  }
 
  while (1)
@@ -176,7 +187,7 @@ main(int argc, char *argv[])
 
   for (i=0;i<1024;++i)
   {
-    if (read(0,buffer0+i,1)<1) exit(6);
+    if (read(0,buffer0+i,1)<1) exit(7);
     if (buffer0[i] == '\r') --i;
     if (buffer0[i] == '\n') break;
   } if (buffer0[i] != '\n') continue;
@@ -237,7 +248,7 @@ main(int argc, char *argv[])
      memcpy(buffer0,"PASS ",5);
      memcpy(buffer0+5,hex,192);
      memcpy(buffer0+5+192,"\n",1);
-     if (write(1,buffer0,5+192+1)<=0) exit(7);
+     if (write(1,buffer0,5+192+1)<=0) exit(8);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      memcpy(identifiednick,buffer2+2+12+4+8+32,nicklen);
@@ -270,7 +281,7 @@ main(int argc, char *argv[])
        continue;
       }
       base16_encode(hex,pk0,32);
-      if (write(fd,hex,64)<64) exit(8);
+      if (write(fd,hex,64)<64) exit(9);
       close(fd);
       crypto_scalarmult_curve25519_base(pk0,sk);
       bzero(path,512);
@@ -284,14 +295,14 @@ main(int argc, char *argv[])
        continue;
       }
       base16_encode(hex,pk0,32);
-      if (write(fd,hex,64)<64) exit(9);
+      if (write(fd,hex,64)<64) exit(10);
       close(fd);
       base16_encode(hex,sk,32);
       base16_encode(hex+64,sk,64);
       memcpy(buffer0,"PASS ",5);
       memcpy(buffer0+5,hex,192);
       memcpy(buffer0+5+192,"\n",1);
-      if (write(1,buffer0,5+192+1)<=0) exit(10);
+      if (write(1,buffer0,5+192+1)<=0) exit(11);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
       if (!identified) {
@@ -365,7 +376,7 @@ main(int argc, char *argv[])
      memcpy(buffer0,"PASS ",5);
      memcpy(buffer0+5+192,"\n",1);
      for (i=0;i<192;++i) buffer0[5+i]='0';
-     if (write(1,buffer0,5+192+1)<=0) exit(11);
+     if (write(1,buffer0,5+192+1)<=0) exit(12);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      starttime = time((long *)0);
@@ -383,7 +394,7 @@ main(int argc, char *argv[])
      memcpy(buffer0,"PASS ",5);
      memcpy(buffer0+5+192,"\n",1);
      for (i=0;i<192;++i) buffer0[5+i]='0';
-     if (write(1,buffer0,5+192+1)<=0) exit(12);
+     if (write(1,buffer0,5+192+1)<=0) exit(13);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      starttime = time((long *)0);
@@ -415,6 +426,6 @@ main(int argc, char *argv[])
     continue;
    }
   }
- if (write(1,buffer0,i)<=0) exit(13);
+ if (write(1,buffer0,i)<=0) exit(14);
  }
 }
