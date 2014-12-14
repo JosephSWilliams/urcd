@@ -45,17 +45,17 @@ void randombytes(unsigned char *b, int blen) {
  if (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
  if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  if (devurandomfd == -1) {
-  unsigned char * a = malloc(256 * sizeof(unsigned char));
-  unsigned char c[256]; /* sometimes heap is zeroed, try luck with stack */
+  unsigned char * h = malloc(256 * sizeof(unsigned char));
+  unsigned char s[256]; /* sometimes heap is zeroed, try luck with stack */
   struct timeval now;
   int i;
   for (i=0;i<blen;++i) {
    gettimeofday(&now,'\x00');
    srand(now.tv_usec);
    b[i] = rand() & 255;
-   b[i] ^= c[i & 255];
-   if (a) b[i] ^= a[i & 255];
-  }if (a) free(a);
+   b[i] ^= s[i & 255];
+   if (h) b[i] ^= h[i & 255];
+  }if (h) free(h);
  } else read(devurandomfd,b,blen);
 }
 
