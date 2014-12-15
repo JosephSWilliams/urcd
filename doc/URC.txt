@@ -64,7 +64,7 @@ Advantages:
  links and encrypted connections. Taia96n replaces the current buggy
  timing algorithms, and is usable for the next few billion years.
 
- Simple API and Modularity - URCd allows the user to “hack” his or
+ Simple API and Modularity - URCd allows the user to "hack” his or
  her conversation with their local daemon with any programming
  language, so long as the user can read and write with stdin and
  stdout, and can parse URCLINE (simplified IRC lines).
