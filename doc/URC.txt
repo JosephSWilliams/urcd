@@ -16,10 +16,10 @@ Description:
 
 
 Advantages:
- Anonymity - URC doesn’t care about IP or Ident, and doesn’t reveal
- this information to other users on the network. the “server” or “ip”
+ Anonymity - URC doesn't care about IP or Ident, and doesn't reveal
+ this information to other users on the network. the "serve" or "ip"
  section of a URCLINE is always a hostmask chosen by the user. When a
- client sends a URC packet across the network, the sender’s physical
+ client sends a URC packet across the network, the sender's physical
  location is protected, by scattering the packet throughout the
  network in a randomly chosen order, i.e. the receiver is also
  protected.
@@ -29,7 +29,7 @@ Advantages:
  you.
 
  NO Presence - URCd, by default, does not announce JOIN, PART, or
- QUIT messages, therefore a user’s activities and timing is
+ QUIT messages, therefore a user's activities and timing is
  protected.
 
  Plausible Deniability - URC packets that are not signed cannot prove
@@ -47,11 +47,11 @@ Advantages:
  exploits in the past associated with parsing.
 
  AntiSurveillance - Encrypted URC packets do not reveal the source or
- destination of a packet. Instead they rely on NaCl’s highspeed
+ destination of a packet. Instead they rely on NaCl's highspeed
  Poly1305, or encrypted signatures for authentication and
  verification. Thus, an attacker sniffing the network cannot target
  specific conversations because they contain no identifying marks
- compared against other encrypted traffic. Only user’s with the
+ compared against other encrypted traffic. Only user's with the
  correct keys can discover this information. By default, all
  encrypted packets are padded to protect against other side channels.
 
@@ -103,7 +103,7 @@ lines SHOULD have a similar effect as IRC equivalents.
   :nick!user@server INVITE nick :#channel\n
 
 JOIN, PART, QUIT, KICK can be used by listeners to learn presence.
-There’s no mandate for a URCd daemon to announce presence, as this can
+There's no mandate for a URCd daemon to announce presence, as this can
 be learned through natural message traffic. Currently presence is only
 default in URC2sd to sync with URCd and to announce censorship from IRCd
 admins.
@@ -122,7 +122,7 @@ URCHUB:
  third field is a 32bit CMD and is currently used to distinguish types of
  packets. The last 24 bits of CMD SHOULD remain NULL until future usages
  are necessary. The fourth field are 64bits of random data that ensures
- uniqueness of a packet. The fifth field is the payload and it’s size
+ uniqueness of a packet. The fifth field is the payload and it's size
  MUST be reflected by the 16bit LEN field. Generally this field is a
  URCLINE, but can also contain binary or alternative data.
 
@@ -135,7 +135,7 @@ URCHUB/URCSIGN:
    SIGNATURE |
 
   SIGNATURE is the 64 signature bytes from the crypto_sign function in
- NaCl’s API. The entire message is used to derive SIGNATURE with CMD set
+ NaCl's API. The entire message is used to derive SIGNATURE with CMD set
  to prevent signatures from being replayed in other protocols of URC.
 
 URCHUB/URCSECRETBOX:
