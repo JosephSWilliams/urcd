@@ -170,7 +170,7 @@ URCHUB/URCCRYPTOBOX/PFS:
  CRYPTO_BOX1.
 
 Download and Install:
- torify git clone git://cbadanhgoo6oamul.onion/urcd.git \
+ torify git clone git://ntwrkhhtqv73vwd4.onion/urcd.git \
     /usr/local/src/urcd
  cd /usr/local/src/urcd/
  less README
