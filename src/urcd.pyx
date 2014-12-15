@@ -92,12 +92,17 @@ if URCDB:
  except:
   os.remove(URCDB)
   db = shelve.open(URCDB,flag='c',writeback=True)
- try: channel_struct = db['channel_struct']
- except: channel_struct = dict()
+ Src = db['Src']
+ Mask = db['Mask']
+ channel_struct = db['channel_struct']
+ active_clients = db['active_clients']
  while len(Src) > CHANLIMIT*CHANLIMIT: del Src[Src.keys()[0]]
  while len(Mask) > CHANLIMIT*CHANLIMIT: del Mask[Mask.keys()[0]]
  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
  while len(active_clients) > CHANLIMIT*CHANLIMIT: del active_clients[active_clients.keys()[0]]
+ for src in active_clients:
+  if not src in Src.keys(): Src[src] = src
+  if not src in Mask.keys(): Mask[src] = src
 
 def try_read(fd,buflen):
  try: return os.read(fd,buflen)
