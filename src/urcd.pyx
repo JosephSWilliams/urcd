@@ -92,10 +92,17 @@ if URCDB:
  except:
   os.remove(URCDB)
   db = shelve.open(URCDB,flag='c',writeback=True)
- Src = db['Src']
- Mask = db['Mask']
- channel_struct = db['channel_struct']
- active_clients = db['active_clients']
+
+ ### corrupted db's sometimes fail, urcd *should* repair it
+ try: Src = db['Src']
+ except: pass
+ try: Mask = db['Mask']
+ except: pass
+ try: channel_struct = db['channel_struct']
+ except: pass
+ try: active_clients = db['active_clients']
+ except: pass
+
  while len(Src) > CHANLIMIT*CHANLIMIT: del Src[Src.keys()[0]]
  while len(Mask) > CHANLIMIT*CHANLIMIT: del Mask[Mask.keys()[0]]
  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
@@ -131,14 +138,12 @@ def _crypto_sign(m,sk):
 def _crypto_sign_open(m,s,pk):
  return 1 if crypto_sign_open(s[:32]+m+s[32:],pk) != 0 else 0
 
-urcsecretboxdb = dict()
+urcsecretboxdb, urccryptoboxdb, urccryptoboxpfsdb, urccryptoboxpassdb = dict(), dict(), dict(), dict()
+
 if URCSECRETBOXDIR:
  for dst in os.listdir(URCSECRETBOXDIR):
   urcsecretboxdb[dst.lower()] = open(URCSECRETBOXDIR+'/'+dst,'rb').read(64).decode('hex')
 
-urccryptoboxdb = dict()
-urccryptoboxpfsdb = dict()
-urccryptoboxpassdb = dict()
 if URCCRYPTOBOXDIR:
  for dst in os.listdir(URCCRYPTOBOXDIR):
   if URCCRYPTOBOXPFS and dst in os.listdir(URCCRYPTOBOXPFS):
