@@ -107,9 +107,14 @@ if URCDB:
  while len(Mask) > CHANLIMIT*CHANLIMIT: del Mask[Mask.keys()[0]]
  while len(channel_struct) > CHANLIMIT: del channel_struct[channel_struct.keys()[0]]
  while len(active_clients) > CHANLIMIT*CHANLIMIT: del active_clients[active_clients.keys()[0]]
- for src in active_clients:
-  if not src in Src.keys(): Src[src] = src
+
+for dst in channel_struct.keys():
+ channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
+ if channel_struct[dst]['topic']: channel_struct[dst]['topic'] = channel_struct[dst]['topic'][:TOPICLEN]
+ for src in channel_struct[dst]['names']:
+  if not src in active_clients.keys(): active_clients[src] = now
   if not src in Mask.keys(): Mask[src] = serv
+  if not src in Src.keys(): Src[src] = src
 
 def try_read(fd,buflen):
  try: return os.read(fd,buflen)
@@ -179,14 +184,6 @@ if URCSIGNDB:
  urcsigndb = dict()
  for src in os.listdir(URCSIGNDB):
   urcsigndb[src.lower()] = open(URCSIGNDB+'/'+src,'rb').read(64).decode('hex')
-
-for dst in channel_struct.keys():
- channel_struct[dst]['names'] = collections.deque(list(channel_struct[dst]['names']),CHANLIMIT)
- if channel_struct[dst]['topic']: channel_struct[dst]['topic'] = channel_struct[dst]['topic'][:TOPICLEN]
- for src in channel_struct[dst]['names']:
-  if not src in active_clients.keys(): active_clients[src] = now
-  if not src in Mask.keys(): Mask[src] = serv
-  if not src in Src.keys(): Src[src] = src
 
 def sock_close(sn,sf):
  try: os.remove(str(os.getpid()))
