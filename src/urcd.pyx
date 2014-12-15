@@ -102,7 +102,7 @@ if URCDB:
  while len(active_clients) > CHANLIMIT*CHANLIMIT: del active_clients[active_clients.keys()[0]]
  for src in active_clients:
   if not src in Src.keys(): Src[src] = src
-  if not src in Mask.keys(): Mask[src] = src
+  if not src in Mask.keys(): Mask[src] = serv
 
 def try_read(fd,buflen):
  try: return os.read(fd,buflen)
