@@ -18,7 +18,7 @@ chown urcd cryptoservroot/*
 
 # expiry cleanup (hackaround)
 for i in `ls cryptoservroot/urccryptoboxpfs/`; do
- test -e cryptoservroot/urcsigndb/$i || rm -rf cryptoservroot/urccryptoboxpfs/$i
+# test -e cryptoservroot/urcsigndb/$i || rm -rf cryptoservroot/urccryptoboxpfs/$i
  test -e cryptoservroot/urccryptoboxdir/$i || rm -rf cryptoservroot/urccryptoboxpfs/$i
 done
 
