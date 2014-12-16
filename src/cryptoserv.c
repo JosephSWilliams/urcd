@@ -169,7 +169,7 @@ main(int argc, char *argv[])
     stat(path,(struct stat *)&stats);
     if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
   } closedir(directory);
-
+/*
   memcpy(path,"urccryptoboxpfs/",16); 
   if (!(directory=opendir("urccryptoboxpfs/"))) exit(6);
   while ((file=readdir(directory)))
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
     memcpy(path+16,file->d_name,strlen(file->d_name));
     stat(path,(struct stat *)&stats);
     if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
-  } closedir(directory);
+  } closedir(directory);*/
  }
 
  while (1)
