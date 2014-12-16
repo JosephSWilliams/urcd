@@ -483,7 +483,7 @@ while 1:
    if PRESENCE: try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +\n')
    else: try_write(wr,':'+Nick+'!'+user+'@'+serv+' MODE '+Nick+' +i\n')
 
-  ### IRC does not provide AWAY broadcast ###
+  ### IRC does not provide AWAY broadcast, can implement in WHO & WHOIS (thanks wowaname)
   elif re_CLIENT_AWAY_OFF(buffer):
    try_write(wr,':'+serv+' 305 '+Nick+' :RPL_UNAWAY\n')
 
