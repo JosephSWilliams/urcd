@@ -324,8 +324,8 @@ while 1:
    for dst in channel_struct.keys():
     if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
    del active_clients[src]
-   del Mask[src]
-   del Src[src]
+   if src in Mask.keys(): del Mask[src]
+   if src in Mask.keys(): del Src[src]
  del names
 
  if URCDB and now - sync >= TIMEOUT:
