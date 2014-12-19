@@ -82,7 +82,6 @@ main(int argc, char *argv[])
  long starttime;
  long EXPIRY;
 
- int i = strlen(argv[1]);
  int identifiednicklen;
  int identified = 0;
  int informed = 0;
@@ -90,6 +89,7 @@ main(int argc, char *argv[])
  int sfd = -1;
  int NICKLEN;
  int fd;
+ int i;
 
  fd = open("env/LIMIT",0);
  if (fd>0)
@@ -119,7 +119,9 @@ main(int argc, char *argv[])
 
  bzero(&s,sizeof(s));
  s.sun_family = AF_UNIX;
- memcpy(s.sun_path,argv[1],i); /* contains potential overflow */
+
+ if ((i=strlen(argv[1])) > UNIX_PATH_MAX) exit(2);
+ memcpy(s.sun_path,argv[1],i);
 
  if (((sfd=socket(AF_UNIX,SOCK_DGRAM,0))<0)
  || (itoa(s.sun_path+i,getppid(),UNIX_PATH_MAX-i)<0)
@@ -127,7 +129,7 @@ main(int argc, char *argv[])
  || (setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&i,sizeof(i))<0))
  {
   write(2,USAGE,strlen(USAGE));
-  exit(2);
+  exit(3);
  }
 
  if ((!urcd)
@@ -138,7 +140,7 @@ main(int argc, char *argv[])
  || (setuid(urcd->pw_uid)))
  {
   write(2,USAGE,strlen(USAGE));
-  exit(3);
+  exit(4);
  }
 
  starttime = time((long *)0);
@@ -149,7 +151,7 @@ main(int argc, char *argv[])
 
  if (EXPIRY) {
   memcpy(path,"urcsigndb/",10); 
-  if (!(directory=opendir("urcsigndb/"))) exit(4);
+  if (!(directory=opendir("urcsigndb/"))) exit(5);
   while ((file=readdir(directory)))
   {
     if (file->d_name[0] == '.') continue;
@@ -160,7 +162,7 @@ main(int argc, char *argv[])
   } closedir(directory);
 
   memcpy(path,"urccryptoboxdir/",16); 
-  if (!(directory=opendir("urccryptoboxdir/"))) exit(5);
+  if (!(directory=opendir("urccryptoboxdir/"))) exit(6);
   while ((file=readdir(directory)))
   {
     if (file->d_name[0] == '.') continue;

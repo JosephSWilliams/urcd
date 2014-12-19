@@ -17,7 +17,7 @@ Description:
 
 Advantages:
  Anonymity - URC doesn't care about IP or Ident, and doesn't reveal
- this information to other users on the network. the "serve" or "ip"
+ this information to other users on the network. The server/hostmask
  section of a URCLINE is always a hostmask chosen by the user. When a
  client sends a URC packet across the network, the sender's physical
  location is protected, by scattering the packet throughout the
