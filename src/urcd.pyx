@@ -254,7 +254,7 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  dst = argv[1].lower() if len(argv) > 1 else str()
 
  if dst[-4:] == 'serv' and not dst[0] in ['#','&','!','+']:
-  try_write(2,":"+dst+"!ERROR@"+serv+" NOTICE "+Nick+" :security: outgoing message blocked")
+  try_write(wr,":"+dst+"!ERROR@"+serv+" NOTICE "+Nick+" :security: outgoing message blocked\n")
   return
 
  if URCSIGNSECKEYDIR and dst and dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
