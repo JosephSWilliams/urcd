@@ -253,7 +253,7 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  padlen = PADDING - buflen % PADDING if PADDING else 0
  dst = argv[1].lower() if len(argv) > 1 else str()
 
- if dst[-4] == 'serv' and not dst[0] in ['#','&','!','+']:
+ if dst[-4:] == 'serv' and not dst[0] in ['#','&','!','+']:
   try_write(2,":"+dst+"!ERROR@"+serv+" NOTICE "+Nick+" :security: outgoing message blocked")
   return
 
