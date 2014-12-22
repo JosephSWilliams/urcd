@@ -315,7 +315,7 @@ while 1:
   flood_expiry += FLOOD
   flood -= 1
 
- names = active_clients
+ names = active_clients.keys()
  for src in names:
   if src != nick and now - active_clients[src] >= IDLE:
    for dst in channels:
