@@ -685,7 +685,7 @@ while 1:
    if len(src)>NICKLEN: continue
    active_clients[src] = now
    Src[src] = buffer[1:].split('!',1)[0]
-   Mask[src] = buffer[1:].split('@',1)[1].split(' ',1)[0]
+   Mask[src] = buffer.split('@',1)[1].split(' ',1)[0]
    cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
    if dst[0] in ['#','&','!','+']:
@@ -729,7 +729,7 @@ while 1:
    if len(src)>NICKLEN: continue
    active_clients[src] = now
    Src[src] = buffer[1:].split('!',1)[0]
-   Mask[src] = buffer[1:].split('@',1)[1].split(' ',1)[0]
+   Mask[src] = buffer.split('@',1)[1].split(' ',1)[0]
    dst = buffer.split(' :',1)[1].split('\n',1)[0].lower()
    if len(dst)>CHANNELLEN: continue
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
@@ -776,7 +776,7 @@ while 1:
    if len(cmd)>NICKLEN or len(src)>NICKLEN or len(dst)>CHANNELLEN: continue
    active_clients[cmd] = now
    Src[src] = buffer[1:].split('!',1)[0]
-   Mask[src] = buffer[1:].split('@',1)[1].split(' ',1)[0]
+   Mask[src] = buffer.split('@',1)[1].split(' ',1)[0]
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
    if not dst in channel_struct.keys():
     if len(channel_struct.keys())>=CHANLIMIT:
