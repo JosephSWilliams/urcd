@@ -95,7 +95,7 @@ int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
 
 int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
- unsigned char sm[2+12+4+8+1024+64];
+ unsigned char sm[1024*2];
  unsigned long long smlen;
  if (setlen(p,blen+64) == -1) return -1;
  taia96n(p+2);
@@ -114,8 +114,8 @@ int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk)
 int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
  if (p[12] != 1) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char sm[32+2+12+4+8+1024+32];
- unsigned char m[32+2+12+4+8+1024+32];
+ unsigned char sm[1024*2];
+ unsigned char m[1024*2];
  unsigned long long mlen;
  memmove(sm,p+plen-64,32);
  memmove(sm+32,p,plen-64);
@@ -125,11 +125,12 @@ int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
 
 int urcsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
+ int zlen = blen + (256 - blen % 256);
  unsigned char m[1024*2];
  unsigned char c[1024*2];
- bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
+ bzero(m,32+zlen); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
- if (setlen(p,blen+16) == -1) return -1;
+ if (setlen(p,zlen+16) == -1) return -1;
  taia96n(p+2);
  p[12]=2;
  p[13]=0;
@@ -137,8 +138,8 @@ int urcsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
  p[15]=0;
  randombytes(p+2+12+4,8);
  memmove(m+32,b,blen);
- if (crypto_secretbox(c,m,32+blen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
- memmove(p+2+12+4+8,c+16,blen+16);
+ if (crypto_secretbox(c,m,32+zlen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
+ memmove(p+2+12+4+8,c+16,zlen+16);
  return 0;
 }
 
@@ -157,11 +158,12 @@ int urcsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned cha
 
 int urcsignsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *ssk, unsigned char *csk) {
  if (blen > IRC_MTU) return -1;
- unsigned char sm[2+12+4+8+1024+64];
+ int zlen = blen + (256 - blen % 256);
+ unsigned char sm[1024*2];
  unsigned char m[1024*2];
  unsigned char c[1024*2];
  unsigned long long smlen;
- if (setlen(p,blen+64+16) == -1) return -1;
+ if (setlen(p,zlen+64+16) == -1) return -1;
  taia96n(p+2);
  p[12]=3;
  p[13]=0;
@@ -169,14 +171,15 @@ int urcsignsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned 
  p[15]=0;
  randombytes(p+2+12+4,8);
  memmove(p+2+12+4+8,b,blen);
- if (crypto_sign(sm,&smlen,p,2+12+4+8+blen,ssk) == -1) return -1;
- memmove(p+2+12+4+8+blen,sm,32);
- memmove(p+2+12+4+8+blen+32,sm+smlen-32,32);
+ bzero(p+2+12+4+8+blen,-blen+zlen);
+ if (crypto_sign(sm,&smlen,p,2+12+4+8+zlen,ssk) == -1) return -1;
+ memmove(p+2+12+4+8+zlen,sm,32);
+ memmove(p+2+12+4+8+zlen+32,sm+smlen-32,32);
  bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
- memmove(m+32,p+2+12+4+8,blen+64);
- if (crypto_secretbox(c,m,32+blen+64,(const unsigned char *)p+2,(const unsigned char *)csk) == -1) return -1;
- memmove(p+2+12+4+8,c+16,blen+64+16);
+ memmove(m+32,p+2+12+4+8,zlen+64);
+ if (crypto_secretbox(c,m,32+zlen+64,(const unsigned char *)p+2,(const unsigned char *)csk) == -1) return -1;
+ memmove(p+2+12+4+8,c+16,zlen+64+16);
  return 0;
 }
 
@@ -197,8 +200,8 @@ int urcsignsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned
 int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
  if (p[12] != 3) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char sm[32+2+12+4+8+1024+32];
- unsigned char m[32+2+12+4+8+1024+32];
+ unsigned char sm[1024*2];
+ unsigned char m[1024*2];
  unsigned long long mlen;
  memmove(sm,p+plen-64,32);
  memmove(sm+32,p,plen-64);
@@ -208,11 +211,12 @@ int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
 
 int urccryptobox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *pk, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
+ int zlen = blen + (256 - blen % 256);
  unsigned char m[1024*2];
  unsigned char c[1024*2];
- bzero(m,32); /* http://nacl.cr.yp.to/box.html */
+ bzero(m,32+zlen); /* http://nacl.cr.yp.to/box.html */
  bzero(c,16);
- if (setlen(p,blen+16) == -1) return -1;
+ if (setlen(p,zlen+16) == -1) return -1;
  taia96n(p+2);
  p[12]=4;
  p[13]=0;
@@ -220,8 +224,8 @@ int urccryptobox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
  p[15]=0;
  randombytes(p+2+12+4,8);
  memmove(m+32,b,blen);
- if (crypto_box(c,m,32+blen,(const unsigned char *)p+2,(const unsigned char *)pk,(const unsigned char *)sk) == -1) return -1;
- memmove(p+2+12+4+8,c+16,blen+16);
+ if (crypto_box(c,m,32+zlen,(const unsigned char *)p+2,(const unsigned char *)pk,(const unsigned char *)sk) == -1) return -1;
+ memmove(p+2+12+4+8,c+16,zlen+16);
  return 0;
 }
 

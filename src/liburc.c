@@ -135,7 +135,7 @@ PyObject *pyurcsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  if (sksize != 32) return Py_BuildValue("i", -1);
  if (bsize > IRC_MTU) return Py_BuildValue("i", -1);
  if (urcsecretbox_fmt(p,b,bsize,sk) == -1) return Py_BuildValue("i", -1);
- return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+16);
+ return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+(256-bsize%256)+16);
 }
 
 PyObject *pyurcsecretbox_open(PyObject *self, PyObject *args, PyObject *kw) {
@@ -186,7 +186,7 @@ PyObject *pyurcsignsecretbox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  if (csksize != 32) return Py_BuildValue("i", -1);
  if (bsize > IRC_MTU) return Py_BuildValue("i", -1);
  if (urcsignsecretbox_fmt(p,b,bsize,ssk,csk) == -1) return Py_BuildValue("i", -1);
- return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+64+16);
+ return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+(256-bsize%256)+64+16);
 }
 
 PyObject *pyurcsignsecretbox_open(PyObject *self, PyObject *args, PyObject *kw) {
@@ -257,7 +257,7 @@ PyObject *pyurccryptobox_fmt(PyObject *self, PyObject *args, PyObject *kw) {
  if (sksize != 32) return Py_BuildValue("i", -1);
  if (bsize > IRC_MTU) return Py_BuildValue("i", -1);
  if (urccryptobox_fmt(p,b,bsize,pk,sk) == -1) return Py_BuildValue("i", -1);
- return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+16);
+ return PyBytes_FromStringAndSize((char *)p, 2+12+4+8+bsize+(256-bsize%256)+16);
 }
 
 PyObject *pyurccryptobox_open(PyObject *self, PyObject *args, PyObject *kw) {

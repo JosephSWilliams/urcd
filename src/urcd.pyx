@@ -757,10 +757,9 @@ while 1:
      if cmd == '\x01' and dst in channels:
       try_write(wr,buffer)
       cmd = '\x00'
-   if src in active_clients:
-    del active_clients[src]
-    del Mask[src]
-    del Src[src]
+   if src in active_clients: del active_clients[src]
+   if src in Mask: del Mask[src]
+   if src in Src: del Src[src]
 
   elif re_SERVER_KICK(buffer):
    cmd = buffer.split(':',2)[1].split('!',1)[0].lower()
