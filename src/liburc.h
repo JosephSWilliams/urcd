@@ -80,7 +80,7 @@ void taia96n(unsigned char *ts) {
  randombytes(ts+8,4);
 }
 
-int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
+int urchub_fmt(unsigned char *p, int *plen, unsigned char *b, int blen) {
  if (blen > IRC_MTU) return -1;
  if (setlen(p,blen) == -1) return -1;
  taia96n(p+2);
@@ -90,10 +90,11 @@ int urchub_fmt(unsigned char *p, unsigned char *b, int blen) {
  p[15]=0;
  randombytes(p+2+12+4,8);
  memmove(p+2+12+4+8,b,blen);
+ *plen=2+12+4+8+blen;
  return 0;
 }
 
-int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
+int urcsign_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
  unsigned char sm[1024*2];
  unsigned long long smlen;
@@ -108,6 +109,7 @@ int urcsign_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk)
  if (crypto_sign(sm,&smlen,p,2+12+4+8+blen,sk) == -1) return -1;
  memmove(p+2+12+4+8+blen,sm,32);
  memmove(p+2+12+4+8+blen+32,sm+smlen-32,32);
+ *plen=2+12+4+8+smlen;
  return 0;
 }
 
@@ -123,7 +125,7 @@ int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
  return crypto_sign_open(m,&mlen,(const unsigned char *)sm,plen,(const unsigned char *)pk);
 }
 
-int urcsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *sk) {
+int urcsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
  int zlen = blen + (256 - blen % 256);
  unsigned char m[1024*2];
@@ -140,10 +142,11 @@ int urcsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
  memmove(m+32,b,blen);
  if (crypto_secretbox(c,m,32+zlen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
  memmove(p+2+12+4+8,c+16,zlen+16);
+ *plen=2+12+4+8+zlen+16;
  return 0;
 }
 
-int urcsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned char *sk) {
+int urcsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *sk) {
  if (p[12] != 2) return -1;
  if (plen > URC_MTU) return -1;
  unsigned char m[1024*2];
@@ -153,10 +156,11 @@ int urcsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned cha
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
  if (crypto_secretbox_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
  memmove(b,m+32,-2-12-4-8+plen-16);
+ *blen=-2-12-4-8+plen-16;
  return 0;
 }
 
-int urcsignsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *ssk, unsigned char *csk) {
+int urcsignsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *ssk, unsigned char *csk) {
  if (blen > IRC_MTU) return -1;
  int zlen = blen + (256 - blen % 256);
  unsigned char sm[1024*2];
@@ -180,10 +184,11 @@ int urcsignsecretbox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned 
  memmove(m+32,p+2+12+4+8,zlen+64);
  if (crypto_secretbox(c,m,32+zlen+64,(const unsigned char *)p+2,(const unsigned char *)csk) == -1) return -1;
  memmove(p+2+12+4+8,c+16,zlen+64+16);
+ *plen=2+12+4+8+zlen+64+16;
  return 0;
 }
 
-int urcsignsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned char *sk) {
+int urcsignsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *sk) {
  if (p[12] != 3) return -1;
  if (plen > URC_MTU) return -1;
  unsigned char m[1024*2];
@@ -194,6 +199,7 @@ int urcsignsecretbox_open(unsigned char *b, unsigned char *p, int plen, unsigned
  if (crypto_secretbox_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)sk) == -1) return -1;
  memmove(b,p,2+12+4+8);
  memmove(b+2+12+4+8,m+32,-2-12-4-8+plen-16);
+ *blen=plen-16;
  return 0;
 }
 
@@ -209,7 +215,7 @@ int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
  return crypto_sign_open(m,&mlen,(const unsigned char *)sm,plen,(const unsigned char *)pk);
 }
 
-int urccryptobox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char *pk, unsigned char *sk) {
+int urccryptobox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *pk, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
  int zlen = blen + (256 - blen % 256);
  unsigned char m[1024*2];
@@ -226,10 +232,11 @@ int urccryptobox_fmt(unsigned char *p, unsigned char *b, int blen, unsigned char
  memmove(m+32,b,blen);
  if (crypto_box(c,m,32+zlen,(const unsigned char *)p+2,(const unsigned char *)pk,(const unsigned char *)sk) == -1) return -1;
  memmove(p+2+12+4+8,c+16,zlen+16);
+ *plen=2+12+4+8+zlen+16;
  return 0;
 }
 
-int urccryptobox_open(unsigned char *b, unsigned char *p, int plen, unsigned char *pk, unsigned char *sk) {
+int urccryptobox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *pk, unsigned char *sk) {
  if (p[12] != 4) return -1;
  if (plen > URC_MTU) return -1;
  unsigned char m[1024*2];
@@ -238,6 +245,7 @@ int urccryptobox_open(unsigned char *b, unsigned char *p, int plen, unsigned cha
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
  if (crypto_box_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)pk,(const unsigned char *)sk) == -1) return -1;
- memmove(b,m+32,-2-4-8+plen-16);
+ memmove(b,m+32,-2-12-4-8+plen-16);
+ *blen=-2-12-4-8+plen-16;
  return 0;
 }
