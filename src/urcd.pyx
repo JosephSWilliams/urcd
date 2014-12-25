@@ -191,7 +191,9 @@ def sock_close(sn,sf):
  except: pass
  if sn:
   if URCDB:
-   for dst in channels: channel_struct[dst]['names'].remove(nick)
+   for dst in channels:
+    if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
+   for dst in urcsecretboxdb: del channel_struct[dst]
    db['channel_struct'] = channel_struct
    db['active_clients'] = active_clients
    db['Mask'] = Mask
@@ -334,12 +336,13 @@ while 1:
  del names
 
  if URCDB and now - sync >= TIMEOUT:
-  if not PRESENCE:
-   for dst in channels: channel_struct[dst]['names'].remove(nick)
   db['channel_struct'] = channel_struct
   db['active_clients'] = active_clients
   db['Mask'] = Mask
   db['Src'] = Src
+  if not PRESENCE:
+   for dst in channels: db['channel_struct'][dst]['names'].remove(nick)
+  for dst in urcsecretboxdb: del db['channel_struct'][dst]
   db.sync()
   sync = now
   if not PRESENCE:
@@ -475,10 +478,9 @@ while 1:
    elif cmd =='-k' and dst.lower() in urcsecretboxdb:
     del urcsecretboxdb[dst.lower()]
    if dst.lower() in urcsecretboxdb:
-    try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kn')
-    try_write(wr,'\n') if URCDB else try_write(wr,'s\n')
+    try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kns\n')
    else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
-   try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
+   try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' 1354841938\n') ### Fri Dec 28 18:58:58 2012 +0000
 
   elif re_CLIENT_MODE_NICK(buffer):
    if PRESENCE: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+\n')
@@ -562,9 +564,7 @@ while 1:
    for dst in channel_struct:
     if channel_struct[dst]['names']:
      try_write(wr,':'+serv+' 322 '+Nick+' '+dst+' '+str(len(channel_struct[dst]['names'])))
-     if dst in urcsecretboxdb:
-      if URCDB: try_write(wr,' :[+kn] ')
-      else: try_write(wr,' :[+kns] ')
+     if dst in urcsecretboxdb: try_write(wr,' :[+kns] ')
      else: try_write(wr,' :[+n] ')
      if channel_struct[dst]['topic']: try_write(wr,channel_struct[dst]['topic'])
      try_write(wr,'\n')
