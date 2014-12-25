@@ -345,8 +345,6 @@ while 1:
   for dst in urcsecretboxdb: del db['channel_struct'][dst]
   db.sync()
   sync = now
-  if not PRESENCE:
-   for dst in channels: channel_struct[dst]['names'].append(nick)
 
  if not client_revents(0):
   if now - seen >= TIMEOUT:
