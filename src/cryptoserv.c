@@ -429,5 +429,6 @@ main(int argc, char *argv[])
    }
   }
  if (write(1,buffer0,i)<=0) exit(14);
+ if ((i>=4)&&(!memcmp("quit",buffer1,4))) exit(15);
  }
 }
