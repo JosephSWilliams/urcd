@@ -191,18 +191,12 @@ def sock_close(sn,sf):
  except: pass
  if sn:
   if URCDB:
-   for dst in channels:
-    if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
-   for dst in urcsecretboxdb: del channel_struct[dst]
+   for dst in channels: channel_struct[dst]['names'].remove(nick)
    db['channel_struct'] = channel_struct
    db['active_clients'] = active_clients
    db['Mask'] = Mask
    db['Src'] = Src
    db.close()
-  try: os.write(0,'') ### send EOF to children ###
-  except: pass
-  try: os.write(wr,'')
-  except: pass
   sys.exit(sn&255)
 
 signal.signal(signal.SIGHUP,sock_close)
@@ -336,15 +330,16 @@ while 1:
  del names
 
  if URCDB and now - sync >= TIMEOUT:
+  if not PRESENCE:
+   for dst in channels: channel_struct[dst]['names'].remove(nick)
   db['channel_struct'] = channel_struct
   db['active_clients'] = active_clients
   db['Mask'] = Mask
   db['Src'] = Src
-  if not PRESENCE:
-   for dst in channels: db['channel_struct'][dst]['names'].remove(nick)
-  for dst in urcsecretboxdb: del db['channel_struct'][dst]
   db.sync()
   sync = now
+  if not PRESENCE:
+   for dst in channels: channel_struct[dst]['names'].append(nick)
 
  if not client_revents(0):
   if now - seen >= TIMEOUT:
