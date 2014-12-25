@@ -109,7 +109,7 @@ int urcsign_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigne
  if (crypto_sign(sm,&smlen,p,2+12+4+8+blen,sk) == -1) return -1;
  memmove(p+2+12+4+8+blen,sm,32);
  memmove(p+2+12+4+8+blen+32,sm+smlen-32,32);
- *plen=2+12+4+8+smlen;
+ *plen=2+12+4+8+blen+64;
  return 0;
 }
 
