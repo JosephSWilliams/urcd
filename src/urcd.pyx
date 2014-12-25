@@ -480,7 +480,7 @@ while 1:
    if dst.lower() in urcsecretboxdb:
     try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kns\n')
    else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
-   try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' 1354841938\n') ### Fri Dec 28 18:58:58 2012 +0000
+   try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' 1356742698\n') ### Fri Dec 28 18:58:58 2012 +0000
 
   elif re_CLIENT_MODE_NICK(buffer):
    if PRESENCE: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+\n')
