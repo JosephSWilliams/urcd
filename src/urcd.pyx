@@ -260,7 +260,7 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  padlen = PADDING - buflen % PADDING if PADDING else 0
  dst = argv[1].lower() if len(argv) > 1 else str()
 
- if dst[-4:] == 'serv' and not dst[0] in ['#','&','!','+']:
+ if dst[-4:] == 'serv' and not dst[0] in '#&!+':
   try_write(wr,':'+dst+'!ERROR@'+serv+' NOTICE '+Nick+' :security: outgoing message blocked\n')
   return
 
@@ -443,7 +443,7 @@ while 1:
    try: cmd, dst, msg = re_SPLIT(buffer,2)
    except: cmd, dst, msg = re_SPLIT(buffer,2)+[str()]
    cmd, dst = cmd.upper(), dst.lower()
-   if dst[0] in ['#','&','!','+']:
+   if dst[0] in '#&!+':
     if len(dst)>CHANNELLEN:
      try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
      continue
@@ -679,7 +679,7 @@ while 1:
   if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
   if not UNICODE:
    buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
-   buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
+   buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in '\x01\x02\x03\x0f\x1d\x1f')
   buffer += '\n'
 
   if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
@@ -690,7 +690,7 @@ while 1:
    Mask[src] = buffer.split('@',1)[1].split(' ',1)[0]
    cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
    if dst in urcsecretboxdb and AUTH != dst: continue
-   if dst[0] in ['#','&','!','+']:
+   if dst[0] in '#&!+':
     if len(dst)>CHANNELLEN: continue
     if not dst in channel_struct:
      if len(channel_struct)>=CHANLIMIT:
