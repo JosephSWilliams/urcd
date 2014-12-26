@@ -681,11 +681,11 @@ while 1:
   buffer += '\n'
 
   if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
-   src = buffer.split(':',2)[1].split('!',1)[0].lower()
+   src = buffer[1:].split('!',1)[0].lower()
    if len(src)>NICKLEN: continue
    active_clients[src] = now
-   Src[src] = buffer.split(':',2)[1].split('!',1)[0]
-   Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
+   Src[src] = buffer[1:].split('!',1)[0]
+   Mask[src] = buffer.split(' ',1)[0].split('@',1)[1].split(' ',1)[0]
    cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
    if dst[0] in ['#','&','!','+']:
@@ -725,12 +725,12 @@ while 1:
    if dst == nick or dst in channels: try_write(wr,buffer)
 
   elif re_SERVER_JOIN(buffer):
-   src = buffer.split(':',2)[1].split('!',1)[0].lower()
+   src = buffer[1:].split('!',1)[0].lower()
    if len(src)>NICKLEN: continue
    active_clients[src] = now
-   Src[src] = buffer.split(':',2)[1].split('!',1)[0]
-   Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
-   dst = buffer.split(':')[2].split('\n',1)[0].lower()
+   Src[src] = buffer[1:].split('!',1)[0]
+   Mask[src] = buffer.split(' ',1)[0].split('@',1)[1].split(' ',1)[0]
+   dst = buffer.split(' :')[1].split('\n',1)[0].lower()
    if len(dst)>CHANNELLEN: continue
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
    if not dst in channel_struct.keys():
@@ -739,7 +739,7 @@ while 1:
       if not dst in channels:
        del channel_struct[dst]
        break
-     dst = buffer.split(':')[2].split('\n',1)[0].lower()
+     dst = buffer.split(' :')[1].split('\n',1)[0].lower()
     channel_struct[dst] = dict(
      names = collections.deque([],CHANLIMIT),
      topic = None,
@@ -756,7 +756,7 @@ while 1:
     channel_struct[dst]['names'].append(src)
 
   elif re_SERVER_QUIT(buffer):
-   src = buffer.split(':',2)[1].split('!',1)[0].lower()
+   src = buffer[1:].split('!',1)[0].lower()
    if src == nick or len(src)>NICKLEN: continue
    cmd = '\x01'
    for dst in channel_struct.keys():
@@ -767,16 +767,16 @@ while 1:
       cmd = '\x00'
    if src in active_clients.keys():
     del active_clients[src]
-    del Mask[src]
-    del Src[src]
+    if src in Mask: del Mask[src]
+    if src in Src: del Src[src]
 
   elif re_SERVER_KICK(buffer):
-   cmd = buffer.split(':',2)[1].split('!',1)[0].lower()
+   cmd = buffer[1:].split('!',1)[0].lower()
    dst, src = re_SPLIT(buffer.lower(),4)[2:4]
    if len(cmd)>NICKLEN or len(src)>NICKLEN or len(dst)>CHANNELLEN: continue
    active_clients[cmd] = now
-   Src[src] = buffer.split(':',2)[1].split('!',1)[0]
-   Mask[src] = buffer.split(':',2)[1].split('@',1)[1].split(' ',1)[0]
+   Src[src] = buffer[1:].split('!',1)[0]
+   Mask[src] = buffer.split(' ',1)[0].split('@',1)[1].split(' ',1)[0]
    if dst in urcsecretboxdb.keys() and AUTH != dst: continue
    if not dst in channel_struct.keys():
     if len(channel_struct.keys())>=CHANLIMIT:
