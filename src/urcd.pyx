@@ -41,10 +41,10 @@ re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
 re_CLIENT_USER = re.compile('^USER ',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
-re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,256} ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
-re_SERVER_JOIN = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,256} JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
-re_SERVER_QUIT = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,256} QUIT :.*$',re.IGNORECASE).search
-re_SERVER_KICK = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,256} KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_JOIN = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
+re_SERVER_QUIT = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ QUIT :.*$',re.IGNORECASE).search
+re_SERVER_KICK = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]+ KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 re_SERVICE = re.compile('^:['+RE+']*Serv!',re.IGNORECASE).search
 
 ### strange values will likely yield strange results ###
@@ -254,7 +254,7 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  padlen = PADDING - buflen % PADDING if PADDING else 0
  dst = argv[1].lower() if len(argv) > 1 else str()
 
- if dst[-4:] == 'serv' and not dst[0] in '#&!+':
+ if dst[-4:] == 'serv' and not dst[0] in ['#','&','!','+']:
   try_write(wr,':'+dst+'!ERROR@'+serv+' NOTICE '+Nick+' :security: outgoing message blocked\n')
   return
 
@@ -331,8 +331,7 @@ while 1:
 
  if URCDB and now - sync >= TIMEOUT:
   if not PRESENCE:
-   for dst in channels:
-    if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
+   for dst in channels: channel_struct[dst]['names'].remove(nick)
   db['channel_struct'] = channel_struct
   db['active_clients'] = active_clients
   db['Mask'] = Mask
@@ -437,7 +436,7 @@ while 1:
    try: cmd, dst, msg = re_SPLIT(buffer,2)
    except: cmd, dst, msg = re_SPLIT(buffer,2)+[str()]
    cmd, dst = cmd.upper(), dst.lower()
-   if dst[0] in '#&!+':
+   if dst[0] in ['#','&','!','+']:
     if len(dst)>CHANNELLEN:
      try_write(wr,':'+serv+' 403 '+Nick+' :ERR_NOSUCHCHANNEL\n')
      continue
@@ -472,9 +471,10 @@ while 1:
    elif cmd =='-k' and dst.lower() in urcsecretboxdb:
     del urcsecretboxdb[dst.lower()]
    if dst.lower() in urcsecretboxdb:
-    try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kns\n')
+    try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kn')
+    try_write(wr,'\n') if URCDB else try_write(wr,'s\n')
    else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
-   try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' 1356742698\n') ### Fri Dec 28 18:58:58 2012 +0000
+   try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
 
   elif re_CLIENT_MODE_NICK(buffer):
    if PRESENCE: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+\n')
@@ -558,7 +558,9 @@ while 1:
    for dst in channel_struct:
     if channel_struct[dst]['names']:
      try_write(wr,':'+serv+' 322 '+Nick+' '+dst+' '+str(len(channel_struct[dst]['names'])))
-     if dst in urcsecretboxdb: try_write(wr,' :[+kns] ')
+     if dst in urcsecretboxdb:
+      if URCDB: try_write(wr,' :[+kn] ')
+      else: try_write(wr,' :[+kns] ')
      else: try_write(wr,' :[+n] ')
      if channel_struct[dst]['topic']: try_write(wr,channel_struct[dst]['topic'])
      try_write(wr,'\n')
@@ -571,7 +573,7 @@ while 1:
   ### implement new re_CLIENT_CMD's here ###
 
   ### ERR_UKNOWNCOMMAND ###
-  else: try_write(wr,':'+serv+' 421 : ERR_UNKNOWNCOMMAND: '+str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')+'\n')
+  else: try_write(wr,':'+serv+' 421 '+str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')+'\n')
 
  while server_revents(0) and not client_revents(0):
 
@@ -673,7 +675,7 @@ while 1:
   if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
   if not UNICODE:
    buffer = codecs.ascii_encode(unicodedata.normalize('NFKD',unicode(buffer,'utf-8','replace')),'ignore')[0]
-   buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in '\x01\x02\x03\x0f\x1d\x1f')
+   buffer = ''.join(byte for byte in buffer if 127 > ord(byte) > 31 or byte in ['\x01','\x02','\x03','\x0f','\x1d','\x1f'])
   buffer += '\n'
 
   if re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART(buffer):
@@ -684,7 +686,7 @@ while 1:
    Mask[src] = buffer.split('@',1)[1].split(' ',1)[0]
    cmd, dst = re_SPLIT(buffer.lower(),3)[1:3]
    if dst in urcsecretboxdb and AUTH != dst: continue
-   if dst[0] in '#&!+':
+   if dst[0] in ['#','&','!','+']:
     if len(dst)>CHANNELLEN: continue
     if not dst in channel_struct:
      if len(channel_struct)>=CHANLIMIT:
