@@ -428,6 +428,10 @@ main(int argc, char *argv[])
     continue;
    }
   }
- if (write(1,buffer0,i)<=0) exit(14);
+  if (write(1,buffer0,i)<=0) exit(14);
+  if ((i>=4)&&(!memcmp("quit",buffer1,4))) {
+   write(1,"",0); // send EOF  
+   exit(15);
+  }
  }
 }
