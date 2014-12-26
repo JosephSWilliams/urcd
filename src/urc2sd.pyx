@@ -39,7 +39,7 @@ re_CLIENT_CHANMODE = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ MODE [#&
 re_CLIENT_BAN_EXCEPT = re.compile('^:['+RE+'!@~.]+ ((367)|(348)) ['+RE+']+ [#&!+]['+RE+']+ \S+ ',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(ACTION )?',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
-re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]+ ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_PRIVMSG_NOTICE_TOPIC = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[:#'+RE+'.]{1,256} ((PRIVMSG)|(NOTICE)|(TOPIC)) [#&!+]['+RE+']+ :.*$',re.IGNORECASE).search
 
 ### some operating systems do not set atime reliably ###
 if os.path.exists('env/HELP') \
