@@ -80,6 +80,7 @@ Src = dict()
 Mask = dict()
 active_clients = dict()
 channel_struct = dict() ### operations assume nick is in channel_struct[dst]['names'] if dst in channels ###
+struct_channel = dict(names = collections.deque([],CHANLIMIT), topic = None)
 channels = collections.deque([],CHANLIMIT)
 bytes = [(chr(i),i) for i in xrange(0,256)]
 motd = open('env/motd','rb').read().split('\n')
@@ -527,10 +528,7 @@ while 1:
     if msg and not msg in ['x','?']:
      URCSECRETBOXDIR = 1
      urcsecretboxdb[dst.lower()] = crypto_hash_sha512(msg+dst)[32:64]
-    if not dst in channel_struct.keys(): channel_struct[dst] = dict(
-     names = collections.deque([],CHANLIMIT),
-     topic = None,
-    )
+    if not dst in channel_struct.keys(): channel_struct[dst] = struct_channel
     elif nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
     try_write(wr,
      ':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'
@@ -697,10 +695,7 @@ while 1:
         del channel_struct[dst]
         break
       dst = re_SPLIT(buffer,3)[2].lower()
-     channel_struct[dst] = dict(
-      names = collections.deque([],CHANLIMIT),
-      topic = None,
-     )
+     channel_struct[dst] = struct_channel
     if cmd == 'topic':
      msg = buffer.split(':',2)[2].split('\n',1)[0][:TOPICLEN]
      if not msg: continue
@@ -740,10 +735,7 @@ while 1:
        del channel_struct[dst]
        break
      dst = buffer.split(' :')[1].split('\n',1)[0].lower()
-    channel_struct[dst] = dict(
-     names = collections.deque([],CHANLIMIT),
-     topic = None,
-    )
+    channel_struct[dst] = struct_channel
    if src != nick and not src in channel_struct[dst]['names']:
     if dst in channels:
      try_write(wr,buffer)
@@ -785,10 +777,7 @@ while 1:
        del channel_struct[dst]
        break
      dst = re_SPLIT(buffer,3)[2].lower()
-    channel_struct[dst] = dict(
-     names = collections.deque([],CHANLIMIT),
-     topic = None,
-    )
+    channel_struct[dst] = struct_channel
    if src != nick:
     dst = re_SPLIT(buffer,3)[2].lower()
     if src in channel_struct[dst]['names']:
