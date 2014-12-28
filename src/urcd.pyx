@@ -573,7 +573,7 @@ while 1:
   ### implement new re_CLIENT_CMD's here ###
 
   ### ERR_UKNOWNCOMMAND ###
-  else: try_write(wr,':'+serv+' 421 '+str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')+'\n')
+  else: try_write(wr,':'+serv+' 421 : ERR_UKNOWNCOMMAND: '+str({str():buffer})[6:-2].replace("\\'","'").replace('\\\\','\\')+'\n')
 
  while server_revents(0) and not client_revents(0):
 
