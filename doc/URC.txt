@@ -33,7 +33,10 @@ Advantages:
  protected.
 
  Plausible Deniability - URC packets that are not signed cannot prove
- a specific user created a message.
+ a specific user created a message. Admins using URCd and CryptoServ
+ also have a unique advantage, in that they can deny knowing a secret
+ key because the keys can be sent remotely and are not stored on the
+ server.
 
  NO NickServ/Chanserv - NickServ and ChanServ are replaced by
  signatures and encryption, that come optional to the user.
@@ -55,7 +58,7 @@ Advantages:
  correct keys can discover this information. By default, all
  encrypted packets are padded to protect against other side channels.
 
- Security is priority - URC is written in a small amount of open
+ Security Aware - URC is written in a small amount of open
  source C and Python code. URC daemons only function inside of a
  chroot jail with only the privileges necessary to run. URC supports
  the new record setting Networking and Cryptographic library (NaCl),
