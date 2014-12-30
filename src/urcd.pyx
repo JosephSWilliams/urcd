@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from binascii import unhexlify as unhex
+from hashlib import sha512
 from errno import EAGAIN
 from nacltaia import *
 from taia96n import *
@@ -465,7 +466,7 @@ while 1:
   elif re_CLIENT_MODE_CHANNEL_ARG(buffer):
    try:
     dst, cmd, msg = re_SPLIT(buffer,4)[1:4]
-    msg = crypto_hash_sha512(msg+dst.lower())[32:64] if not msg in ['x','?'] else str()
+    msg = sha512(msg+dst.lower()).digest()[32:64] if not msg in ['x','?'] else str()
    except: dst, cmd, msg = re_SPLIT(buffer,2)[1],str(),str()
    if cmd == '+k' and len(msg)==32 and dst.lower() in channels and len(urcsecretboxdb.keys())<=CHANLIMIT:
     urcsecretboxdb[dst.lower()], URCSECRETBOXDIR = msg, 1
@@ -528,7 +529,7 @@ while 1:
     channels.append(dst)
     if msg and not msg in ['x','?']:
      URCSECRETBOXDIR = 1
-     urcsecretboxdb[dst.lower()] = crypto_hash_sha512(msg+dst)[32:64]
+     urcsecretboxdb[dst.lower()] = sha512(msg+dst).digest()[32:64]
     if not dst in channel_struct.keys(): channel_struct[dst] = struct_channel
     elif nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
     try_write(wr,
