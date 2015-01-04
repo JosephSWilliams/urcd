@@ -783,5 +783,5 @@ while 1:
    if cmd != nick:
     dst = re_SPLIT(buffer,3)[2].lower()
     if cmd in channel_struct[dst]['names']:
-     channel_struct[dst]['names'].remove(src)
+     channel_struct[dst]['names'].remove(cmd)
      if dst in channels: try_write(wr,buffer)
