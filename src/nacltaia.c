@@ -1,3 +1,7 @@
+/*
+ this library will eventually be replaced with liburc
+*/
+
 #include <nacl/crypto_hash_sha512.h>
 #include <nacl/crypto_hash_sha256.h>
 #include <nacl/crypto_secretbox.h>
