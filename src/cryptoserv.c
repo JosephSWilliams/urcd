@@ -59,7 +59,7 @@ main(int argc, char *argv[])
   exit(1);
  }
 
- struct passwd *urcd = getpwnam("urcd"); 
+ struct passwd *urcd = getpwnam("urcd");
  struct sockaddr_un s;
  struct dirent *file;
  struct stat stats;
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
  memcpy(buffer2+2+12+4+8,":CryptoServ!URCD@service NOTICE ",32);
 
  if (EXPIRY) {
-  memcpy(path,"urcsigndb/",10); 
+  memcpy(path,"urcsigndb/",10);
   if (!(directory=opendir("urcsigndb/"))) exit(5);
   while ((file=readdir(directory)))
   {
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
     if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
   } closedir(directory);
 
-  memcpy(path,"urccryptoboxdir/",16); 
+  memcpy(path,"urccryptoboxdir/",16);
   if (!(directory=opendir("urccryptoboxdir/"))) exit(6);
   while ((file=readdir(directory)))
   {
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
     if (time((long *)0) - stats.st_atime >= EXPIRY) remove(path);
   } closedir(directory);
 /*
-  memcpy(path,"urccryptoboxpfs/",16); 
+  memcpy(path,"urccryptoboxpfs/",16);
   if (!(directory=opendir("urccryptoboxpfs/"))) exit(6);
   while ((file=readdir(directory)))
   {
@@ -430,7 +430,7 @@ main(int argc, char *argv[])
   }
   if (write(1,buffer0,i)<=0) exit(14);
   if ((i>=4)&&(!memcmp("quit",buffer1,4))) {
-   write(1,"",0); // send EOF  
+   write(1,"",0); // send EOF
    exit(15);
   }
  }

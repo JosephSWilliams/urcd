@@ -199,6 +199,10 @@ def sock_close(sn,sf):
    db['Mask'] = Mask
    db['Src'] = Src
    db.close()
+  try: os.write(0,"") ### send EOF ###
+  except: pass
+  try: os.write(wr,"")
+  except: pass
   sys.exit(sn&255)
 
 signal.signal(signal.SIGHUP,sock_close)
