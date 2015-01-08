@@ -7,6 +7,7 @@ from taia96n import *
 import unicodedata
 import collections
 import subprocess
+import liburc
 import codecs
 import select
 import socket
@@ -288,27 +289,16 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
    )
 
  ### URCSIGNSECRETBOX ###
- elif seckey and signseckey:
-  buflen += 64 + 16 + padlen
-  nonce = taia96n_pack(taia96n_now())+'\x03\x00\x00\x00'+randombytes(8)
-  buffer = chr(buflen>>8)+chr(buflen%256)+nonce+buffer+randombytes(padlen)
-  buffer += _crypto_sign(buffer,signseckey)
-  buffer = buffer[:2+12+4+8]+crypto_secretbox(buffer[2+12+4+8:],nonce,seckey)
+ elif seckey and signseckey: buffer = liburc.urcsignsecretbox_fmt(buffer,signseckey,seckey)
 
  ### URCSECRETBOX ###
- elif seckey:
-  buflen += 16 + padlen
-  nonce = taia96n_pack(taia96n_now())+'\x02\x00\x00\x00'+randombytes(8)
-  buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+randombytes(padlen),nonce,seckey)
+ elif seckey: buffer = liburc.urcsecretbox_fmt(buffer,seckey)
 
  ### URCSIGN ###
- elif signseckey:
-  buflen += 64
-  buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x01\x00\x00\x00'+randombytes(8)+buffer
-  buffer += _crypto_sign(buffer,signseckey)
+ elif signseckey: buffer = liburc.urcsign_fmt(buffer,signseckey)
 
  ### URCHUB ###
- else: buffer = chr(buflen>>8)+chr(buflen%256)+taia96n_pack(taia96n_now())+'\x00\x00\x00\x00'+randombytes(8)+buffer
+ else: buffer = liburc.urchub_fmt(buffer)
 
  try: sock.sendto(buffer,'hub')
  except: pass
