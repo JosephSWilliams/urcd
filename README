@@ -43,10 +43,6 @@ install:
   # OpenBSD:
    echo '-ftrampolines' > conf-cc
 
-  # if python2.6:
-   sed 's/\.7/.6/g' Make.sh | sh -v
-
-  # elif python2.7
   ./Make.sh
 
   # edit the network/hostmask
