@@ -1,5 +1,6 @@
 #include <nacl/crypto_hash_sha512.h>
 #include <nacl/crypto_secretbox.h>
+#include <nacl/crypto_stream.h>
 #include <nacl/crypto_sign.h>
 #include <nacl/crypto_box.h>
 #include <sys/types.h>
@@ -42,25 +43,25 @@ int urc_jail(char *path) {
 }
 
 /* security: strong entropy not guaranteed without devurandomfd open */
-void randombytes(unsigned char *b, int blen) {
+void randombytes(unsigned char *d, int dlen) {
  if (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
  if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  if (devurandomfd == -1) {
-  static unsigned char d[64];
-  unsigned char * h = malloc(256 * sizeof(unsigned char));
-  unsigned char s[256]; /* sometimes heap is zeroed, try luck with stack */
-  struct timeval now;
   int i;
-  for (i=0;i<blen;++i) {
-   if (!i&63) crypto_hash_sha512(d,b,blen);
-   gettimeofday(&now,'\x00');
-   srand(now.tv_usec);
-   b[i] = rand() & 255;
-   b[i] ^= s[i & 255];
-   b[i] ^= d[i & 63];
-   if (h) b[i] ^= h[i & 255];
-  }if (h) free(h);
- } else read(devurandomfd,b,blen);
+  struct timeval now;
+  unsigned char a[64];
+  unsigned char c[64];
+  unsigned char *b = malloc(64 * sizeof(unsigned char));
+  for (i=0;i<64;++i) {
+   gettimeofday(&now,'\x00'); srand(now.tv_usec); a[i] = 255 & rand();
+   if (b) a[i] ^= b[i];
+   a[i] ^= c[i];
+  }
+  crypto_hash_sha512(a,a,64);
+  crypto_stream(d,dlen,a,a+24);
+  if (b) free(b);
+ }
+ else read(devurandomfd,d,dlen);
 }
 
 int setlen(unsigned char *b, int blen) {
