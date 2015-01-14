@@ -1,4 +1,4 @@
 #!/bin/sh -e
 # bet you wish you had the passwd
 
-torify git push https://github.com/d3v11b0t/urcd.git master
+torify git push https://github.com/JosephSWilliams/urcd.git master
