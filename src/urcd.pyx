@@ -470,7 +470,7 @@ while 1:
     try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +kn')
     try_write(wr,'\n') if URCDB else try_write(wr,'s\n')
    else: try_write(wr,':'+serv+' 324 '+Nick+' '+dst+' +n\n')
-   try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' '+str(int(now))+'\n')
+   try_write(wr,':'+serv+' 329 '+Nick+' '+dst+' 1356742738\n')
 
   elif re_CLIENT_MODE_NICK(buffer):
    if PRESENCE: try_write(wr,':'+serv+' 221 '+re_SPLIT(buffer,2)[1]+' :+\n')
