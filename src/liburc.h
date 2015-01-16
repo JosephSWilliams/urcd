@@ -61,7 +61,12 @@ void randombytes(unsigned char *d, int dlen) {
   crypto_stream(d,dlen,a,a+24);
   if (b) free(b);
  }
- else read(devurandomfd,d,dlen);
+ else {
+  while (1) { /* consider using errno here (thanks frank denis) */
+   if (read(devurandomfd,d,dlen) != dlen) sleep(1);
+   else break;
+  }
+ }
 }
 
 int setlen(unsigned char *b, int blen) {
