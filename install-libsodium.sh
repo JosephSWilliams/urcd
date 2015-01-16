@@ -1,5 +1,14 @@
 #!/bin/sh
 
+echo "
+this library breaks compatibility with NaCl's crypto_sign. \
+crypto_sign_edwards25519sha512batch implementation segfaults. \
+i no longer support libsodium until the developers make a non-sloppy product. \
+" 1>&2
+
+exit 255
+
+
 if which wget 2>/dev/null 1>&2; then
   retr=wget
 elif which curl 2>/dev/null 1>&2; then
