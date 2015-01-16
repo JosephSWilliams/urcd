@@ -107,7 +107,8 @@ int urcsign_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigne
  p[17]=0;
  randombytes(p+2+12+4,8);
  memmove(p+2+12+4+8,b,blen);
- if (crypto_sign(sm,&smlen,p,2+12+4+8+blen,sk) == -1) return -1;
+// if (crypto_sign(sm,&smlen,p,2+12+4+8+blen,sk) == -1) return -1;
+ if (crypto_sign_edwards25519sha512batch(sm,&smlen,p,(unsigned long long)(2+12+4+8+blen),sk) == -1) return -1;
  memmove(p+2+12+4+8+blen,sm,32);
  memmove(p+2+12+4+8+blen+32,sm+smlen-32,32);
  *plen=2+12+4+8+blen+64;
@@ -123,7 +124,8 @@ int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
  memmove(sm,p+plen-64,32);
  memmove(sm+32,p,plen-64);
  memmove(sm+32+plen-64,p+plen-32,32);
- return crypto_sign_open(m,&mlen,(const unsigned char *)sm,plen,(const unsigned char *)pk);
+// return crypto_sign_open(m,&mlen,(const unsigned char *)sm,plen,(const unsigned char *)pk);
+ return crypto_sign_edwards25519sha512batch_open(m,&mlen,(const unsigned char *)sm,(unsigned long long)plen,(const unsigned char *)pk);
 }
 
 int urcsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *sk) {
