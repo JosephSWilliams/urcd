@@ -63,10 +63,10 @@ hub2hub:
  ### create your urchub, you only need to do this once
  test -e /services/urcd-hub0/ || ./bin/add-urchub
 
- ./bin/add-hublisten your.urcd.ano 6789 /service/urcd-hub0/socket/
+ ./bin/add-hublisten local.urc.example.tld 6789 /service/urcd-hub0/socket/
 
  ### add peers. i recommend three
- ./bin/add-hubconnect peer.urcd.ano 6789 /service/urcd-hub0/socket/
+ ./bin/add-hubconnect remote.urc.example.tld 6789 /service/urcd-hub0/socket/
 
 no censorship (security):
  URC networks are censorship resistant. i

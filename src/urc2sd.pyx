@@ -4,8 +4,7 @@ USAGE='''\
 urc2sd: help: This NOTICE can be disabled if env/HELP is set \
 to 0. /INVITE adds temporary relay if env/INVITE is set to 1. \
 Contact the urc2sd admin for permenance. ChanOp BAN/EXCEPT \
-masks also filter relay traffic. I.E.: *!sign@* represent \
-signed messages and *!urcd@* represents nonverified messages. \
+masks also filter relay traffic. \
 Thanks for supporting URC, the anonymous decentralized \
 alternative to IRC.\n'''
 
@@ -350,7 +349,8 @@ while 1:
        break
      if cmd == 0: continue
     cmd = re_SPLIT(buffer,3)[1].upper()
-    src = src.split('@',1)[0]+'@'+hexlify(crypto_hash_sha256(src.split('@',1)[1])[:4])+'> '
+#    src = src.split('@',1)[0]+'@'+hexlify(crypto_hash_sha256(src.split('@',1)[1])[:4])+'> '
+    src = src.split('!',1)[0] + '@' + hexlify(crypto_hash_sha256(src.split('!',1)[1])[:4]) + '> '
     if cmd == 'TOPIC':
      try_write(1,'NOTICE '+dst+' :'+src+'/TOPIC\n')
      time.sleep(LIMIT)
