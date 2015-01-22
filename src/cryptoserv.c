@@ -271,7 +271,7 @@ main(int argc, char *argv[])
       memcpy(path,"urcsigndb/",10);
       if (identified) memcpy(path+10,identifiednick,identifiednicklen);
       else memcpy(path+10,buffer2+2+12+4+8+32,nicklen);
-      if (!access(path,F_OK)) {
+      if ((!access(path,F_OK))&&(!identified)) {
        memcpy(buffer2+2+12+4+8+32+nicklen+2,"Account already exists.\n",24);
        write(sfd,buffer2,2+12+4+8+32+nicklen+2+24);
        continue;
