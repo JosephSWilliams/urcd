@@ -318,9 +318,9 @@ main(int argc, char *argv[])
     /// SET PASSWORD
     if ((i>=20+13+1+1)&&(!memcmp("set password ",buffer1+20,13))) {
      if (!identified) goto HELP;
-     memcpy(buffer3,buffer0+20+9,-20-9+i-1);
-     memcpy(buffer3-20-9+i-1,identifiednick,nicklen);
-     crypto_hash_sha512(sk,buffer3,-20-9+i-1+nicklen);
+     memcpy(buffer3,buffer0+20+13,-20-13+i-1);
+     memcpy(buffer3-20-13+i-1,identifiednick,identifiednicklen);
+     crypto_hash_sha512(sk,buffer3,-20-13+i-1+identifiednicklen);
      goto REGISTER;
     }
 
