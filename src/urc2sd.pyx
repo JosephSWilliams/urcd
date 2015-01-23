@@ -338,7 +338,7 @@ while 1:
    dst = re_SPLIT(buffer,3)[2].lower()
    if dst in channels:
     cmd, src = 1, re_SPLIT(buffer[1:],1)[0]
-    src = src.split('!',1)[0] + '!.@' + hexlify(crypto_hash_sha256(src.split('!',1)[1])[:4])
+    src = src.split('!',1)[0] + '!*@' + hexlify(crypto_hash_sha256(src.split('!',1)[1])[:4])
     for cmd in EXCEPT[dst]:
      if cmd(src):
       cmd = 0
@@ -350,9 +350,7 @@ while 1:
        break
      if cmd == 0: continue
     cmd = re_SPLIT(buffer,3)[1].upper()
-#    src = src.split('@',1)[0]+'@'+hexlify(crypto_hash_sha256(src.split('@',1)[1])[:4])+'> '
-    src = re_SPLIT(buffer[1:],1)[0]
-    src = src.split('!',1)[0] + '@' + hexlify(crypto_hash_sha256(src.split('!',1)[1])[:4]) + '> '
+    src = src.replace('!*@','@',1) + '> '
     if cmd == 'TOPIC':
      try_write(1,'NOTICE '+dst+' :'+src+'/TOPIC\n')
      time.sleep(LIMIT)
