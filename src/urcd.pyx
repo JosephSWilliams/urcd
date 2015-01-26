@@ -427,6 +427,7 @@ while 1:
   elif re_CLIENT_HOSTSERV_REQUEST(buffer):
    try_write(wr,":HostServ!URCD@Service NOTICE "+Nick+" :Success\n")
    serv = re_SPLIT(buffer,3)[3]
+   Mask[nick] = serv
 
   elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
    if FLOOD:
