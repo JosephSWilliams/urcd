@@ -482,9 +482,11 @@ while 1:
 
   ### IRC does not provide AWAY broadcast, can implement in WHO & WHOIS (thanks wowaname)
   elif re_CLIENT_AWAY_OFF(buffer):
+   if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' AWAY\n')
    try_write(wr,':'+serv+' 305 '+Nick+' :RPL_UNAWAY\n')
 
   elif re_CLIENT_AWAY_ON(buffer):
+   if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' AWAY :'+re_SPLIT(buffer,1)[1]+'\n')
    try_write(wr,':'+serv+' 306 '+Nick+' :RPL_AWAY\n')
 
   elif re_CLIENT_WHO(buffer):
