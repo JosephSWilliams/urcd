@@ -28,6 +28,7 @@ re_MIRC = re.compile('^NICK :',re.IGNORECASE).sub
 re_CLIENT_PASS = re.compile('^PASS :?\S+$',re.IGNORECASE).search
 re_CLIENT_PING_PONG = re.compile('^P[IO]NG :?.+$',re.IGNORECASE).search
 re_CLIENT_NICK = re.compile('^NICK ['+RE+']+$',re.IGNORECASE).search
+re_CLIENT_HOSTSERV_REQUEST = re.compile('^PRIVMSG HostServ :REQUEST [~:#'+RE+'.]{1,255}$',re.IGNORECASE).search
 re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART = re.compile('^((PRIVMSG)|(NOTICE)|(TOPIC)|(PART)) [#&!+]?['+RE+']+( :.*)?',re.IGNORECASE).search
 re_CLIENT_MODE_CHANNEL_ARG = re.compile('^MODE [#&!+]['+RE+']+( [-+a-zA-Z]+)?',re.IGNORECASE).search
 re_CLIENT_MODE_NICK = re.compile('^MODE ['+RE+']+$',re.IGNORECASE).search
@@ -43,10 +44,10 @@ re_CLIENT_QUIT = re.compile('^QUIT ',re.IGNORECASE).search
 re_CLIENT_USER = re.compile('^USER ',re.IGNORECASE).search
 re_BUFFER_CTCP_DCC = re.compile('\x01(?!ACTION )',re.IGNORECASE).sub
 re_BUFFER_COLOUR = re.compile('(\x03[0-9][0-9]?((?<=[0-9]),[0-9]?[0-9]?)?)|[\x02\x03\x0f\x1d\x1f]',re.IGNORECASE).sub
-re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,256} ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
-re_SERVER_JOIN = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,256} JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
-re_SERVER_QUIT = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,256} QUIT :.*$',re.IGNORECASE).search
-re_SERVER_KICK = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,256} KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_PRIVMSG_NOTICE_TOPIC_INVITE_PART = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,255} ((PRIVMSG)|(NOTICE)|(TOPIC)|(INVITE)|(PART)) [#&!+]?['+RE+']+ :.*$',re.IGNORECASE).search
+re_SERVER_JOIN = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,255} JOIN :[#&!+]['+RE+']+$',re.IGNORECASE).search
+re_SERVER_QUIT = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,255} QUIT :.*$',re.IGNORECASE).search
+re_SERVER_KICK = re.compile('^:['+RE+']+![~:#'+RE+'.]+@[~:#'+RE+'.]{1,255} KICK [#&!+]['+RE+']+ ['+RE+']+ :.*$',re.IGNORECASE).search
 re_SERVICE = re.compile('^:['+RE+']*Serv!',re.IGNORECASE).search
 
 ### strange values will likely yield strange results ###
@@ -422,6 +423,10 @@ while 1:
    elif msg.upper() == user.upper(): PONG = 1
 
   elif not nick: pass
+
+  elif re_CLIENT_HOSTSERV_REQUEST(buffer):
+   try_write(wr,":HostServ!URCD@Service NOTICE "+Nick+" :Success\n")
+   serv = re_SPLIT(buffer,3)[3]
 
   elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
    if FLOOD:
