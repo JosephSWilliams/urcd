@@ -339,7 +339,7 @@ while 1:
    if dst in channels:
     cmd, src = 1, re_SPLIT(buffer[1:],1)[0]
     if buffer.split('!',1)[1].split('@')[0] == 'sign': src = src.split('!',1)[0] + '!*@verified'
-    else: src = src.split('!',1)[0] + '!*@' + hexlify(crypto_hash_sha256(src.split('@',1))[1][:4])
+    else: src = src.split('!',1)[0] + '!*@' + hexlify(crypto_hash_sha256(src.split('@',1)[1])[:4])
     for cmd in EXCEPT[dst]:
      if cmd(src):
       cmd = 0
