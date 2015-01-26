@@ -263,7 +263,7 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  dst = argv[1].lower() if len(argv) > 1 else str()
 
  if dst[-4:] == 'serv' and not dst[0] in ['#','&','!','+']:
-  try_write(wr,":"+dst+"!ERROR@"+serv+" NOTICE "+Nick+" :security: outgoing message blocked\n")
+  try_write(wr,":"+dst+"!ERROR@"+serv+" NOTICE "+Nick+" :Invalid command.\n")
   return
 
  if URCSIGNSECKEYDIR and dst and dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
@@ -425,9 +425,9 @@ while 1:
   elif not nick: pass
 
   elif re_CLIENT_HOSTSERV_REQUEST(buffer):
-   try_write(wr,":HostServ!URCD@Service NOTICE "+Nick+" :Success\n")
    serv = re_SPLIT(buffer,3)[3]
    Mask[nick] = serv
+   try_write(wr,":HostServ!URCD@Service NOTICE "+Nick+" :You are now known as "+Nick+"@"+serv+".\n")
 
   elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
    if FLOOD:
