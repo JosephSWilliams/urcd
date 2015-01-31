@@ -83,7 +83,9 @@ main(int argc, char *argv[])
  long EXPIRY;
 
  int identifiednicklen;
+ int loginattempts = 0;
  int identified = 0;
+ int oldnicklen = 0;
  int informed = 0;
  int nicklen = 0;
  int sfd = -1;
@@ -200,9 +202,17 @@ main(int argc, char *argv[])
   /// NICK
   if ((i>=7)&&(!memcmp("nick ",buffer1,5))) { /* not reliable */
    nicklen=-5+i-1;
+   for (;nicklen>0;--nicklen) {
+    if ((buffer1[5+nicklen] == '.') || (buffer1[5+nicklen] == '/')) {
+     nicklen=oldnicklen;
+     goto client_write;
+    }
+   }
+   nicklen=-5+i-1;
    if (nicklen<=NICKLEN) {
     memcpy(buffer2+2+12+4+8+32,buffer1+5,nicklen);
     memcpy(buffer2+2+12+4+8+32+nicklen," :",2);
+    oldnicklen = nicklen;
    }
    else nicklen = 0;
   } else if (nicklen) {
@@ -212,6 +222,8 @@ main(int argc, char *argv[])
 
     /// IDENTIFY
     if ((i>=20+9+1+1)&&(!memcmp("identify ",buffer1+20,9))) {
+     if (loginattempts == 4) goto invalid_passwd;
+     ++loginattempts;
      bzero(path,512);
      memcpy(path,"urcsigndb/",10);
      memcpy(path+10,buffer2+2+12+4+8+32,nicklen);
@@ -226,9 +238,10 @@ main(int argc, char *argv[])
      crypto_hash_sha512(sk,buffer3,-20-9+i-1+nicklen);
      crypto_sign_keypair(pk1,sk);
      if (memcmp(pk0,pk1,32)) {
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Invalid passwd.\n",16);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+16);
-      continue;
+      invalid_passwd:
+       memcpy(buffer2+2+12+4+8+32+nicklen+2,"Invalid passwd.\n",16);
+       write(sfd,buffer2,2+12+4+8+32+nicklen+2+16);
+       continue;
      }
      bzero(path,512);
      memcpy(path,"urccryptoboxdir/",16);
@@ -255,6 +268,7 @@ main(int argc, char *argv[])
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      memcpy(identifiednick,buffer2+2+12+4+8+32,nicklen);
      identifiednicklen = nicklen;
+     loginattempts = 0;
      identified = 1;
      continue;
     }
@@ -428,7 +442,8 @@ main(int argc, char *argv[])
     continue;
    }
   }
-  if (write(1,buffer0,i)<=0) exit(14);
+  client_write:
+   if (write(1,buffer0,i)<=0) exit(14);
   if ((i>=4)&&(!memcmp("quit",buffer1,4))) {
    write(1,"",0); // send EOF
    exit(15);
