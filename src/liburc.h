@@ -102,7 +102,7 @@ int urchub_fmt(unsigned char *p, int *plen, unsigned char *b, int blen) {
 
 int urcsign_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
- unsigned char sm[1024*2];
+ unsigned char sm[1024*2] = {0};
  unsigned long long smlen;
  if (setlen(p,blen+64) == -1) return -1;
  taia96n(p+2);
@@ -123,8 +123,8 @@ int urcsign_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigne
 int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
  if (p[14] != 1) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char sm[1024*2];
- unsigned char m[1024*2];
+ unsigned char sm[1024*2] = {0};
+ unsigned char m[1024*2] = {0};
  unsigned long long mlen;
  memmove(sm,p+plen-64,32);
  memmove(sm+32,p,plen-64);
@@ -136,8 +136,8 @@ int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
 int urcsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
  int zlen = blen + (256 - blen % 256);
- unsigned char m[1024*2];
- unsigned char c[1024*2];
+ unsigned char m[1024*2] = {0};
+ unsigned char c[1024*2] = {0};
  bzero(m,32+zlen); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
  if (setlen(p,zlen+16) == -1) return -1;
@@ -157,8 +157,8 @@ int urcsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, un
 int urcsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *sk) {
  if (p[14] != 2) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char m[1024*2];
- unsigned char c[1024*2];
+ unsigned char m[1024*2] = {0};
+ unsigned char c[1024*2] = {0};
  bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
@@ -171,9 +171,9 @@ int urcsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int plen, u
 int urcsignsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *ssk, unsigned char *csk) {
  if (blen > IRC_MTU) return -1;
  int zlen = blen + (256 - blen % 256);
- unsigned char sm[1024*2];
- unsigned char m[1024*2];
- unsigned char c[1024*2];
+ unsigned char sm[1024*2] = {0};
+ unsigned char m[1024*2] = {0};
+ unsigned char c[1024*2] = {0};
  unsigned long long smlen;
  if (setlen(p,zlen+64+16) == -1) return -1;
  taia96n(p+2);
@@ -199,8 +199,8 @@ int urcsignsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen
 int urcsignsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *sk) {
  if (p[14] != 3) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char m[1024*2];
- unsigned char c[1024*2];
+ unsigned char m[1024*2] = {0};
+ unsigned char c[1024*2] = {0};
  bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
@@ -214,8 +214,8 @@ int urcsignsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int ple
 int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
  if (p[14] != 3) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char sm[1024*2];
- unsigned char m[1024*2];
+ unsigned char sm[1024*2] = {0};
+ unsigned char m[1024*2] = {0};
  unsigned long long mlen;
  memmove(sm,p+plen-64,32);
  memmove(sm+32,p,plen-64);
@@ -226,8 +226,8 @@ int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
 int urccryptobox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *pk, unsigned char *sk) {
  if (blen > IRC_MTU) return -1;
  int zlen = blen + (256 - blen % 256);
- unsigned char m[1024*2];
- unsigned char c[1024*2];
+ unsigned char m[1024*2] = {0};
+ unsigned char c[1024*2] = {0};
  bzero(m,32+zlen); /* http://nacl.cr.yp.to/box.html */
  bzero(c,16);
  if (setlen(p,zlen+16) == -1) return -1;
@@ -247,8 +247,8 @@ int urccryptobox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, un
 int urccryptobox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *pk, unsigned char *sk) {
  if (p[14] != 4) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char m[1024*2];
- unsigned char c[1024*2];
+ unsigned char m[1024*2] = {0};
+ unsigned char c[1024*2] = {0};
  bzero(m,32); /* http://nacl.cr.yp.to/box.html */
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);

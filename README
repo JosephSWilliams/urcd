@@ -1,6 +1,7 @@
 URCd:
- "10,000 genomes of human lizard hybrid soldiers being sent server to server
- between Angola and Luxembourg" - Retard
+ 10,000 genomes of human lizard hybrid soldiers being sent server to server
+ between Angola and Luxembourg with some 70's style casual sex peering
+ arrangement.
 
  if you want a real description view doc/*
 
@@ -37,8 +38,6 @@ install:
 
   # recommended over ./install-libsodium.sh:
    ./install-nacl.sh
-
-  useradd urcd
 
   # OpenBSD:
    echo '-ftrampolines' > conf-cc

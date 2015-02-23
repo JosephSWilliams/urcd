@@ -99,8 +99,8 @@ PyObject *pyurcsign_fmt(PyObject *self, PyObject *args, PyObject *kw) {
 PyObject *pyurcsign_verify(PyObject *self, PyObject *args, PyObject *kw) {
  unsigned char *p;
  unsigned char *pk;
- Py_ssize_t psize=0;
- Py_ssize_t pksize=0;
+ Py_ssize_t psize = 0;
+ Py_ssize_t pksize = 0;
  static const char *kwlist[] = {"p", "pk", 0};
  if (!PyArg_ParseTupleAndKeywords(
   args,
@@ -221,8 +221,8 @@ PyObject *pyurcsignsecretbox_open(PyObject *self, PyObject *args, PyObject *kw) 
 PyObject *pyurcsignsecretbox_verify(PyObject *self, PyObject *args, PyObject *kw) {
  unsigned char *p;
  unsigned char *pk;
- Py_ssize_t psize=0;
- Py_ssize_t pksize=0;
+ Py_ssize_t psize = 0;
+ Py_ssize_t pksize = 0;
  static const char *kwlist[] = {"p", "pk", 0};
  if (!PyArg_ParseTupleAndKeywords(
   args,
