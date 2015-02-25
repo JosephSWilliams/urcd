@@ -33,6 +33,10 @@ todo:
 
  make kat noise
 
+ replace add-urchub with a less buggy implementation
+
+ test arch vm and pacman -S linux-grsec paxd gradm
+
 install:
   # install dependencies, if you haven't already:
    ./install-daemontools.sh
@@ -58,13 +62,13 @@ install:
   echo "`pwd`/urc.db" > env/URCDB
   svstat /service/urcd
 
+  ### create your urchub, you only need to do this once
+  ./bin/add-urchub
+
 CryptoServ (requires NaCl):
  ln -s stdin.cryptoserv stdin
 
 hub2hub:
- ### create your urchub, you only need to do this once
- test -e /services/urcd-hub0/ || ./bin/add-urchub
-
  ./bin/add-hublisten local.urc.example.tld 6789 /service/urcd-hub0/socket/
 
  ### add peers. i recommend three
