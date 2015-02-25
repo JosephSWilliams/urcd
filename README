@@ -10,6 +10,9 @@ depends:
  python(>=2.6), python-dev(>=2.6),
  daemontools, sh, gcc
 
+ your clock needs to be as reasonably accurate, possibly by using something like
+ ntp, otherwise you messages could be dropped from the network.
+
 recommends:
  NaCl instead of libsodium,
  cython(>=0.18.0)
