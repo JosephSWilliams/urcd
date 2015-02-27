@@ -704,7 +704,10 @@ while 1:
         del channel_struct[dst]
         break
       dst = re_SPLIT(buffer,3)[2].lower()
-     channel_struct[dst] = struct_channel
+     channel_struct[dst] = dict(
+      names = collections.deque([],CHANLIMIT),
+      topic = None
+     )
     if cmd == 'topic':
      msg = buffer.split(':',2)[2].split('\n',1)[0][:TOPICLEN]
      if not msg: continue
@@ -744,7 +747,10 @@ while 1:
        del channel_struct[dst]
        break
      dst = buffer.split(' :')[1].split('\n',1)[0].lower()
-    channel_struct[dst] = struct_channel
+    channel_struct[dst] = dict(
+     names = collections.deque([],CHANLIMIT),
+     topic = None
+    )
    if src != nick and not src in channel_struct[dst]['names']:
     if dst in channels:
      try_write(wr,buffer)
@@ -786,7 +792,10 @@ while 1:
        del channel_struct[dst]
        break
      dst = re_SPLIT(buffer,3)[2].lower()
-    channel_struct[dst] = struct_channel
+    channel_struct[dst] = dict(
+     names = collections.deque([],CHANLIMIT),
+     topic = None
+    )
    if cmd != nick:
     dst = re_SPLIT(buffer,3)[2].lower()
     if cmd in channel_struct[dst]['names']:
