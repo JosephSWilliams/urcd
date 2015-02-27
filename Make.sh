@@ -21,6 +21,9 @@ else
  exit 255
 fi
 
+# this is ridiculous...
+PYLIB="python$PYVER`ls ${PYTHON_HEADERS/include*/lib} | grep libpython$PYVER | head -1 | sed s/libpython$PYVER// | cut -d'.' -f1`"
+
 # OpenBSD && NetBSD \o/
 export CPATH="/usr/pkg/include:/usr/local/include:$CPATH"
 export LIBRARY_PATH="/usr/pkg/lib:/usr/local/lib:$LIBRARY_PATH"
@@ -70,9 +73,9 @@ gcc `cat conf-cc` $src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 gcc `cat conf-cc` $src/keypair.c -o keypair -l $nacl $randombytes || exit 1
 gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l $nacl $randombytes || exit 1
 
-gcc -O2 -fPIC -DPIC $src/liburc.c -shared -I $PYTHON_HEADERS -o liburc.so -l python$PYVER -l tai -l $nacl || exit 1
+gcc -O2 -fPIC -DPIC $src/liburc.c -shared -I $PYTHON_HEADERS -o liburc.so -l $PYLIB -l tai -l $nacl || exit 1
 
-gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $PYTHON_HEADERS -o nacltaia.so -l python$PYVER -l tai -l $nacl $randombytes || exit 1
+gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $PYTHON_HEADERS -o nacltaia.so -l $PYLIB -l tai -l $nacl $randombytes || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
  gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1
@@ -96,11 +99,11 @@ mkdir -p build || exit 1
 
 cython --embed $src/urcd.pyx -o build/urcd.c || exit 1
 gcc `cat conf-cc` -O2 -c build/urcd.c -I $PYTHON_HEADERS -o build/urcd.o || exit 1
-gcc `cat conf-cc` -O1 -o urcd build/urcd.o -l python$PYVER || exit 1
+gcc `cat conf-cc` -O1 -o urcd build/urcd.o -l $PYLIB || exit 1
 
 cython --embed $src/urc2sd.pyx -o build/urc2sd.c || exit 1
 gcc `cat conf-cc` -O2 -c build/urc2sd.c -I $PYTHON_HEADERS -o build/urc2sd.o || exit 1
-gcc `cat conf-cc` -O1 -o urc2sd build/urc2sd.o -l python$PYVER || exit 1
+gcc `cat conf-cc` -O1 -o urc2sd build/urc2sd.o -l $PYLIB || exit 1
 
 cython $src/taia96n.pyx -o build/taia96n.c || exit 1
 gcc `cat conf-cc` -O2 -shared -pthread -fPIC -fwrapv -Wall \

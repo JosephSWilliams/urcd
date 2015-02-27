@@ -328,7 +328,8 @@ while 1:
 
  if URCDB and now - sync >= TIMEOUT:
   if not PRESENCE:
-   for dst in channels: channel_struct[dst]['names'].remove(nick)
+   for dst in channels:
+    if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
   db['channel_struct'] = channel_struct
   db['active_clients'] = active_clients
   db['Mask'] = Mask
@@ -516,7 +517,7 @@ while 1:
   elif re_CLIENT_JOIN(buffer):
    try:
     dst_list = re_SPLIT(buffer,3)[1].lower().split(',')
-    msg_list = re_SPLIT(buffer,3)[2].split(',')
+    msg_list = re_SPLIT(buffer,3)[2].lower().split(',')
    except: msg_list = list()
    if len(dst_list)>len(msg_list):
     for dst in dst_list[len(msg_list):]: msg_list.append(str())
@@ -531,8 +532,11 @@ while 1:
     channels.append(dst)
     if msg and not msg in ['x','?']:
      URCSECRETBOXDIR = 1
-     urcsecretboxdb[dst.lower()] = sha512(msg+dst).digest()[32:64]
-    if not dst in channel_struct.keys(): channel_struct[dst] = struct_channel
+     urcsecretboxdb[dst.lower()] = crypto_hash_sha512(msg)[32:64]
+    if not dst in channel_struct.keys(): channel_struct[dst] = dict(
+     names = collections.deque([],CHANLIMIT),
+     topic = None,
+    )
     elif nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
     try_write(wr,
      ':'+Nick+'!'+user+'@'+serv+' JOIN :'+dst+'\n'

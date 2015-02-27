@@ -41,7 +41,7 @@ main(int argc, char **argv)
   || (setgid(urcd->pw_gid))
   || (setuid(urcd->pw_uid))) exit(64);
 
-  unsigned char buffer[2+12+4+8+65536+32];
+  unsigned char buffer[65536*2];
   unsigned char hash[32];
   unsigned char ts[16];
   unsigned char ret[1];
