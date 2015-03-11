@@ -83,7 +83,6 @@ Src = dict()
 Mask = dict()
 active_clients = dict()
 channel_struct = dict() ### operations assume nick is in channel_struct[dst]['names'] if dst in channels ###
-struct_channel = dict(names = collections.deque([],CHANLIMIT), topic = None)
 channels = collections.deque([],CHANLIMIT)
 bytes = [(chr(i),i) for i in xrange(0,256)]
 motd = open('env/motd','rb').read().split('\n')

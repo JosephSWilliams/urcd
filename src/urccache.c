@@ -14,13 +14,7 @@
 #include "tai_dec.h"
 #include "tai_inc.h"
 
-/*
- there is an 8 minute replay window on bootstrap.
- cache does not backup memory when process dies.
-*/
-
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
 
   if (argc<2)
   {
@@ -29,8 +23,25 @@ main(int argc, char **argv)
   }
 
   unsigned char cache[256][16384]={0};
+  unsigned char buffer[65536*2];
   unsigned char salt[32];
+  unsigned char hash[32];
+  unsigned char ts[16];
+  unsigned char st[16];
+  unsigned char ret[1];
+
+  unsigned long timecached[256];
+  float cached[256];
+  int i, n, l;
+
   randombytes(salt,32);
+
+  tai_now(st);
+  tai_pack(st,st);
+  tai_inc(st,st,"\0\0\0\0\0\0\0\x20");
+
+  bzero(cached,sizeof(cached));
+  for (i=0;i<256;++i) timecached[i] = time(0L);
 
   struct passwd *urcd = getpwnam("urcd");
 
@@ -40,32 +51,30 @@ main(int argc, char **argv)
   || (setgroups(0,'\x00'))
   || (setgid(urcd->pw_gid))
   || (setuid(urcd->pw_uid))) exit(64);
-
-  unsigned char buffer[65536*2];
-  unsigned char hash[32];
-  unsigned char ts[16];
-  unsigned char ret[1];
-  int i, n, l;
-
-  float cached[256];
-  bzero(cached,sizeof(cached));
-  unsigned long timecached[256];
-  for (i=0;i<256;++i) timecached[i] = time(0L);
-
   
-  while (1)
-  {
+  while (1) {
 
     readbuffer: if (read(0,buffer,2)<2) exit(1);
 
     n = 0;
     l = 12 + 4 + 8 + buffer[0] * 256 + buffer[1];
 
-    while (n<l)
-    {
+    while (n<l) {
       i = read(0,buffer+n,l-n);
       if (i<1) exit(2);
       n += i;
+    }
+
+    if  (buffer[12+1]) {
+     for (i=0;i<12;++i)
+     {
+       if (st[i] < buffer[i]) break;
+       if (st[i] > buffer[i])
+       {
+         if (write(1,"\4",1)<1) exit(3);
+         goto readbuffer;
+       }
+     }
     }
 
     taia_now(ts);
@@ -119,5 +128,4 @@ main(int argc, char **argv)
     usleep((int) (cached[hash[0]] / 512.0 * 1000000.0));
 
   }
-
 }
