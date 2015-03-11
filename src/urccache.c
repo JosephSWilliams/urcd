@@ -36,8 +36,8 @@ main(int argc, char **argv) {
 
   randombytes(salt,32);
 
-  tai_now(st);
-  tai_pack(st,st);
+  taia_now(st);
+  taia_pack(st,st);
   tai_inc(st,st,"\0\0\0\0\0\0\0\x20");
 
   bzero(cached,sizeof(cached));

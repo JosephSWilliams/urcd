@@ -44,29 +44,24 @@ int urc_jail(char *path) {
 
 /* security: strong entropy not guaranteed without devurandomfd open */
 void randombytes(unsigned char *d, int dlen) {
+ unsigned char *b = malloc(64 * sizeof(unsigned char));
+ unsigned char a[64];
+ unsigned char c[64];
+ struct timeval now;
+ int i;
  if (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
  if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  if (devurandomfd == -1) {
-  int i;
-  struct timeval now;
-  unsigned char a[64];
-  unsigned char c[64];
-  unsigned char *b = malloc(64 * sizeof(unsigned char));
   for (i=0;i<64;++i) {
    gettimeofday(&now,'\x00'); srand(now.tv_usec); a[i] = 255 & rand();
    if (b) a[i] ^= b[i];
    a[i] ^= c[i];
   }
-  crypto_hash_sha512(a,a,64);
-  crypto_stream(d,dlen,a,a+24);
-  if (b) free(b);
  }
- else {
-  while (1) { /* consider using errno here (thanks frank denis) */
-   if (read(devurandomfd,d,dlen) != dlen) sleep(1);
-   else break;
-  }
- }
+ else while (read(devurandomfd,a,64) != 64) sleep(1); /* potential EDEADLK */
+ crypto_hash_sha512(c,a,64);
+ crypto_stream(d,dlen,c,c+24);
+ if (b) free(b);
 }
 
 int setlen(unsigned char *b, int blen) {
@@ -112,7 +107,6 @@ int urcsign_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigne
  p[17]=0;
  randombytes(p+2+12+4,8);
  memmove(p+2+12+4+8,b,blen);
-// if (crypto_sign(sm,&smlen,p,2+12+4+8+blen,sk) == -1) return -1;
  if (crypto_sign_edwards25519sha512batch(sm,&smlen,p,(unsigned long long)(2+12+4+8+blen),sk) == -1) return -1;
  memmove(p+2+12+4+8+blen,sm,32);
  memmove(p+2+12+4+8+blen+32,sm+smlen-32,32);
@@ -129,7 +123,6 @@ int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
  memmove(sm,p+plen-64,32);
  memmove(sm+32,p,plen-64);
  memmove(sm+32+plen-64,p+plen-32,32);
-// return crypto_sign_open(m,&mlen,(const unsigned char *)sm,plen,(const unsigned char *)pk);
  return crypto_sign_edwards25519sha512batch_open(m,&mlen,(const unsigned char *)sm,(unsigned long long)plen,(const unsigned char *)pk);
 }
 
