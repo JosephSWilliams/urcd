@@ -134,10 +134,6 @@ def try_write(fd,buffer):
    if time.time() - now >= TIMEOUT: sock_close(3,0)
    time.sleep(1)
 
-### nacl-20110221's randombytes() not compatible with chroot ###
-devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
-def randombytes(n): return try_read(devurandomfd,n)
-
 ### NaCl's crypto_sign / crypto_sign_open API sucks ###
 def _crypto_sign(m,sk):
  s = crypto_sign(m,sk)
@@ -156,7 +152,7 @@ if URCCRYPTOBOXDIR:
  for dst in os.listdir(URCCRYPTOBOXDIR):
   if URCCRYPTOBOXPFS and dst in os.listdir(URCCRYPTOBOXPFS):
    pk,sk=crypto_box_keypair()
-   urccryptoboxpfsdb[dst.lower()] = {"pubkey":pk,"seckey":sk,"tmpkey":randombytes(32)}
+   urccryptoboxpfsdb[dst.lower()] = {"pubkey":pk,"seckey":sk,"tmpkey":liburc.randombytes(32)}
    del pk, sk
   if URCCRYPTOBOXSECKEYDIR and dst in os.listdir(URCCRYPTOBOXSECKEYDIR):
    urccryptoboxdb[dst.lower()] = crypto_box_beforenm(
@@ -223,14 +219,8 @@ if os.access('stdout',os.X_OK):
  del p
 else: wr = 1
 
-uid, gid = pwd.getpwnam('urcd')[2:4]
-os.chdir(sys.argv[1])
-os.chroot(os.getcwd())
-os.setgroups(list())
-os.setgid(gid)
-os.setuid(uid)
+if liburc.urc_jail(sys.argv[1]) == -1: sys.exit(64)
 root = os.getcwd()
-del uid, gid
 
 sock=socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
 sock_close(0,0)
@@ -278,13 +268,13 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  ### URCCRYPTOBOX ###
  if crypto_box_seckey:
   buflen += 16 + padlen
-  nonce = taia96n_pack(taia96n_now())+'\x04\x00\x00\x00'+randombytes(8)
+  nonce = taia96n_pack(taia96n_now())+'\x04\x00\x00\x00'+liburc.randombytes(8)
   if not dst in urccryptoboxpfsdb.keys():
-   buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+randombytes(padlen),nonce,crypto_box_seckey)
+   buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+liburc.randombytes(padlen),nonce,crypto_box_seckey)
   else:
    buflen += 32 + 16
    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(urccryptoboxpfsdb[dst]["pubkey"]+
-    crypto_box(buffer+randombytes(padlen),nonce,urccryptoboxpfsdb[dst]["tmpkey"],urccryptoboxpfsdb[dst]["seckey"]),
+    crypto_box(buffer+liburc.randombytes(padlen),nonce,urccryptoboxpfsdb[dst]["tmpkey"],urccryptoboxpfsdb[dst]["seckey"]),
     nonce,crypto_box_seckey
    )
 
@@ -672,7 +662,7 @@ while 1:
   ### Block Malicious /NICK *Serv attacks
   if re_SERVICE(buffer) and AUTH != '\x00': continue
 
-  server_revents(ord(randombytes(1))<<4) ### may reduce some side channels ###
+  server_revents(ord(liburc.randombytes(1))<<4) ### may reduce some side channels ###
 
   buffer = re_BUFFER_CTCP_DCC('',buffer) + '\x01' if '\x01ACTION ' in buffer.upper() else buffer.replace('\x01','')
   if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)
