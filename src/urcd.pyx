@@ -326,17 +326,12 @@ while 1:
  del names
 
  if URCDB and now - sync >= TIMEOUT:
-  if not PRESENCE:
-   for dst in channels:
-    if nick in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(nick)
   db['channel_struct'] = channel_struct
   db['active_clients'] = active_clients
   db['Mask'] = Mask
   db['Src'] = Src
   db.sync()
   sync = now
-  if not PRESENCE:
-   for dst in channels: channel_struct[dst]['names'].append(nick)
 
  if not client_revents(0):
   if now - seen >= TIMEOUT:

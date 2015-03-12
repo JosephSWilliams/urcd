@@ -92,7 +92,7 @@ main(int argc, char **argv) {
       }
     }
 
-    tai_inc(ts,ts,"\0\0\0\0\0\0\1\0");
+    tai_inc(ts,ts,"\0\0\0\0\0\0\x01\0");
 
     for (i=0;i<12;++i)
     {

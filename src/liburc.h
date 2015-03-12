@@ -49,16 +49,15 @@ void randombytes(unsigned char *d, int dlen) {
  unsigned char c[64];
  struct timeval now;
  int i;
- if (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
- if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
- if (devurandomfd == -1) {
+ if  (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
+ if  (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
+ if ((devurandomfd == -1) || (read(devurandomfd,a,64) != 64)) {
   for (i=0;i<64;++i) {
    gettimeofday(&now,'\x00'); srand(now.tv_usec); a[i] = 255 & rand();
    if (b) a[i] ^= b[i];
    a[i] ^= c[i];
   }
  }
- else while (read(devurandomfd,a,64) != 64) sleep(1); /* potential EDEADLK */
  crypto_hash_sha512(c,a,64);
  crypto_stream(d,dlen,c,c+24);
  if (b) free(b);
