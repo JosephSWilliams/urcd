@@ -71,12 +71,13 @@ int setlen(unsigned char *b, int blen) {
 }
 
 void taia96n(unsigned char *ts) {
+ unsigned char b[1];
  struct timeval now;
  tai_now(ts);
  tai_pack(ts,ts);
- gettimeofday(&now,'\x00');
- srand((unsigned) now.tv_usec);
- ts[7] &= (240 + (rand() & 15));
+ randombytes(b,1);
+ ts[7] &= 240;
+ ts[7] |= (b[0] & 15);
  randombytes(ts+8,4);
 }
 
