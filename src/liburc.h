@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -27,8 +28,10 @@
 #define IRC_MTU 512
 
 int devurandomfd = -1;
+int procstatusfd = -1;
 
 int urc_jail(char *path) {
+ if (procstatusfd == -1) procstatusfd = open("/proc/self/status",O_RDONLY);
  if (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
  if (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  struct passwd *urcd = getpwnam("urcd");
@@ -42,18 +45,23 @@ int urc_jail(char *path) {
  return 0;
 }
 
-/* security: strong entropy not guaranteed without devurandomfd open */
 void randombytes(unsigned char *d, int dlen) {
  unsigned char *b = malloc(64 * sizeof(unsigned char));
- unsigned char a[64];
+ static unsigned char buff[1024];
+ static unsigned char a[64];
  unsigned char c[64];
  static struct timeval now;
  static int i;
+ if  (procstatusfd == -1) procstatusfd = open("/proc/self/status",O_RDONLY);
  if  (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
  if  (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  if ((devurandomfd == -1) || (read(devurandomfd,a,64) != 64)) {
+  if (procstatusfd != -1) {
+   lseek(procstatusfd,0,SEEK_SET);
+   if (read(procstatusfd,buff,1024) > 0) crypto_hash_sha512(a,buff,1024);
+  }
   for (i=0;i<64;++i) {
-   gettimeofday(&now,'\x00'); srand(now.tv_usec); a[i] = 255 & rand();
+   gettimeofday(&now,'\x00'); srand(now.tv_usec); a[i]^= (rand() & 255);
    if (b) a[i] ^= b[i];
    a[i] ^= c[i];
   }

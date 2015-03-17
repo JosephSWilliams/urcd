@@ -98,6 +98,15 @@ Advantages:
  authenticity of a client's messages, nor does the protocol require or
  allow remote systems to overide or alter the policies on a local URCd.
 
+ Entropy - LibURC ships with it's own secure randombytes implementation
+ that is powered by NaCl's crypto_stream function, providing strong and reliable
+ entropy, suitable in chroot environments. A nonce and a one time secret key are
+ derived using the strongest nonblocking available RNG and crypto_hash_sha512 to
+ generate an arbitrary amount of random data without depleting the system's 
+ entropy pool. Should the onboard RNG ever fail, the LibURC randombytes function
+ will not. the implementation has a secure failover using variable information
+ from the system clock and other status information.
+
 
 URCLINE:
 A URCLINE is similar to a line of IRC. These lines are wrapped and
