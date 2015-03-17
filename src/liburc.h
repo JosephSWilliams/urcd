@@ -71,13 +71,19 @@ int setlen(unsigned char *b, int blen) {
 }
 
 void taia96n(unsigned char *ts) {
+ static long long offset[] = {
+  -8ULL, -7ULL, -6ULL, -5ULL, -4ULL, -3ULL, -2ULL, -1ULL,
+   8ULL,  7ULL,  6ULL,  5ULL,  4ULL,  3ULL,  2ULL,  1ULL
+ };
+ unsigned long long a = 0ULL;
  unsigned char b[1];
  struct timeval now;
  tai_now(ts);
- tai_pack(ts,ts);
+ memcpy(&a,ts,8);
  randombytes(b,1);
- ts[7] &= 240;
- ts[7] |= (b[0] & 15);
+ a+=offset[b[0] & 15];
+ memcpy(ts,&a,8);
+ tai_pack(ts,ts);
  randombytes(ts+8,4);
 }
 
