@@ -64,8 +64,8 @@ Advantages:
  the new record setting Networking and Cryptographic library (NaCl),
  rather than older, bloated, and slower libraries of the past. URC
  daemons also support CurveCP and TOR rather than SSL and TLS for
- links and encrypted connections. Taia96n replaces the current buggy
- timing algorithms, and is usable for the next few billion years.
+ links and encrypted connections. The current URCd software is however flexible
+ enough to wrap the URCHUB protocol with other security layers.
 
  Simple API and Modularity - URCd allows the user to "hack" his or
  her conversation with their local daemon with any programming
@@ -82,14 +82,13 @@ Advantages:
  and other networks, by using UDP broadcasts, multicast groups, and TCP streams.
  Other protocols can easily integrate URC into existing networks as well.
 
- Taia96n - URC's implementation can easily be modified to provide
- nano second accuracy. Taia96n is accurate to the second by default,
- and then padded by a few seconds to prevent leaks of clockskew.
- Nano bytes in the default implementation are random to prevent leaks.
- Taia96n does not reveal time zone information. Using Taia96n
- is reliable for preventing replay attacks and allows packet
- uniqueness and effecient caching. Admins should use accurate clocks,
- for maximum security.
+ Taia96n - LibURC's implementation can easily be modified to provide nano second
+ accuracy, but this is not necessary. Taia96n is a 96 bit timestamp, accurate to
+ the first 60 bits in network byte order. Masking the last 36 bits allows URC
+ nodes to mitigate the risk of leaking clockskew and other side channel attacks.
+ The randomization of the last 36 bits also increases the entropy for the
+ cryptographic nonce bytes used in the URCHUB protocol. This protocol will not
+ expire within the next few billion years.
 
  No Trust - The URC protocol and supporting softwares take a different
  approach to an often overlooked point of failure used on many crypto
