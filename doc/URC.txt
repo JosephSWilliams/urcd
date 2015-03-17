@@ -84,11 +84,11 @@ Advantages:
 
  Taia96n - LibURC's implementation can easily be modified to provide nano second
  accuracy, but this is not necessary. Taia96n is a 96 bit timestamp, accurate to
- the first 60 bits in network byte order. Masking the last 36 bits allows URC
- nodes to mitigate the risk of leaking clockskew and other side channel attacks.
- The randomization of the last 36 bits also increases the entropy for the
- cryptographic nonce bytes used in the URCHUB protocol. This protocol will not
- expire within the next few billion years.
+ roughly the first 60 bits in network byte order. Masking the last 36 bits
+ allows URC nodes to mitigate the risk of leaking clockskew and other side
+ channel attacks. The randomization of the last 36 bits also increases the
+ entropy for the cryptographic nonce bytes used in the URCHUB protocol. This
+ protocol will not expire within the next few billion years.
 
  No Trust - The URC protocol and supporting softwares take a different
  approach to an often overlooked point of failure used on many crypto

@@ -47,8 +47,8 @@ void randombytes(unsigned char *d, int dlen) {
  unsigned char *b = malloc(64 * sizeof(unsigned char));
  unsigned char a[64];
  unsigned char c[64];
- struct timeval now;
- int i;
+ static struct timeval now;
+ static int i;
  if  (devurandomfd == -1) devurandomfd = open("/dev/arandom",O_RDONLY);
  if  (devurandomfd == -1) devurandomfd = open("/dev/urandom",O_RDONLY);
  if ((devurandomfd == -1) || (read(devurandomfd,a,64) != 64)) {
@@ -75,9 +75,10 @@ void taia96n(unsigned char *ts) {
   -8ULL, -7ULL, -6ULL, -5ULL, -4ULL, -3ULL, -2ULL, -1ULL,
    8ULL,  7ULL,  6ULL,  5ULL,  4ULL,  3ULL,  2ULL,  1ULL
  };
- unsigned long long a = 0ULL;
- unsigned char b[1];
+ static unsigned long long a;
+ static unsigned char b[1];
  tai_now(ts);
+ a=0ULL;
  memcpy(&a,ts,8);
  randombytes(b,1);
  a+=offset[b[0] & 15];
@@ -101,9 +102,9 @@ int urchub_fmt(unsigned char *p, int *plen, unsigned char *b, int blen) {
 }
 
 int urcsign_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *sk) {
+ static unsigned long long smlen;
+ static unsigned char sm[1024*2];
  if (blen > IRC_MTU) return -1;
- unsigned char sm[1024*2] = {0};
- unsigned long long smlen;
  if (setlen(p,blen+64) == -1) return -1;
  taia96n(p+2);
  p[14]=1;
@@ -120,11 +121,11 @@ int urcsign_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigne
 }
 
 int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
+ static unsigned char sm[1024*2];
+ static unsigned char m[1024*2];
+ static unsigned long long mlen;
  if (p[14] != 1) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char sm[1024*2] = {0};
- unsigned char m[1024*2] = {0};
- unsigned long long mlen;
  memmove(sm,p+plen-64,32);
  memmove(sm+32,p,plen-64);
  memmove(sm+32+plen-64,p+plen-32,32);
@@ -132,10 +133,11 @@ int urcsign_verify(unsigned char *p, int plen, unsigned char *pk) {
 }
 
 int urcsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *sk) {
+ static unsigned char m[1024*2];
+ static unsigned char c[1024*2];
+ static int zlen;
  if (blen > IRC_MTU) return -1;
- int zlen = blen + (256 - blen % 256);
- unsigned char m[1024*2] = {0};
- unsigned char c[1024*2] = {0};
+ zlen = blen + (256 - blen % 256);
  bzero(m,32+zlen); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
  if (setlen(p,zlen+16) == -1) return -1;
@@ -153,10 +155,10 @@ int urcsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, un
 }
 
 int urcsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *sk) {
+ static unsigned char m[1024*2];
+ static unsigned char c[1024*2];
  if (p[14] != 2) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char m[1024*2] = {0};
- unsigned char c[1024*2] = {0};
  bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
@@ -167,12 +169,13 @@ int urcsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int plen, u
 }
 
 int urcsignsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *ssk, unsigned char *csk) {
+ static unsigned long long smlen;
+ static unsigned char sm[1024*2];
+ static unsigned char m[1024*2];
+ static unsigned char c[1024*2];
+ static int zlen;
  if (blen > IRC_MTU) return -1;
- int zlen = blen + (256 - blen % 256);
- unsigned char sm[1024*2] = {0};
- unsigned char m[1024*2] = {0};
- unsigned char c[1024*2] = {0};
- unsigned long long smlen;
+ zlen = blen + (256 - blen % 256);
  if (setlen(p,zlen+64+16) == -1) return -1;
  taia96n(p+2);
  p[14]=3;
@@ -195,10 +198,10 @@ int urcsignsecretbox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen
 }
 
 int urcsignsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *sk) {
+ static unsigned char m[1024*2];
+ static unsigned char c[1024*2];
  if (p[14] != 3) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char m[1024*2] = {0};
- unsigned char c[1024*2] = {0};
  bzero(m,32); /* http://nacl.cr.yp.to/secretbox.html */
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
@@ -210,11 +213,11 @@ int urcsignsecretbox_open(unsigned char *b, int *blen, unsigned char *p, int ple
 }
 
 int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
+ static unsigned long long mlen;
+ static unsigned char sm[1024*2];
+ static unsigned char m[1024*2];
  if (p[14] != 3) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char sm[1024*2] = {0};
- unsigned char m[1024*2] = {0};
- unsigned long long mlen;
  memmove(sm,p+plen-64,32);
  memmove(sm+32,p,plen-64);
  memmove(sm+32+plen-64,p+plen-32,32);
@@ -222,10 +225,11 @@ int urcsignsecretbox_verify(unsigned char *p, int plen, unsigned char *pk) {
 }
 
 int urccryptobox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *pk, unsigned char *sk) {
+ static unsigned char m[1024*2];
+ static unsigned char c[1024*2];
+ static int zlen;
  if (blen > IRC_MTU) return -1;
- int zlen = blen + (256 - blen % 256);
- unsigned char m[1024*2] = {0};
- unsigned char c[1024*2] = {0};
+ zlen = blen + (256 - blen % 256);
  bzero(m,32+zlen); /* http://nacl.cr.yp.to/box.html */
  bzero(c,16);
  if (setlen(p,zlen+16) == -1) return -1;
@@ -243,10 +247,10 @@ int urccryptobox_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, un
 }
 
 int urccryptobox_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *pk, unsigned char *sk) {
+ static unsigned char m[1024*2];
+ static unsigned char c[1024*2];
  if (p[14] != 4) return -1;
  if (plen > URC_MTU) return -1;
- unsigned char m[1024*2] = {0};
- unsigned char c[1024*2] = {0};
  bzero(m,32); /* http://nacl.cr.yp.to/box.html */
  bzero(c,16);
  memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
