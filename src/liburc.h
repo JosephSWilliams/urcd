@@ -84,15 +84,15 @@ void taia96n(unsigned char *ts) {
    8ULL,  7ULL,  6ULL,  5ULL,  4ULL,  3ULL,  2ULL,  1ULL
  };
  static unsigned long long a;
- static unsigned char b[1];
+ static unsigned char b[1+4];
+ randombytes(b,1+4);
  tai_now(ts);
  a=0ULL;
  memcpy(&a,ts,8);
- randombytes(b,1);
  a+=offset[b[0] & 15];
  memcpy(ts,&a,8);
  tai_pack(ts,ts);
- randombytes(ts+8,4);
+ memcpy(ts+8,b+1,4);
 }
 
 int urchub_fmt(unsigned char *p, int *plen, unsigned char *b, int blen) {
