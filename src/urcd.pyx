@@ -650,8 +650,10 @@ while 1:
      urccryptoboxpfsdb[src]["tmpkey"] = msg[:32]
      msg = crypto_box_open(msg[32:],buffer[2:2+12+4+8],msg[:32],urccryptoboxpfsdb[src]["seckey"])
      if not msg:
-       try_write(wr,':'+Src[src]+'!ERROR@'+Mask[src]+' NOTICE '+Nick+' :Unable to decrypt message.\n' + \
-                    ':'+Src[src]+'!ERROR@'+Mask[src]+' NOTICE '+Nick+' :You should respond to exchange session keys.\n')
+       try_write(wr,
+        ':'+Src[src]+'!ERROR@'+Mask[src]+' NOTICE '+Nick+' :Unable to decrypt message.\n' +
+        ':'+Src[src]+'!ERROR@'+Mask[src]+' NOTICE '+Nick+' :You should respond to exchange session keys.\n'
+       )
        continue
    if src == msg[1:].split('!',1)[0].lower(): buffer = re_USER('!VERIFIED@',msg.split('\n',1)[0],1)
    else: buffer = re_USER('!URCD@',msg.split('\n',1)[0],1)
