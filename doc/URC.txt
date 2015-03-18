@@ -27,7 +27,7 @@ Advantages:
  yourself, rather than someone else choosing them for you.
 
  NO Presence - URCd, by default, does not announce JOIN, PART, or QUIT messages,
- therefore a user's activities and timing is protected.
+ therefore a user's activities and timing are protected.
 
  Plausible Deniability - URC packets that are not signed cannot prove a specific
  user created a message. Admins using URCd and CryptoServ also have a unique
@@ -65,7 +65,12 @@ Advantages:
  Simple API and Modularity - URCd allows the user to "hack" his or her
  conversation with their local daemon with any programming language, so long as
  the user can read and write with stdin and stdout, and can parse URCLINE
- (simplified IRC lines).
+ (simplified IRC lines). URCd also ships with LibURC, a library for creating
+ plaintext, encrypted, and signed URC packets from IRC lines. LibURC is a very
+ simple library, that is written in C, and contains wrappers for Python, and
+ soon other languages as well. URCd utilizes the wisdom of the Unix philosophy
+ in its design, so that it's flexible, legible, and modular with interchangeable
+ components.
 
  Stateless - URC is a stateless broadcast protocol that can easily use a variety
  of networks to send data, where each hop is a similar to a radio hub or signal
@@ -90,7 +95,7 @@ Advantages:
  communications over a decentralized network. For example, URC does not require,
  nor allow another server to verify the authenticity of a client's messages, nor
  does the protocol require or allow remote systems to overide or alter the
- policies on a local URCd.
+ policies on someone's local URCd.
 
  Entropy - LibURC ships with it's own secure randombytes implementation
  that is powered by NaCl's crypto_stream function, providing strong and reliable
