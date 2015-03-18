@@ -187,7 +187,15 @@ URCHUB/URCCRYPTOBOX/PFS:
  CRYPTO_BOX1.
 
 Download and Install:
- torify git clone git://ntwrkhhtqv73vwd4.onion/urcd.git \
-    /usr/local/src/urcd
- cd /usr/local/src/urcd/
- less README
+
+ Upstream:
+  git clone git://josephswilliams.com/urcd.git /usr/local/src/urcd
+
+ GitHub:
+  git clone git://github.com/JosephSWilliams/urcd /usr/local/src/urcd
+
+ Tor:
+  torify git clone git://ntwrkhhtqv73vwd4.onion/urcd.git /usr/local/src/urcd
+
+ Simply follow the instructions in the urcd/README. Feel free to contact me
+ if you have complaints or suggestions. Happy hacking :-).
