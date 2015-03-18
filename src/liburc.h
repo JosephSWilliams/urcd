@@ -80,8 +80,8 @@ int setlen(unsigned char *b, int blen) {
 
 void taia96n(unsigned char *ts) {
  static const long long offset[] = {
-  -8ULL, -7ULL, -6ULL, -5ULL, -4ULL, -3ULL, -2ULL, -1ULL,
-   8ULL,  7ULL,  6ULL,  5ULL,  4ULL,  3ULL,  2ULL,  1ULL
+  -8LL, -7LL, -6LL, -5LL, -4LL, -3LL, -2LL, -1LL,
+   8LL,  7LL,  6LL,  5LL,  4LL,  3LL,  2LL,  1LL
  };
  static unsigned long long a;
  static unsigned char b[1+4];
