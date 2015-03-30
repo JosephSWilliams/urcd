@@ -587,13 +587,13 @@ while 1:
    and dst in urcsignpubkeydb.keys() \
    and src in urcsignpubkeydb[dst].keys():
     try:
-     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsignpubkeydb[dst][src]):
+     if liburc.urcsign_verify(buffer,urcsignpubkeydb[dst][src]) != -1:
       buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
      else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
     except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
    elif URCSIGNDB:
     try:
-     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsigndb[src]):
+     if liburc.urcsign_verify(buffer,urcsigndb[src]) != -1:
       buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
      else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
     except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
@@ -603,20 +603,20 @@ while 1:
   elif buffer[2+12:2+12+4] == '\x02\x00\x00\x00':
    if not URCSECRETBOXDIR: continue
    for dst in urcsecretboxdb.keys():
-    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urcsecretboxdb[dst])
-    if msg: break
-   if not msg: continue
+    msg = liburc.urcsecretbox_open(buffer,urcsecretboxdb[dst])
+    if msg != -1: break
+   if not msg or msg == -1: continue
    AUTH, buffer = dst, re_USER('!URCD@',msg.split('\n',1)[0],1)
 
   ### URCSIGNSECRETBOX ###
   elif buffer[2+12:2+12+4] == '\x03\x00\x00\x00':
    if not URCSECRETBOXDIR: continue
    for dst in urcsecretboxdb.keys():
-    msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urcsecretboxdb[dst])
-    if msg: break
-   if not msg: continue
+    msg = liburc.urcsignsecretbox_open(buffer,urcsecretboxdb[dst])
+    if msg != -1: break
+   if not msg or msg == -1: continue
 
-   AUTH, buffer = dst, buffer[:2+12+4+8]+msg
+   AUTH, buffer = dst, msg
    buflen = len(buffer)
    try:
     src, cmd, dst = re_SPLIT(buffer[2+12+4+8+1:].lower(),3)[:3]
@@ -627,13 +627,13 @@ while 1:
    and dst in urcsignpubkeydb.keys() \
    and src in urcsignpubkeydb[dst].keys():
     try:
-     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsignpubkeydb[dst][src]):
+     if liburc.urcsignsecretbox_verify(buffer,urcsignpubkeydb[dst][src]) != -1:
       buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
      else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
     except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
    elif URCSIGNDB:
     try:
-     if _crypto_sign_open(buffer[:buflen-64],buffer[-64:],urcsigndb[src]):
+     if liburc.urcsignsecretbox_verify(buffer,urcsigndb[src]) != -1:
       buffer = re_USER('!VERIFIED@',buffer[2+12+4+8:].split('\n',1)[0],1)
      else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
     except: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
