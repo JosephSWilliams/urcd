@@ -661,6 +661,10 @@ while 1:
   ### URCHUB ###
   else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
+  ### Add nick to the user field. Some IRC clients become confused by the same username
+  try: buffer = buffer.replace('@','-'+buffer[1:].split('!',1)[0]+'@',1)
+  except: continue
+
   ### Block Malicious /NICK *Serv attacks
   if re_SERVICE(buffer) and AUTH != '\x00': continue
 

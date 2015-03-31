@@ -94,7 +94,7 @@ mkdir -p build || exit 1
 
 cython --embed $src/urcd.pyx -o build/urcd.c || exit 1
 gcc `cat conf-cc` -O2 -c build/urcd.c $PYTHON_INCLUDE -o build/urcd.o || exit 1
-gcc `cat conf-cc` -O1 -o urcd build/urcd.o -l $PYTHON_LIBRARY || exit 1
+gcc `cat conf-cc` -O1 -o urcd build/urcd.o $PYTHON_LIBRARY || exit 1
 
 cython --embed $src/urc2sd.pyx -o build/urc2sd.c || exit 1
 gcc `cat conf-cc` -O2 -c build/urc2sd.c $PYTHON_INCLUDE -o build/urc2sd.o || exit 1

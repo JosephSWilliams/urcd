@@ -55,23 +55,20 @@ hub2hub:
  ./bin/add-hubconnect remote.urc.example.tld 6789 /service/urcd-hub0/socket/
 
 no censorship (security):
- URC networks are censorship resistant. i
- recommend URCSIGN and/or URCCRYPTOBOX to
- ignore spam and trolls. URCd will replace
- the user field with VERIFIED for users with
- valid authentication or signature verification.
- All other user fields will be replaced with
- URCD. e.g.:
+ URC networks are censorship resistant. i recommend URCSIGN and/or URCCRYPTOBOX
+ to ignore spam and trolls. URCd will replace the user field with VERIFIED-Nick
+ for users with valid authentication or signature verification. All other user
+ fields will be replaced with URCD-Nick. e.g.:
 
- nick!URCD@server
- nick!VERIFIED@server
+ Nick!URCD-Nick@server
+ Nick!VERIFIED-Nick@server
 
  irssi ("ban/except"):
   /ignore *!*@* ALL
   /ignore -except friend!*@* ALL
-  /ignore -except *!VERIFIED@* ALL
+  /ignore -except *!VERIFIED-*@* ALL
 
  xchat ("ban/except"):
   /ignore *!*@* ALL
   /ignore friend!*@* ALL UNIGNORE
-  /ignore *!VERIFIED@* ALL UNIGNORE
+  /ignore *!VERIFIED-*@* ALL UNIGNORE
