@@ -252,7 +252,7 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  dst = argv[1].lower() if len(argv) > 1 else str()
 
  if dst[-4:] == 'serv' and not dst[0] in ['#','&','!','+']:
-  try_write(wr,":"+dst+"!ERROR@"+serv+" NOTICE "+Nick+" :Invalid command.\n")
+  try_write(wr,":"+dst+"!ERROR-"+serv+"@"+serv+" NOTICE "+Nick+" :Invalid command.\n")
   return
 
  if URCSIGNSECKEYDIR and dst and dst in urcsignseckeydb.keys(): signseckey = urcsignseckeydb[dst]
@@ -306,7 +306,7 @@ while 1:
   if src != nick and now - active_clients[src] >= IDLE:
    for dst in channels:
     if src in channel_struct[dst]['names']:
-     try_write(wr,':'+Src[src]+'!URCD@'+Mask[src]+' QUIT :IDLE\n')
+     try_write(wr,':'+Src[src]+'!URCD-'+Src[src]+'@'+Mask[src]+' QUIT :IDLE\n')
      break
    for dst in channel_struct.keys():
     if src in channel_struct[dst]['names']: channel_struct[dst]['names'].remove(src)
@@ -412,7 +412,7 @@ while 1:
   elif re_CLIENT_HOSTSERV_REQUEST(buffer):
    serv = re_SPLIT(buffer,3)[3]
    Mask[nick] = serv
-   try_write(wr,":HostServ!URCD@Service NOTICE "+Nick+" :You are now known as "+Nick+"@"+serv+".\n")
+   try_write(wr,":HostServ!URCD-HostServ@Service NOTICE "+Nick+" :You are now known as "+Nick+"@"+serv+".\n")
 
   elif re_CLIENT_PRIVMSG_NOTICE_TOPIC_PART(buffer):
    if FLOOD:
@@ -531,7 +531,8 @@ while 1:
     if channel_struct[dst]['topic']:
      try_write(wr,':'+serv+' 332 '+Nick+' '+dst+' :'+channel_struct[dst]['topic']+'\n')
     if len(channel_struct[dst]['names'])>=CHANLIMIT:
-     try_write(wr,':'+Src[channel_struct[dst]['names'][0]]+'!URCD@'+Mask[channel_struct[dst]['names'][0]]+' PART '+dst+'\n')
+     cmd=channel_struct[dst]['names'][0]
+     try_write(wr,':'+Src[cmd]+'!URCD-'+Src[cmd]+'@'+Mask[cmd]+' PART '+dst+'\n')
     channel_struct[dst]['names'].append(nick)
     if PRESENCE: sock_write(':'+Nick+'!'+Nick+'@'+serv+' JOIN :'+dst+'\n',dst)
    del dst_list, msg_list
@@ -651,8 +652,8 @@ while 1:
      msg = crypto_box_open(msg[32:],buffer[2:2+12+4+8],msg[:32],urccryptoboxpfsdb[src]["seckey"])
      if not msg:
        try_write(wr,
-        ':'+Src[src]+'!ERROR@'+Mask[src]+' NOTICE '+Nick+' :Unable to decrypt message.\n' +
-        ':'+Src[src]+'!ERROR@'+Mask[src]+' NOTICE '+Nick+' :You should respond to exchange session keys.\n'
+        ':'+Src[src]+'!ERROR-'+Src[src]+'@'+Mask[src]+' NOTICE '+Nick+' :Unable to decrypt message.\n' +
+        ':'+Src[src]+'!ERROR-'+Src[src]+'@'+Mask[src]+' NOTICE '+Nick+' :You should respond to exchange session keys.\n'
        )
        continue
    if src == msg[1:].split('!',1)[0].lower(): buffer = re_USER('!VERIFIED@',msg.split('\n',1)[0],1)
@@ -713,9 +714,11 @@ while 1:
       try_write(wr,re_SPLIT(buffer,1)[0]+' JOIN :'+dst+'\n')
       if len(channel_struct[dst]['names'])>=CHANLIMIT:
        if nick != channel_struct[dst]['names'][0]:
-        try_write(wr,':'+Src[channel_struct[dst]['names'][0]]+'!URCD@'+Mask[channel_struct[dst]['names'][0]]+' PART '+dst+'\n')
+        msg=channel_struct[dst]['names'][0]
+        try_write(wr,':'+Src[msg]+'!URCD-'+Src[msg]+'@'+Mask[msg]+' PART '+dst+'\n')
        else:
-        try_write(wr,':'+Src[channel_struct[dst]['names'][1]]+'!URCD@'+Mask[channel_struct[dst]['names'][1]]+' PART '+dst+'\n')
+        msg=channel_struct[dst]['names'][1] 
+        try_write(wr,':'+Src[msg]+'!URCD-'+Src[msg]+'@'+Mask[msg]+' PART '+dst+'\n')
         channel_struct[dst]['names'].append(nick)
      channel_struct[dst]['names'].append(src)
    elif cmd == 'part': continue
@@ -746,9 +749,11 @@ while 1:
      try_write(wr,buffer)
      if len(channel_struct[dst]['names'])>=CHANLIMIT:
       if nick != channel_struct[dst]['names'][0]:
-       try_write(wr,':'+Src[channel_struct[dst]['names'][0]]+'!URCD@'+Mask[channel_struct[dst]['names'][0]]+' PART '+dst+'\n')
+       msg=channel_struct[dst]['names'][0]
+       try_write(wr,':'+Src[msg]+'!URCD-'+Src[msg]+'@'+Mask[msg]+' PART '+dst+'\n')
       else:
-       try_write(wr,':'+Src[channel_struct[dst]['names'][1]]+'!URCD@'+Mask[channel_struct[dst]['names'][1]]+' PART '+dst+'\n')
+       msg=channel_struct[dst]['names'][1]
+       try_write(wr,':'+Src[msg]+'!URCD-'+Src[msg]+'@'+Mask[msg]+' PART '+dst+'\n')
        channel_struct[dst]['names'].append(nick)
     channel_struct[dst]['names'].append(src)
 

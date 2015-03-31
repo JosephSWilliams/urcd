@@ -45,7 +45,7 @@ install:
   ### create your urchub, you only need to do this once
   ./bin/add-urchub
 
-CryptoServ (requires NaCl):
+CryptoServ:
  ln -s stdin.cryptoserv stdin
 
 hub2hub:
