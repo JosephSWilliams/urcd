@@ -7,22 +7,17 @@ fi
 
 touch conf-cc
 
-PYVER="`python --version 2>&1 | cut -d ' ' -f2 | cut -d. -f1,2`" || exit 1
-
-# need Python.h and structmember.h
-if [ -e '/usr/include/python'$PYVER ]; then
- PYTHON_HEADERS='/usr/include/python'$PYVER
-elif [ -e '/usr/pkg/include/python'$PYVER ]; then
- PYTHON_HEADERS='/usr/pkg/include/python'$PYVER
-elif [ -e '/usr/local/include/python'$PYVER ]; then
- PYTHON_HEADERS='/usr/local/include/python'$PYVER
-else
- echo $0': fatal error: no suitable python headers exists' 1>&2
- exit 255
+if ! which python-config; then
+ if ! which python2.7-config; then
+  echo $0': fatal error: no suitable python development files exist' 1>&2
+  exit 255
+ fi
+ python_config=python2.7-config
+else python_config=python-config
 fi
 
-# this is ridiculous...
-PYLIB="python$PYVER`ls ${PYTHON_HEADERS/include*/lib} | grep libpython$PYVER | head -1 | sed s/libpython$PYVER// | cut -d'.' -f1`"
+PYTHON_INCLUDE=`$python_config --includes` || exit 1
+PYTHON_LIBRARY=`$python_config --libs` || exit 1
 
 # OpenBSD && NetBSD \o/
 export CPATH="/usr/pkg/include:/usr/local/include:$CPATH"
@@ -73,9 +68,9 @@ gcc `cat conf-cc` $src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 gcc `cat conf-cc` $src/keypair.c -o keypair -l $nacl $randombytes || exit 1
 gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l $nacl $randombytes || exit 1
 
-gcc -O2 -fPIC -DPIC $src/liburc.c -shared -I $PYTHON_HEADERS -o liburc.so -l $PYLIB -l tai -l $nacl || exit 1
+gcc -O2 -fPIC -DPIC $src/liburc.c -shared $PYTHON_INCLUDE -o liburc.so $PYTHON_LIBRARY -l tai -l $nacl || exit 1
 
-gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared -I $PYTHON_HEADERS -o nacltaia.so -l $PYLIB -l tai -l $nacl $randombytes || exit 1
+gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared $PYTHON_INCLUDE -o nacltaia.so $PYTHON_LIBRARY -l tai -l $nacl $randombytes || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
  gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1
@@ -98,16 +93,16 @@ fi
 mkdir -p build || exit 1
 
 cython --embed $src/urcd.pyx -o build/urcd.c || exit 1
-gcc `cat conf-cc` -O2 -c build/urcd.c -I $PYTHON_HEADERS -o build/urcd.o || exit 1
-gcc `cat conf-cc` -O1 -o urcd build/urcd.o -l $PYLIB || exit 1
+gcc `cat conf-cc` -O2 -c build/urcd.c $PYTHON_INCLUDE -o build/urcd.o || exit 1
+gcc `cat conf-cc` -O1 -o urcd build/urcd.o -l $PYTHON_LIBRARY || exit 1
 
 cython --embed $src/urc2sd.pyx -o build/urc2sd.c || exit 1
-gcc `cat conf-cc` -O2 -c build/urc2sd.c -I $PYTHON_HEADERS -o build/urc2sd.o || exit 1
-gcc `cat conf-cc` -O1 -o urc2sd build/urc2sd.o -l $PYLIB || exit 1
+gcc `cat conf-cc` -O2 -c build/urc2sd.c $PYTHON_INCLUDE -o build/urc2sd.o || exit 1
+gcc `cat conf-cc` -O1 -o urc2sd build/urc2sd.o $PYTHON_LIBRARY || exit 1
 
 cython $src/taia96n.pyx -o build/taia96n.c || exit 1
 gcc `cat conf-cc` -O2 -shared -pthread -fPIC -fwrapv -Wall \
- -fno-strict-aliasing -I $PYTHON_HEADERS build/taia96n.c -o taia96n.so || exit 1
+ -fno-strict-aliasing $PYTHON_INCLUDE build/taia96n.c -o taia96n.so || exit 1
 
 rm -rf build libsodium_src || exit 1
 
