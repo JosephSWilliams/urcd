@@ -51,7 +51,7 @@ CryptoServ (requires NaCl):
 hub2hub:
  ./bin/add-hublisten local.urc.example.tld 6789 /service/urcd-hub0/socket/
 
- ### add peers. i recommend three
+ ### add peers. i recommend between 2 and 4 at the most
  ./bin/add-hubconnect remote.urc.example.tld 6789 /service/urcd-hub0/socket/
 
 no censorship (security):
