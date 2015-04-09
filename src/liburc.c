@@ -349,7 +349,6 @@ PyObject *pyurccryptoboxpfs_open(PyObject *self, PyObject *args, PyObject *kw) {
  char *sk1;
  Py_ssize_t bsize = 0;
  Py_ssize_t psize = 0;
- Py_ssize_t pk0size = 0;
  Py_ssize_t sk0size = 0;
  Py_ssize_t pk1size = 0;
  Py_ssize_t sk1size = 0;
