@@ -641,7 +641,7 @@ while 1:
    else: buffer = re_USER('!URCD@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
   ### URCCRYPTOBOX ###
-  elif buffer[2+12:2+12+4] == '\x04\x00\x00\x00':
+  elif buffer[2+12:2+12+4] in ['\x04\x00\x00\x00', '\x05\x00\x00\x00']:
    if not URCCRYPTOBOXDIR: continue
    for src in urccryptoboxdb.keys():
     msg = crypto_secretbox_open(buffer[2+12+4+8:],buffer[2:2+12+4+8],urccryptoboxdb[src])
