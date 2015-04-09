@@ -297,6 +297,7 @@ int urccryptoboxpfs_fmt(unsigned char *p, int *plen, unsigned char *b, int blen,
 int urccryptoboxpfs_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *pk0, unsigned char *sk0, unsigned char *pk1, unsigned char *sk1) {
  static unsigned char m[1024*2];
  static unsigned char c[1024*2];
+ bzero(pk0,32);
  if (p[14] != 5) return -1;
  if (plen > URC_MTU) return -1;
  bzero(m,32); /* http://nacl.cr.yp.to/box.html */
