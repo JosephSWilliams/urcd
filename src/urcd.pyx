@@ -268,10 +268,11 @@ def sock_write(*argv): ### (buffer, dst, ...) ###
  ### URCCRYPTOBOX ###
  if crypto_box_seckey:
   buflen += 16 + padlen
-  nonce = taia96n_pack(taia96n_now())+'\x04\x00\x00\x00'+liburc.randombytes(8)
   if not dst in urccryptoboxpfsdb.keys():
+   nonce = taia96n_pack(taia96n_now())+'\x04\x00\x00\x00'+liburc.randombytes(8)
    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(buffer+liburc.randombytes(padlen),nonce,crypto_box_seckey)
   else:
+   nonce = taia96n_pack(taia96n_now())+'\x05\x00\x00\x00'+liburc.randombytes(8)
    buflen += 32 + 16
    buffer = chr(buflen>>8)+chr(buflen%256)+nonce+crypto_secretbox(urccryptoboxpfsdb[dst]["pubkey"]+
     crypto_box(buffer+liburc.randombytes(padlen),nonce,urccryptoboxpfsdb[dst]["tmpkey"],urccryptoboxpfsdb[dst]["seckey"]),
