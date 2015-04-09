@@ -1,3 +1,4 @@
+#include <nacl/crypto_scalarmult_curve25519.h>
 #include <nacl/crypto_hash_sha512.h>
 #include <nacl/crypto_secretbox.h>
 #include <nacl/crypto_stream.h>
@@ -265,5 +266,47 @@ int urccryptobox_open(unsigned char *b, int *blen, unsigned char *p, int plen, u
  if (crypto_box_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)pk,(const unsigned char *)sk) == -1) return -1;
  memmove(b,m+32,-2-12-4-8+plen-16);
  *blen=-2-12-4-8+plen-16;
+ return 0;
+}
+
+int urccryptoboxpfs_fmt(unsigned char *p, int *plen, unsigned char *b, int blen, unsigned char *pk0, unsigned char *sk0, unsigned char *pk1, unsigned char *sk1) {
+ static unsigned char m[1024*2];
+ static unsigned char c[1024*2];
+ static int zlen;
+ if (blen > IRC_MTU) return -1;
+ zlen = blen + (256 - blen % 256);
+ bzero(m,32+zlen); /* http://nacl.cr.yp.to/box.html */
+ bzero(c,16);
+ if (setlen(p,32+zlen+16+16) == -1) return -1;
+ taia96n(p+2);
+ p[14]=5;
+ p[15]=0;
+ p[16]=0;
+ p[17]=0;
+ randombytes(p+2+12+4,8);
+ memmove(m+32,b,blen);
+ if (crypto_box(c,m,32+zlen,(const unsigned char *)p+2,(const unsigned char *)pk0,(const unsigned char *)sk0) == -1) return -1;
+ crypto_scalarmult_curve25519_base(m+32,sk0);
+ memmove(m+32+32,c+16,zlen+16);
+ if (crypto_box(c,m,32+32+zlen+16,(const unsigned char *)p+2,(const unsigned char *)pk1,(const unsigned char *)sk1) == -1) return -1;
+ memmove(p+2+12+4+8,c+16,32+zlen+16+16);
+ *plen=2+12+4+8+32+zlen+16+16;
+ return 0;
+}
+
+int urccryptoboxpfs_open(unsigned char *b, int *blen, unsigned char *p, int plen, unsigned char *pk0, unsigned char *sk0, unsigned char *pk1, unsigned char *sk1) {
+ static unsigned char m[1024*2];
+ static unsigned char c[1024*2];
+ if (p[14] != 5) return -1;
+ if (plen > URC_MTU) return -1;
+ bzero(m,32); /* http://nacl.cr.yp.to/box.html */
+ bzero(c,16);
+ memmove(c+16,p+2+12+4+8,-2-12-4-8+plen);
+ if (crypto_box_open(m,c,16-2-12-4-8+plen,(const unsigned char *)p+2,(const unsigned char *)pk1,(const unsigned char *)sk1) == -1) return -1;
+ memmove(pk0,m+32,32);
+ memmove(c+16,m+32+32,-2-12-4-8-32+plen-16);
+ if (crypto_box_open(m,c,16-2-12-4-8-32+plen-16,(const unsigned char *)p+2,(const unsigned char *)pk0,(const unsigned char *)sk0) == -1) return -1;
+ memmove(b,m+32,-2-12-4-8-32+plen-16-16);
+ *blen=-2-12-4-8-32+plen-16-16;
  return 0;
 }

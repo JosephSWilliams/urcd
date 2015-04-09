@@ -178,7 +178,7 @@ URCHUB/URCCRYPTOBOX:
  key is derived from a curve25519 diffie-hellman key exchange.
 
 URCHUB/URCCRYPTOBOX/PFS:
- | 16bit LEN | 96bit taia96n | \4\0\0\0 | 64bit random | [ CRYPTO_BOX1
+ | 16bit LEN | 96bit taia96n | \5\0\0\0 | 64bit random | [ CRYPTO_BOX1
  |CRYPTO_BOX0| ]             |
 
   CRYPTO_BOX1 is derived using the same method as URCHUB/URCCRYPTOBOX and

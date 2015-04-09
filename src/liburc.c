@@ -15,6 +15,9 @@
 #define URC_MTU 1024
 #define IRC_MTU 512
 
+/* ImportError: workaround dummy init function (initliburc) */
+PyObject *pyliburc(PyObject *self) { return Py_BuildValue("i", 0); }
+
 PyObject *pyurc_jail(PyObject *self, PyObject *args, PyObject *kw) {
  char *path;
  Py_ssize_t pathsize = 0;
@@ -297,12 +300,99 @@ PyObject *pyurccryptobox_open(PyObject *self, PyObject *args, PyObject *kw) {
  return PyBytes_FromStringAndSize((char *)b, bsize);
 }
 
-/* ImportError: workaround dummy init function (initliburc) */
-PyObject *pyliburc(PyObject *self) { return Py_BuildValue("i", 0); }
+PyObject *pyurccryptoboxpfs_fmt(PyObject *self, PyObject *args, PyObject *kw) {
+ unsigned char p[1024*2];
+ char *b;
+ char *pk0;
+ char *sk0;
+ char *pk1;
+ char *sk1;
+ Py_ssize_t psize = 0;
+ Py_ssize_t bsize = 0;
+ Py_ssize_t pk0size = 0;
+ Py_ssize_t sk0size = 0;
+ Py_ssize_t pk1size = 0;
+ Py_ssize_t sk1size = 0;
+ static const char *kwlist[] = {"b","pk0","sk0","pk1","sk1",0};
+ if (!PyArg_ParseTupleAndKeywords(
+  args,
+  kw,
+  "|s#s#s#s#s#:urccryptoboxpfs_fmt",
+  (char **)kwlist,
+  &b,
+  &bsize,
+  &pk0,
+  &pk0size,
+  &sk0,
+  &sk0size,
+  &pk1,
+  &pk1size,
+  &sk1,
+  &sk1size
+ )) return Py_BuildValue("i", -1);
+ if (pk0size != 32) return Py_BuildValue("i", -1);
+ if (sk0size != 32) return Py_BuildValue("i", -1);
+ if (pk1size != 32) return Py_BuildValue("i", -1);
+ if (sk1size != 32) return Py_BuildValue("i", -1);
+ if (bsize > IRC_MTU) return Py_BuildValue("i", -1);
+ if (urccryptoboxpfs_fmt(p,&psize,b,bsize,pk0,sk0,pk1,sk1) == -1) return Py_BuildValue("i", -1);
+ return PyBytes_FromStringAndSize((char *)p, psize);
+}
+
+PyObject *pyurccryptoboxpfs_open(PyObject *self, PyObject *args, PyObject *kw) {
+ unsigned char b[1024*2];
+ unsigned char pk0[32];
+ unsigned char zk[32];
+ char *p;
+ char *sk0;
+ char *pk1;
+ char *sk1;
+ Py_ssize_t bsize = 0;
+ Py_ssize_t psize = 0;
+ Py_ssize_t pk0size = 0;
+ Py_ssize_t sk0size = 0;
+ Py_ssize_t pk1size = 0;
+ Py_ssize_t sk1size = 0;
+ static const char *kwlist[] = {"p","sk0","pk1","sk1",0};
+ if (!PyArg_ParseTupleAndKeywords(
+  args,
+  kw,
+  "|s#s#s#s#:urccryptoboxpfs_open",
+  (char **)kwlist,
+  &p,
+  &psize,
+  &sk0,
+  &sk0size,
+  &pk1,
+  &pk1size,
+  &sk1,
+  &sk1size
+ )) return Py_BuildValue("i", -1);
+ if (sk0size != 32) return Py_BuildValue("i", -1);
+ if (pk1size != 32) return Py_BuildValue("i", -1);
+ if (sk1size != 32) return Py_BuildValue("i", -1);
+ if (psize > URC_MTU) return Py_BuildValue("i", -1);
+ if (urccryptoboxpfs_open(b,&bsize,p,psize,pk0,sk0,pk1,sk1) == -1) {
+  bzero(zk,32);
+  if (memcmp(pk0,zk,32)) return Py_BuildValue("OO",
+   PyBytes_FromStringAndSize((char *)pk0, 32),
+   Py_BuildValue("i", -1)
+  );
+  return Py_BuildValue("OO",
+   Py_BuildValue("i", -1),
+   Py_BuildValue("i", -1)
+  );
+ }
+ return Py_BuildValue("OO",
+  PyBytes_FromStringAndSize((char *)pk0, 32),
+  PyBytes_FromStringAndSize((char *)b, bsize)
+ );
+}
 
 static PyMethodDef Module_methods[] = {
  { "liburc",                  pyliburc,                  METH_NOARGS },
  { "urc_jail",                pyurc_jail,                METH_VARARGS|METH_KEYWORDS},
+ { "randombytes",             pyrandombytes,             METH_VARARGS|METH_KEYWORDS},
  { "urchub_fmt",              pyurchub_fmt,              METH_VARARGS|METH_KEYWORDS},
  { "urcsign_fmt",             pyurcsign_fmt,             METH_VARARGS|METH_KEYWORDS},
  { "urcsign_verify",          pyurcsign_verify,          METH_VARARGS|METH_KEYWORDS},
@@ -313,7 +403,8 @@ static PyMethodDef Module_methods[] = {
  { "urcsignsecretbox_verify", pyurcsignsecretbox_verify, METH_VARARGS|METH_KEYWORDS},
  { "urccryptobox_fmt",        pyurccryptobox_fmt,        METH_VARARGS|METH_KEYWORDS},
  { "urccryptobox_open",       pyurccryptobox_open,       METH_VARARGS|METH_KEYWORDS},
- { "randombytes",             pyrandombytes,             METH_VARARGS|METH_KEYWORDS},
+ { "urccryptoboxpfs_fmt",     pyurccryptoboxpfs_fmt,     METH_VARARGS|METH_KEYWORDS},
+ { "urccryptoboxpfs_open",    pyurccryptoboxpfs_open,    METH_VARARGS|METH_KEYWORDS},
  { NULL, NULL}
 };
 
@@ -329,3 +420,5 @@ void initurccryptobox_fmt(){ (void) Py_InitModule("urccryptobox_fmt", Module_met
 void initurccryptobox_open(){ (void) Py_InitModule("urccryptobox_open", Module_methods); }
 void initurcsignsecretbox_fmt(){ (void) Py_InitModule("urcsignsecretbox_fmt", Module_methods); }
 void initurcsignsecretbox_open(){ (void) Py_InitModule("urcsignsecretbox_open", Module_methods); }
+void initurccryptoboxpfs_fmt(){ (void) Py_InitModule("urccryptoboxpfs_fmt", Module_methods); }
+void initurccryptoboxpfs_open(){ (void) Py_InitModule("urccryptoboxpfs_open", Module_methods); }
