@@ -112,6 +112,7 @@ signal.signal(signal.SIGTERM,sock_close)
 signal.signal(signal.SIGCHLD,sock_close)
 
 rd = 0
+"""
 if os.access('stdin',os.X_OK):
  p = subprocess.Popen(['./stdin'],stdout=subprocess.PIPE)
  rd = p.stdout.fileno()
@@ -122,6 +123,7 @@ if os.access('stdout',os.X_OK):
  pipefd = ( p.stdout.fileno(), p.stdin.fileno() )
  del p
 else: pipefd = os.pipe()
+"""
 
 ### nacl-20110221's randombytes() not compatible with chroot ###
 devurandomfd = os.open("/dev/urandom",os.O_RDONLY)
@@ -144,7 +146,7 @@ sd=sock.fileno()
 
 poll=select.poll()
 poll.register(rd,select.POLLIN|select.POLLPRI)
-poll.register(pipefd[0],select.POLLIN)
+"""poll.register(pipefd[0],select.POLLIN)"""
 poll.register(sd,select.POLLIN)
 poll=poll.poll
 
@@ -152,9 +154,11 @@ client_revents=select.poll()
 client_revents.register(rd,select.POLLIN|select.POLLPRI)
 client_revents=client_revents.poll
 
+"""
 pipe_revents=select.poll()
 pipe_revents.register(pipefd[0],select.POLLIN)
 pipe_revents=pipe_revents.poll
+"""
 
 server_revents=select.poll()
 server_revents.register(sd,select.POLLIN)
@@ -314,6 +318,7 @@ while 1:
   ### URCHUB ###
   else: buffer = re_USER('!urcd@',buffer[2+12+4+8:].split('\n',1)[0],1)
 
+  """
   if buffer: try_write(pipefd[1],buffer+'\n')
 
  if pipe_revents(0):
@@ -324,6 +329,7 @@ while 1:
    if byte == '': sock_close(5,0)
    if byte == '\n': break
    if byte != '\r' and len(buffer)<768: buffer += byte
+  """
 
   action, buffer = (1, re_BUFFER_CTCP_DCC('',buffer) + '\x01') if '\x01ACTION ' in buffer.upper() else (0, re_BUFFER_CTCP_DCC('',buffer))
   if not COLOUR: buffer = re_BUFFER_COLOUR('',buffer)

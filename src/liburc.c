@@ -1,3 +1,4 @@
+#include <nacl/crypto_verify_32.h>
 #include <Python.h>
 #include "liburc.h"
 
@@ -373,7 +374,7 @@ PyObject *pyurccryptoboxpfs_open(PyObject *self, PyObject *args, PyObject *kw) {
  if (psize > URC_MTU) return Py_BuildValue("i", -1);
  if (urccryptoboxpfs_open(b,&bsize,p,psize,pk0,sk0,pk1,sk1) == -1) {
   bzero(zk,32);
-  if (memcmp(pk0,zk,32)) return Py_BuildValue("OO",
+  if (crypto_verify_32(pk0,zk)) return Py_BuildValue("OO",
    PyBytes_FromStringAndSize((char *)pk0, 32),
    Py_BuildValue("i", -1)
   );
