@@ -221,7 +221,14 @@ main(int argc, char *argv[])
     usleep((int)(LIMIT*1000000));
 
     /// IDENTIFY
-    if ((i>=20+9+1+1)&&(!memcmp("identify ",buffer1+20,9))) {
+    if ((i>=20+5+1+1)&&(!memcmp("ident",buffer1+20,5))) {
+     int epochsucks=0;
+     if ((i>=20+9+1+1)&&(!memcmp("identify ",buffer1+20,9))) epochsucks=192;
+     if ((i>=20+9+1+1)&&(!memcmp("identsig ",buffer1+20,9))) epochsucks=128;
+     if ((i>=20+9+1+1)&&(!memcmp("identenc ",buffer1+20,9))) epochsucks=64;
+//     if ((i>=20+9+1+1)&&(!memcmp("identoff ",buffer1+20,9))) epochsucks=0;//dunno how to do this yet.
+     if(epochsucks == 0) continue;
+
      if (loginattempts == 4) goto invalid_passwd;
      ++loginattempts;
      bzero(path,512);
@@ -261,9 +268,9 @@ main(int argc, char *argv[])
      base16_encode(hex,sk,32);
      base16_encode(hex+64,sk,64);
      memcpy(buffer0,"PASS ",5);
-     memcpy(buffer0+5,hex,192);
-     memcpy(buffer0+5+192,"\n",1);
-     if (write(1,buffer0,5+192+1)<=0) exit(8);
+     memcpy(buffer0+5,hex+((epochsucks==128)?64:0),epochsucks);
+     memcpy(buffer0+5+epochsucks,"\n",1);
+     if (write(1,buffer0,5+epochsucks+1)<=0) exit(8);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      memcpy(identifiednick,buffer2+2+12+4+8+32,nicklen);

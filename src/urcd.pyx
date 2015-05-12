@@ -134,14 +134,6 @@ def try_write(fd,buffer):
    if time.time() - now >= TIMEOUT: sock_close(3,0)
    time.sleep(1)
 
-### NaCl's crypto_sign / crypto_sign_open API sucks ###
-def _crypto_sign(m,sk):
- s = crypto_sign(m,sk)
- return s[:32]+s[-32:]
-
-def _crypto_sign_open(m,s,pk):
- return 1 if crypto_sign_open(s[:32]+m+s[32:],pk) != 0 else 0
-
 urcsecretboxdb, urccryptoboxdb, urccryptoboxpfsdb, urccryptoboxpassdb = dict(), dict(), dict(), dict()
 
 if URCSECRETBOXDIR:
