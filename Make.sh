@@ -1,5 +1,9 @@
 #!/bin/sh -v
 
+if ! su urcd -c exit 0 ; then
+ useradd urcd
+fi
+
 if [ -e '/usr/lib/libnacl.so' ]; then
  echo $0': fatal error: move /usr/lib/libnacl.so temporarily' 1>&2
  exit 255
@@ -52,9 +56,6 @@ else
 fi
 
 gcc `cat conf-cc` $src/urchub.c -o urchub || exit 1
-gcc `cat conf-cc` $src/urcsend.c -o urcsend || exit 1
-gcc `cat conf-cc` $src/urcrecv.c -o urcrecv || exit 1
-gcc `cat conf-cc` $src/urcstream.c -o urcstream || exit 1
 gcc `cat conf-cc` $src/urc-udpsend.c -o urc-udpsend || exit 1
 gcc `cat conf-cc` $src/urc-udprecv.c -o urc-udprecv || exit 1
 gcc `cat conf-cc` $src/ucspi-stream.c -o ucspi-stream || exit 1
@@ -73,11 +74,15 @@ gcc -O2 -fPIC -DPIC $src/liburc.c -shared $PYTHON_INCLUDE -o liburc.so $PYTHON_L
 gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared $PYTHON_INCLUDE -o nacltaia.so $PYTHON_LIBRARY -l tai -l $nacl $randombytes || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
- gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1
+ echo $0': fatal error: (security) potential cache error 00' 1>&2
+ exit 255
 else
  gcc `cat conf-cc` $src/urccache.c -o urccache -l tai -l $nacl $randombytes || exit 1
  printf '' | ./urccache `pwd`/$src/
- if [ $? != 1 ] ; then gcc `cat conf-cc` $src/urccache-failover.c -o urccache -l $nacl || exit 1 ; fi
+ if [ $? != 1 ] ; then
+  echo $0': fatal error: (security) potential cache error 01' 1>&2
+  exit 255
+ fi
 fi
 
 if ! which cython 2>/dev/null ; then
@@ -105,7 +110,3 @@ gcc `cat conf-cc` -O2 -shared -pthread -fPIC -fwrapv -Wall \
  -fno-strict-aliasing $PYTHON_INCLUDE build/taia96n.c -o taia96n.so || exit 1
 
 rm -rf build libsodium_src || exit 1
-
-if ! su urcd -c exit 0 ; then
- useradd urcd
-fi

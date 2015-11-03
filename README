@@ -43,16 +43,16 @@ install:
   svstat /service/urcd
 
   ### create your urchub, you only need to do this once
-  ./bin/add-urchub
+  ./scripts/add-urchub
 
 CryptoServ:
  ln -s stdin.cryptoserv stdin
 
 hub2hub:
- ./bin/add-hublisten local.urc.example.tld 6789 /service/urcd-hub0/socket/
+ ./scripts/add-hublisten local.urc.example.tld 6789 /service/urcd-hub0/socket/
 
  ### add peers. i recommend between 2 and 4 at the most
- ./bin/add-hubconnect remote.urc.example.tld 6789 /service/urcd-hub0/socket/
+ ./scripts/add-hubconnect remote.urc.example.tld 6789 /service/urcd-hub0/socket/
 
 no censorship (security):
  URC networks are censorship resistant. i recommend URCSIGN and/or URCCRYPTOBOX

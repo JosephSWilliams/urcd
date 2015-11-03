@@ -19,7 +19,8 @@ git add -f \
  doc/ \
  stdin.cryptoserv \
  COPYRIGHT \
- LICENSE
+ LICENSE \
+ DONATE
 
 TZ=UTC git commit --date="`date -u +'%s'`"
 test -x /usr/lib/git-core/git-update-server-info && /usr/lib/git-core/git-update-server-info
