@@ -5,7 +5,6 @@ git add -f \
  .gitignore \
  gitd \
  Make.sh \
-# bin \
  run \
  run.log \
  run.urcd-curvecp \

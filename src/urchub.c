@@ -99,7 +99,7 @@ main(int argc, char **argv)
 
   while (1)
   {
-    bzero(recvpath.sun_path,UNIX_PATH_MAX);
+    bzero(&recvpath.sun_path,UNIX_PATH_MAX);
     n = recvfrom(sockfd,buffer,65536,0,(struct sockaddr *)&recvpath,&recvpath_len);
     if (!n) continue;
     if (n<0) sock_close(7);
