@@ -99,6 +99,7 @@ main(int argc, char **argv)
 
   while (1)
   {
+    recvpath_len = sizeof(recvpath); // must be initialized each recvfrom call
     bzero(&recvpath.sun_path,UNIX_PATH_MAX);
     n = recvfrom(sockfd,buffer,65536,0,(struct sockaddr *)&recvpath,&recvpath_len);
     if (!n) continue;
