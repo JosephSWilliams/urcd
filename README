@@ -21,6 +21,8 @@ install:
   # install dependencies, if you haven't already:
    ./install-daemontools.sh
    ./install-ucspi-tcp.sh
+
+  # this also patches libtai for 64-bit shared objects
    ./install-libtai.sh
 
   # recommended over ./install-libsodium.sh:
