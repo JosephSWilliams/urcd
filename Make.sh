@@ -1,16 +1,24 @@
 #!/bin/sh -v
 
+
+# URCd requires user urcd
 if ! su urcd -c exit 0 ; then
  useradd urcd
 fi
 
+
+# Ivo's libnacl.so will break NaCl softwares
 if [ -e '/usr/lib/libnacl.so' ]; then
  echo $0': fatal error: move /usr/lib/libnacl.so temporarily' 1>&2
  exit 255
 fi
 
+
+# you can add gcc options to conf-cc
 touch conf-cc
 
+
+# configure a suitable python development library
 if ! which python-config; then
  if ! which python2.7-config; then
   echo $0': fatal error: no suitable python development files exist' 1>&2
@@ -23,9 +31,11 @@ fi
 PYTHON_INCLUDE=`$python_config --includes` || exit 1
 PYTHON_LIBRARY=`$python_config --libs` || exit 1
 
-# OpenBSD && NetBSD \o/
+
+# OpenBSD and NetBSD need these paths
 export CPATH="/usr/pkg/include:/usr/local/include:$CPATH"
 export LIBRARY_PATH="/usr/pkg/lib:/usr/local/lib:$LIBRARY_PATH"
+
 
 # Support libsodium fanboys
 if gcc src/check-nacl.h -o /dev/null 2>/dev/null ; then
@@ -55,6 +65,8 @@ else
   exit 255
 fi
 
+
+# compile c programs
 gcc `cat conf-cc` $src/urchub.c -o urchub || exit 1
 gcc `cat conf-cc` $src/urc-udpsend.c -o urc-udpsend || exit 1
 gcc `cat conf-cc` $src/urc-udprecv.c -o urc-udprecv || exit 1
@@ -62,16 +74,17 @@ gcc `cat conf-cc` $src/ucspi-stream.c -o ucspi-stream || exit 1
 gcc `cat conf-cc` $src/urchubstream.c -o urchubstream || exit 1
 gcc `cat conf-cc` $src/cryptoserv.c -o cryptoserv -l $nacl || exit 1
 gcc `cat conf-cc` $src/urcstream2hub.c -o urcstream2hub -l tai || exit 1
-gcc `cat conf-cc` $src/check-taia.c -o check-taia -l tai -l $nacl || exit 1
 gcc `cat conf-cc` $src/ucspi-client2server.c -o ucspi-client2server || exit 1
 gcc `cat conf-cc` $src/ucspi-server2client.c -o ucspi-server2client || exit 1
 gcc `cat conf-cc` $src/ucspi-socks4aclient.c -o ucspi-socks4aclient || exit 1
 gcc `cat conf-cc` $src/keypair.c -o keypair -l $nacl $randombytes || exit 1
 gcc `cat conf-cc` $src/sign_keypair.c -o sign_keypair -l $nacl $randombytes || exit 1
-
 gcc -O2 -fPIC -DPIC $src/liburc.c -shared $PYTHON_INCLUDE -o liburc.so $PYTHON_LIBRARY -l tai -l $nacl || exit 1
-
 gcc -O2 -fPIC -DPIC $src/nacltaia.c -shared $PYTHON_INCLUDE -o nacltaia.so $PYTHON_LIBRARY -l tai -l $nacl $randombytes || exit 1
+
+
+# compile urccache.c and check for errors
+gcc `cat conf-cc` $src/check-taia.c -o check-taia -l tai -l $nacl || exit 1
 
 if ! $(./check-taia >/dev/null) ; then
  echo $0': fatal error: (security) potential cache error 00' 1>&2
@@ -85,6 +98,8 @@ else
  fi
 fi
 
+
+# if cython is not installed use python scripts and exit
 if ! which cython 2>/dev/null ; then
  cp $src/urcd.pyx urcd || exit 1
  chmod +x urcd || exit 1
@@ -95,6 +110,8 @@ if ! which cython 2>/dev/null ; then
  exit 0 
 fi
 
+
+# compile cython programs
 mkdir -p build || exit 1
 
 cython --embed $src/urcd.pyx -o build/urcd.c || exit 1
@@ -109,4 +126,6 @@ cython $src/taia96n.pyx -o build/taia96n.c || exit 1
 gcc `cat conf-cc` -O2 -shared -pthread -fPIC -fwrapv -Wall \
  -fno-strict-aliasing $PYTHON_INCLUDE build/taia96n.c -o taia96n.so || exit 1
 
+
+# clean up
 rm -rf build libsodium_src || exit 1
