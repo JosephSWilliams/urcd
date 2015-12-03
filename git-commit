@@ -18,6 +18,7 @@ git add -f \
  doc/ \
  stdin.cryptoserv \
  COPYRIGHT \
+ THANKS \
  LICENSE \
  DONATE
 
