@@ -79,6 +79,7 @@ main(int argc, char *argv[])
 
  float LIMIT;
 
+ long logintime;
  long starttime;
  long EXPIRY;
 
@@ -88,6 +89,7 @@ main(int argc, char *argv[])
  int oldnicklen = 0;
  int informed = 0;
  int nicklen = 0;
+ int identval=0;
  int sfd = -1;
  int NICKLEN;
  int fd;
@@ -146,6 +148,7 @@ main(int argc, char *argv[])
  }
 
  starttime = time((long *)0);
+ logintime = starttime;
 
  fcntl(0,F_SETFL,fcntl(0,F_GETFL,0)&~O_NONBLOCK);
 
@@ -199,6 +202,11 @@ main(int argc, char *argv[])
 
   lower(buffer1,buffer0,i);
 
+  if ((loginattempts)&&(time((long *)0)-logintime>256)) {
+   logintime = time((long *)0);
+   --loginattempts;
+  }
+
   /// NICK
   if ((i>=7)&&(!memcmp("nick ",buffer1,5))) { /* not reliable */
    nicklen=-5+i-1;
@@ -222,12 +230,11 @@ main(int argc, char *argv[])
 
     /// IDENTIFY
     if ((i>=20+5+1+1)&&(!memcmp("ident",buffer1+20,5))) {
-     int epochsucks=0;
-     if ((i>=20+9+1+1)&&(!memcmp("identify ",buffer1+20,9))) epochsucks=192;
-     if ((i>=20+9+1+1)&&(!memcmp("identsig ",buffer1+20,9))) epochsucks=128;
-     if ((i>=20+9+1+1)&&(!memcmp("identenc ",buffer1+20,9))) epochsucks=64;
-//     if ((i>=20+9+1+1)&&(!memcmp("identoff ",buffer1+20,9))) epochsucks=0;//dunno how to do this yet.
-     if(epochsucks == 0) continue;
+     if ((i>=20+9+1+1)&&(!memcmp("identify ",buffer1+20,9))) identval=192;
+     if ((i>=20+9+1+1)&&(!memcmp("identsig ",buffer1+20,9))) identval=128;
+     if ((i>=20+9+1+1)&&(!memcmp("identenc ",buffer1+20,9))) identval=64;
+//     if ((i>=20+9+1+1)&&(!memcmp("identoff ",buffer1+20,9))) identval=0;//dunno how to do this yet.
+     if (identval == 0) continue;
 
      if (loginattempts == 4) goto invalid_passwd;
      ++loginattempts;
@@ -268,9 +275,9 @@ main(int argc, char *argv[])
      base16_encode(hex,sk,32);
      base16_encode(hex+64,sk,64);
      memcpy(buffer0,"PASS ",5);
-     memcpy(buffer0+5,hex+((epochsucks==128)?64:0),epochsucks);
-     memcpy(buffer0+5+epochsucks,"\n",1);
-     if (write(1,buffer0,5+epochsucks+1)<=0) exit(8);
+     memcpy(buffer0+5,hex+((identval==128)?64:0),identval);
+     memcpy(buffer0+5+identval,"\n",1);
+     if (write(1,buffer0,5+identval+1)<=0) exit(8);
      memcpy(buffer2+2+12+4+8+32+nicklen+2,"Success\n",8);
      write(sfd,buffer2,2+12+4+8+32+nicklen+2+8);
      memcpy(identifiednick,buffer2+2+12+4+8+32,nicklen);
@@ -435,10 +442,14 @@ main(int argc, char *argv[])
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+60);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`IDENTIFY <passwd>' to login to your account and activate URCSIGN and URCCRYPTOBOX.\n",84);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+84);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"`IDENTENC <passwd>' to login to your account and activate URCCRYPTOBOX.\n",72);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+72);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"`IDENTSIG <passwd>' to login to your account and activate URCSIGN.\n",67);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+67);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`SET PASSWORD <passwd>' changes your password after you REGISTER/IDENTIFY.\n",75);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+75);
-      memcpy(buffer2+2+12+4+8+32+nicklen+2,"`SET PFS <ON, OFF>' toggles perfect forward secrecy for PM.\n",60);
-      write(sfd,buffer2,2+12+4+8+32+nicklen+2+60);
+      memcpy(buffer2+2+12+4+8+32+nicklen+2,"`SET PFS <ON, OFF>' toggles perfect forward secrecy for PM after /reconnect\n",76);
+      write(sfd,buffer2,2+12+4+8+32+nicklen+2+76);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`DROP' removes your account after you REGISTER/IDENTIFY.\n",57);
       write(sfd,buffer2,2+12+4+8+32+nicklen+2+57);
       memcpy(buffer2+2+12+4+8+32+nicklen+2,"`LOGOUT' deactivates URCSIGN and URCCRYPTOBOX.\n",47);
