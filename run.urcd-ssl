@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+export DHFILE="env/urcd.pem"
+export KEYFILE="env/urcd.key"
+export CERTFILE="env/urcd.crt"
+
+exec sslserver -H -R -l `cat env/addr` `cat env/addr` `cat env/port` ./urcd `cat env/path` 2>&1
